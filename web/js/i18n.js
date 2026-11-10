@@ -1,8 +1,12 @@
-// UI strings and patient-facing text. Hindi and Tamil drafted by the team;
-// native-speaker review at the pilot sites is on the plan.
+// UI strings and patient-facing text. English, Hindi and Tamil live here;
+// Telugu, Marathi and Kannada come from one pack file each (js/lang/).
+// All Indian-language text is a team draft: native-speaker review at the
+// pilot sites is on the plan.
+import { PACKS } from './lang/index.js';
 
 export const LANGS = { en: 'English', hi: 'हिन्दी', ta: 'தமிழ்' };
 export const LOCALE = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN' };
+for (const p of PACKS) { LANGS[p.code] = p.name; LOCALE[p.code] = p.locale; }
 
 const S = {
   appTagline: { en: 'Voice-first eye check, reviewed by an optometrist', hi: 'आवाज़ से आँखों की जाँच, ऑप्टोमेट्रिस्ट की निगरानी में', ta: 'குரல் வழி கண் பரிசோதனை, ஆப்டோமெட்ரிஸ்ட் மேற்பார்வையில்' },
@@ -76,6 +80,17 @@ const S = {
   newPatient: { en: 'Next patient', hi: 'अगला मरीज़', ta: 'அடுத்த நோயாளி' },
   noVoice: { en: 'This phone has no voice for this language: please read the question aloud.', hi: 'इस फ़ोन में इस भाषा की आवाज़ नहीं है: कृपया सवाल पढ़कर सुनाएँ।', ta: 'இந்த போனில் இந்த மொழிக்கான குரல் இல்லை: கேள்வியைப் படித்துச் சொல்லுங்கள்.' },
   noMic: { en: 'Voice input is not available in this browser: tap the answers.', hi: 'इस ब्राउज़र में आवाज़ इनपुट नहीं है: जवाब टैप करें।', ta: 'இந்த உலாவியில் குரல் உள்ளீடு இல்லை: பதில்களைத் தட்டுங்கள்.' },
+  pinSetTitle: { en: 'Protect patient data on this phone', hi: 'इस फ़ोन पर मरीज़ों का डेटा सुरक्षित करें', ta: 'இந்த போனில் உள்ள நோயாளி தகவல்களைப் பாதுகாக்கவும்' },
+  pinSetHint: { en: 'Choose a 6-digit PIN. Records on this phone are encrypted with it (AES-256).', hi: '6 अंकों का पिन चुनें। इस फ़ोन के रिकॉर्ड इसी से एन्क्रिप्ट होते हैं।', ta: '6 இலக்க பின் தேர்ந்தெடுங்கள். இந்த போனின் பதிவுகள் அதைக் கொண்டு குறியாக்கம் செய்யப்படும்.' },
+  pinEnterTitle: { en: 'Enter your PIN', hi: 'अपना पिन डालें', ta: 'உங்கள் பின்னை உள்ளிடவும்' },
+  pinConfirm: { en: 'Enter the PIN again', hi: 'पिन दोबारा डालें', ta: 'பின்னை மீண்டும் உள்ளிடவும்' },
+  pinMismatch: { en: 'The PINs did not match. Try again.', hi: 'पिन मेल नहीं खाए। फिर से कोशिश करें।', ta: 'பின் பொருந்தவில்லை. மீண்டும் முயற்சிக்கவும்.' },
+  pinWrong: { en: 'Wrong PIN.', hi: 'गलत पिन।', ta: 'தவறான பின்.' },
+  lock: { en: 'Lock', hi: 'लॉक', ta: 'பூட்டு' },
+  resume: { en: 'Continue unfinished patient', hi: 'अधूरा मरीज़ जारी रखें', ta: 'முடிக்காத நோயாளியைத் தொடரவும்' },
+  confirmLow: { en: 'Not sure I heard that right. Please confirm by tapping.', hi: 'ठीक से सुना या नहीं, पक्का नहीं। कृपया टैप करके पुष्टि करें।', ta: 'சரியாகக் கேட்டதா என்று உறுதியில்லை. தட்டி உறுதிப்படுத்தவும்.' },
+  holdStraight: { en: 'Hold the phone straight, level with the eyes.', hi: 'फ़ोन को आँखों की सीध में सीधा पकड़ें।', ta: 'போனை கண் மட்டத்தில் நேராகப் பிடியுங்கள்.' },
+  forgotPin: { en: 'Forgot the PIN? Reset (deletes unsent data on this phone)', hi: 'पिन भूल गए? रीसेट (इस फ़ोन पर न भेजा गया डेटा मिट जाएगा)', ta: 'பின் மறந்துவிட்டதா? மீட்டமை (இந்த போனில் அனுப்பாத தரவு அழிக்கப்படும்)' },
 };
 
 export function tr(key, lang = 'en', vars = {}) {
@@ -139,3 +154,14 @@ export const P = {
 };
 
 export const pt = (entry, lang) => (entry ? entry[lang] || entry.en : '');
+
+// ---------------------------------------------------------------- merge language packs
+for (const pack of PACKS) {
+  const c = pack.code;
+  for (const [k, v] of Object.entries(pack.ui)) if (S[k]) S[k][c] = v;
+  const pp = pack.passport;
+  for (const k of ['title', 'usedFor', 'suggested', 'needed', 'tips', 'showThis']) P[k][c] = pp[k];
+  for (const group of ['lane', 'zone', 'lens', 'flag', 'advice']) {
+    for (const [k, v] of Object.entries(pp[group])) if (P[group][k]) P[group][k][c] = v;
+  }
+}

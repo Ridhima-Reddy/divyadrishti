@@ -3,18 +3,29 @@
 Field phones POST cases (store-and-forward, idempotent on the client case id).
 Optometrists review them in the portal by triage lane, with a response-time
 target per lane. Reviews flow back to the phone and on to the patient's Vision
-Passport. Every case can be exported as a FHIR R4 bundle for hospital or ABDM
-systems.
+Passport. Every case can be exported as a FHIR R4 bundle.
+
+Privacy by design:
+- The server stores clinical data under a pseudonymous case id. The patient's
+  name, phone and village arrive sealed to the hub's public key (only the
+  optometrist's browser can open them) or not at all. Plaintext identity in a
+  non-demo case is stripped on arrival.
+- Every read, review, export and erasure is written to an append-only audit log
+  (no personal data in it).
+- Reviewed cases are purged after DD_RETENTION_DAYS (default 180).
+- Security headers on every response; API responses are never cached.
 
 Run:  uvicorn server.app:app --reload --port 8000   (from the repo root)
 """
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
-from contextlib import asynccontextmanager
 import sqlite3
 import threading
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from statistics import median
@@ -27,13 +38,16 @@ from pydantic import BaseModel, Field
 
 from .fhir import case_to_bundle
 
+VERSION = "0.3.0"
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "web"
 DB_PATH = Path(os.environ.get("DD_DB", ROOT / "server" / "data" / "divyadrishti.db"))
 SEED_FILE = ROOT / "server" / "seed_cases.json"
 SEED = os.environ.get("DD_SEED", "1") == "1"
-PORTAL_TOKEN = os.environ.get("DD_PORTAL_TOKEN")  # set in production: required for review / delete
+PORTAL_TOKEN = os.environ.get("DD_PORTAL_TOKEN")  # set in production: required for review / delete / hub key
+RETENTION_DAYS = int(os.environ.get("DD_RETENTION_DAYS", "180"))
 MAX_CASE_BYTES = 512_000
+LANGS = ("en", "hi", "ta", "te", "mr", "kn")
 
 SLA_HOURS = {"red": 2, "amber": 24, "green": 72}
 LANE_ORDER = {"red": 0, "amber": 1, "green": 2}
@@ -44,6 +58,20 @@ DECISIONS = {
     "urgent": "Urgent referral",
 }
 
+CSP = "; ".join([
+    "default-src 'self'",
+    "script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'",
+    "connect-src 'self' https://cdn.jsdelivr.net https://storage.googleapis.com",
+    "img-src 'self' data: blob:",
+    "media-src 'self' blob:",
+    "style-src 'self' 'unsafe-inline'",
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+])
+
 
 def now() -> datetime:
     return datetime.now(timezone.utc)
@@ -53,6 +81,16 @@ def iso(dt: datetime) -> str:
     return dt.isoformat(timespec="seconds")
 
 
+def b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode()
+
+
+def jwk_thumbprint(jwk: dict) -> str:
+    """RFC 7638 thumbprint, identical to the browser's computation."""
+    canon = json.dumps({"crv": jwk["crv"], "kty": jwk["kty"], "x": jwk["x"], "y": jwk["y"]}, separators=(",", ":"))
+    return b64url(hashlib.sha256(canon.encode()).digest())
+
+
 # ---------------------------------------------------------------- storage
 class Store:
     def __init__(self, path: Path):
@@ -60,13 +98,17 @@ class Store:
         self.lock = threading.Lock()
         self.db = sqlite3.connect(str(path), check_same_thread=False)
         self.db.row_factory = sqlite3.Row
-        self.db.execute(
+        self.db.executescript(
             """CREATE TABLE IF NOT EXISTS cases (
                 id TEXT PRIMARY KEY, created_at TEXT, received_at TEXT, lane TEXT, status TEXT,
                 patient_name TEXT, age INTEGER, village TEXT, site_name TEXT, demo INTEGER,
-                payload TEXT NOT NULL, review TEXT, reviewed_at TEXT)"""
+                payload TEXT NOT NULL, review TEXT, reviewed_at TEXT);
+            CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
+            CREATE TABLE IF NOT EXISTS audit (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT, actor TEXT, action TEXT, case_id TEXT, detail TEXT);"""
         )
         self.db.commit()
+        self.last_purge: Optional[datetime] = None
 
     def count(self) -> int:
         with self.lock:
@@ -84,7 +126,7 @@ class Store:
                 "INSERT INTO cases VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (
                     payload["id"], payload.get("createdAt"), iso(received_at), lane,
-                    "reviewed" if review else "new", p.get("name"), p.get("age"), p.get("village"),
+                    "reviewed" if review else "new", p.get("name"), p.get("age"), p.get("pin") or p.get("village"),
                     (payload.get("site") or {}).get("name"), int(bool(payload.get("demo"))),
                     json.dumps(payload, ensure_ascii=False), json.dumps(review, ensure_ascii=False) if review else None,
                     review.get("reviewedAt") if review else None,
@@ -110,8 +152,53 @@ class Store:
         with self.lock:
             return self.db.execute("SELECT * FROM cases").fetchall()
 
+    # -- meta (hub public key)
+    def get_meta(self, k: str) -> Optional[str]:
+        with self.lock:
+            row = self.db.execute("SELECT v FROM meta WHERE k = ?", (k,)).fetchone()
+            return row["v"] if row else None
+
+    def set_meta(self, k: str, v: str) -> None:
+        with self.lock:
+            self.db.execute("INSERT INTO meta (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v", (k, v))
+            self.db.commit()
+
+    # -- audit (append-only; never personal data)
+    def audit(self, actor: str, action: str, case_id: Optional[str] = None, detail: str = "") -> None:
+        with self.lock:
+            self.db.execute("INSERT INTO audit (at, actor, action, case_id, detail) VALUES (?,?,?,?,?)",
+                            (iso(now()), (actor or "unknown")[:80], action, case_id, detail[:300]))
+            self.db.commit()
+
+    def audit_list(self, case_id: Optional[str], limit: int) -> list[dict]:
+        with self.lock:
+            if case_id:
+                rows = self.db.execute("SELECT * FROM audit WHERE case_id = ? ORDER BY id DESC LIMIT ?", (case_id, limit)).fetchall()
+            else:
+                rows = self.db.execute("SELECT * FROM audit ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+        return [dict(r) for r in rows]
+
+    # -- retention
+    def purge_reviewed_before(self, cutoff: datetime) -> list[str]:
+        with self.lock:
+            ids = [r["id"] for r in self.db.execute(
+                "SELECT id FROM cases WHERE status = 'reviewed' AND reviewed_at < ?", (iso(cutoff),)).fetchall()]
+            self.db.executemany("DELETE FROM cases WHERE id = ?", [(i,) for i in ids])
+            self.db.commit()
+        return ids
+
 
 store = Store(DB_PATH)
+
+
+def purge_expired(force: bool = False) -> int:
+    if not force and store.last_purge and now() - store.last_purge < timedelta(hours=1):
+        return 0
+    store.last_purge = now()
+    ids = store.purge_reviewed_before(now() - timedelta(days=RETENTION_DAYS))
+    for i in ids:
+        store.audit("system", "retention_purge", i, f"reviewed more than {RETENTION_DAYS} days ago")
+    return len(ids)
 
 
 def seed_if_empty() -> int:
@@ -125,6 +212,7 @@ def seed_if_empty() -> int:
         if review:
             review = {**review, "reviewedAt": iso(received + timedelta(minutes=review.pop("afterMinutes", 20)))}
         store.insert(s["case"], received, review)
+    store.audit("system", "seeded", None, f"{len(seeds)} synthetic demo cases")
     return len(seeds)
 
 
@@ -133,7 +221,7 @@ class CaseIn(BaseModel):
     model_config = {"extra": "allow"}
     id: str = Field(min_length=8, max_length=64)
     createdAt: str
-    lang: Literal["en", "hi", "ta"]
+    lang: Literal["en", "hi", "ta", "te", "mr", "kn"]
     site: dict
     patient: dict
     consent: dict
@@ -162,13 +250,21 @@ class ReviewIn(BaseModel):
     messageToPatient: str = Field(default="", max_length=600)
 
 
+class HubKeyIn(BaseModel):
+    jwk: dict
+
+
 # ---------------------------------------------------------------- helpers
+IDENTITY_FIELDS = ("name", "phone", "village")
+
+
 def row_summary(r: sqlite3.Row) -> dict[str, Any]:
     payload = json.loads(r["payload"])
     review = json.loads(r["review"]) if r["review"] else None
     received = datetime.fromisoformat(r["received_at"])
     due = received + timedelta(hours=SLA_HOURS.get(r["lane"], 72))
     prof = payload.get("profile", {})
+    p = payload.get("patient", {}) or {}
     return {
         "id": r["id"],
         "createdAt": r["created_at"],
@@ -177,7 +273,8 @@ def row_summary(r: sqlite3.Row) -> dict[str, Any]:
         "status": r["status"],
         "slaDueAt": iso(due),
         "overdue": r["status"] != "reviewed" and now() > due,
-        "patient": {k: payload.get("patient", {}).get(k) for k in ("name", "age", "sex", "village")},
+        "patient": {"name": p.get("name"), "age": p.get("age"), "sex": p.get("sex"), "pin": p.get("pin") or pin_of(p.get("village")),
+                    "sealed": p.get("sealed")},
         "site": payload.get("site"),
         "lang": payload.get("lang"),
         "demo": bool(r["demo"]),
@@ -195,31 +292,86 @@ def full_case(r: sqlite3.Row) -> dict[str, Any]:
     return payload
 
 
+def pin_of(text: Optional[str]) -> Optional[str]:
+    if not text:
+        return None
+    return next((tok for tok in str(text).replace(",", " ").split() if tok.isdigit() and len(tok) == 6), None)
+
+
 def require_token(token: Optional[str]) -> None:
     if PORTAL_TOKEN and token != PORTAL_TOKEN:
         raise HTTPException(401, "portal token required")
+
+
+def actor_of(request: Request) -> str:
+    return (request.headers.get("x-actor") or "anonymous")[:80]
 
 
 # ---------------------------------------------------------------- app
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     seed_if_empty()
+    purge_expired(force=True)
     yield
 
 
 app = FastAPI(
     title="DivyaDrishti bridge",
-    version="0.2.0",
+    version=VERSION,
     description="Store-and-forward bridge between field phones and remote optometrists.",
     lifespan=lifespan,
 )
 
 
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    h = response.headers
+    h["Content-Security-Policy"] = CSP
+    h["X-Content-Type-Options"] = "nosniff"
+    h["Referrer-Policy"] = "no-referrer"
+    h["Permissions-Policy"] = "camera=(self), microphone=(self), geolocation=(), payment=()"
+    h["Strict-Transport-Security"] = "max-age=31536000"
+    h["Cross-Origin-Opener-Policy"] = "same-origin"
+    if request.url.path.startswith("/api/"):
+        h["Cache-Control"] = "no-store"
+    return response
+
+
 @app.get("/api/health")
 def health() -> dict:
-    return {"ok": True, "cases": store.count(), "time": iso(now())}
+    return {"ok": True, "version": VERSION, "cases": store.count(), "hubKey": bool(store.get_meta("hub_key")), "time": iso(now())}
 
 
+# ---------------------------------------------------------------- hub key (end-to-end identity encryption)
+@app.get("/api/hub/key")
+def get_hub_key() -> dict:
+    raw = store.get_meta("hub_key")
+    if not raw:
+        raise HTTPException(404, "no hub key set up yet")
+    return json.loads(raw)
+
+
+@app.put("/api/hub/key")
+def put_hub_key(body: HubKeyIn, request: Request, replace: bool = Query(False), x_portal_token: Optional[str] = Header(None)) -> dict:
+    require_token(x_portal_token)
+    jwk = body.jwk
+    if "d" in jwk:
+        raise HTTPException(422, "that is a private key: never upload it")
+    if jwk.get("kty") != "EC" or jwk.get("crv") != "P-256" or not jwk.get("x") or not jwk.get("y"):
+        raise HTTPException(422, "expected an EC P-256 public key (JWK)")
+    public = {"kty": "EC", "crv": "P-256", "x": jwk["x"], "y": jwk["y"]}
+    kid = jwk_thumbprint(public)
+    existing = store.get_meta("hub_key")
+    if existing and json.loads(existing)["kid"] != kid and not replace:
+        raise HTTPException(409, "a different hub key is already set; replacing it makes older sealed identities unreadable without the old key")
+    record = {"kid": kid, "jwk": public, "createdAt": iso(now())}
+    store.set_meta("hub_key", json.dumps(record))
+    store.audit(actor_of(request), "hub_key_set", None, f"kid {kid}")
+    return record
+
+
+# ---------------------------------------------------------------- cases
 @app.post("/api/cases", status_code=201)
 async def create_case(request: Request) -> JSONResponse:
     body = await request.body()
@@ -234,10 +386,21 @@ async def create_case(request: Request) -> JSONResponse:
     lane = (case.profile.get("triage") or {}).get("lane")
     if lane not in SLA_HOURS:
         raise HTTPException(422, "profile.triage.lane must be red, amber or green")
-    existing = store.get(case.id)
-    if existing:  # idempotent retry from a phone on a flaky network
+    actor = actor_of(request)
+    if store.get(case.id):  # idempotent retry from a phone on a flaky network
+        store.audit(actor, "case_duplicate", case.id)
         return JSONResponse({"id": case.id, "status": "duplicate"}, status_code=200)
-    store.insert(case.model_dump(), now())
+    data = case.model_dump()
+    patient = dict(data.get("patient") or {})
+    # Defence in depth: a real case must not carry identity in clear text.
+    if not case.demo and any(patient.get(k) for k in IDENTITY_FIELDS):
+        patient["pin"] = patient.get("pin") or pin_of(patient.get("village"))
+        for k in IDENTITY_FIELDS:
+            patient.pop(k, None)
+        store.audit(actor, "identity_stripped", case.id, "plaintext name/phone/village removed on arrival")
+    data["patient"] = patient
+    store.insert(data, now())
+    store.audit(actor, "case_received", case.id, f"lane {lane}; identity {'sealed' if patient.get('sealed') else 'not sent'}")
     return JSONResponse({"id": case.id, "status": "stored", "lane": lane, "slaHours": SLA_HOURS[lane]}, status_code=201)
 
 
@@ -247,6 +410,7 @@ def list_cases(
     status: Optional[str] = Query(None),
     q: Optional[str] = Query(None, max_length=80),
 ) -> list[dict]:
+    purge_expired()
     rows = [row_summary(r) for r in store.all()]
     if lane:
         rows = [r for r in rows if r["lane"] == lane]
@@ -261,15 +425,16 @@ def list_cases(
 
 
 @app.get("/api/cases/{case_id}")
-def get_case(case_id: str) -> dict:
+def get_case(case_id: str, request: Request) -> dict:
     r = store.get(case_id)
     if not r:
         raise HTTPException(404, "case not found")
+    store.audit(actor_of(request), "case_viewed", case_id)
     return full_case(r)
 
 
 @app.post("/api/cases/{case_id}/review")
-def review_case(case_id: str, review: ReviewIn, x_portal_token: Optional[str] = Header(None)) -> dict:
+def review_case(case_id: str, review: ReviewIn, request: Request, x_portal_token: Optional[str] = Header(None)) -> dict:
     require_token(x_portal_token)
     r = store.get(case_id)
     if not r:
@@ -278,24 +443,32 @@ def review_case(case_id: str, review: ReviewIn, x_portal_token: Optional[str] = 
     rv["decisionLabel"] = DECISIONS[review.decision]
     rv["reviewedAt"] = iso(now())
     store.set_review(case_id, rv)
+    store.audit(f"{review.reviewer.name} ({review.reviewer.regNo or 'no reg. no.'})", "case_reviewed", case_id, rv["decisionLabel"])
     return {"id": case_id, "status": "reviewed", "review": rv}
 
 
 @app.delete("/api/cases/{case_id}")
-def delete_case(case_id: str, x_portal_token: Optional[str] = Header(None)) -> dict:
+def delete_case(case_id: str, request: Request, x_portal_token: Optional[str] = Header(None)) -> dict:
     """Erasure on the patient's request (DPDP Act 2023, right to erasure)."""
     require_token(x_portal_token)
     if not store.delete(case_id):
         raise HTTPException(404, "case not found")
+    store.audit(actor_of(request), "case_erased", case_id, "erased on request")
     return {"id": case_id, "status": "deleted"}
 
 
 @app.get("/api/cases/{case_id}/fhir")
-def case_fhir(case_id: str) -> JSONResponse:
+def case_fhir(case_id: str, request: Request) -> JSONResponse:
     r = store.get(case_id)
     if not r:
         raise HTTPException(404, "case not found")
+    store.audit(actor_of(request), "fhir_exported", case_id)
     return JSONResponse(case_to_bundle(full_case(r)), media_type="application/fhir+json")
+
+
+@app.get("/api/audit")
+def audit(case_id: Optional[str] = Query(None, max_length=64), limit: int = Query(100, ge=1, le=1000)) -> list[dict]:
+    return store.audit_list(case_id, limit)
 
 
 @app.get("/api/stats")
@@ -307,6 +480,7 @@ def stats() -> dict:
     recs: dict[str, int] = {}
     dominance: dict[str, int] = {}
     places: dict[str, dict[str, int]] = {}
+    langs: dict[str, int] = {}
     asked, review_mins = [], []
     for c in cases:
         prof = c.get("profile", {})
@@ -320,8 +494,8 @@ def stats() -> dict:
         dm = prof.get("vision", {}).get("dominance")
         if dm:
             dominance[dm] = dominance.get(dm, 0) + 1
-        village = (c.get("patient") or {}).get("village") or "unknown"
-        pin = next((tok for tok in village.replace(",", " ").split() if tok.isdigit() and len(tok) == 6), village)
+        langs[c.get("lang", "?")] = langs.get(c.get("lang", "?"), 0) + 1
+        pin = c["server"]["patient"].get("pin") or "unknown"
         pl = places.setdefault(pin, {"cases": 0, "amber": 0, "red": 0})
         pl["cases"] += 1
         if lane in ("amber", "red"):
@@ -341,8 +515,10 @@ def stats() -> dict:
         "recommendations": recs,
         "dominance": dominance,
         "byPlace": places,
+        "byLanguage": langs,
         "medianQuestionsAsked": median(asked) if asked else None,
         "medianReviewMinutes": round(median(review_mins)) if review_mins else None,
+        "retentionDays": RETENTION_DAYS,
     }
 
 

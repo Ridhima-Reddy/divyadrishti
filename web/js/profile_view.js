@@ -37,5 +37,22 @@ export function profileHtml(prof, m = {}, answers = {}) {
       ${r.coatings.length ? `<p class="small"><b>Coatings:</b> ${esc(r.coatings.join('; '))}</p>` : ''}
       ${r.notes.map((x) => `<p class="small note">${esc(x)}</p>`).join('')}
       ${r.centrationNeeded && !m.pd ? '<p class="small warn-text">Needs PD and fitting height before ordering.</p>' : ''}
-    </div>`;
+    </div>
+    ${decisionPathHtml(r.decisionPath)}
+    ${qualityHtml(prof.quality)}
+    ${prof.rulesVersion ? `<p class="muted tiny-note">Rules ${esc(prof.rulesVersion)}: proposed, for optometrist review</p>` : ''}`;
+}
+
+// How the lens category was reached: each rule checked, in order.
+export function decisionPathHtml(path) {
+  if (!path?.length) return '';
+  return `<details class="dpath"><summary>How this suggestion was reached (${path.length} rules checked)</summary>
+    <ol>${path.map((p) => `<li class="${p.passed ? 'pass' : 'fail'}"><b>${p.passed ? '✓' : '✗'} ${esc(p.rule)}</b><span>${esc(p.detail)}</span></li>`).join('')}</ol></details>`;
+}
+
+// What the profile rests on: reported, measured or assumed, and how reliable.
+export function qualityHtml(q) {
+  if (!q?.items?.length) return '';
+  return `<details class="quality"><summary>Data quality: <b>${esc(q.level)}</b></summary>
+    <ul>${q.items.map((i) => `<li class="${i.ok ? 'ok' : 'warn'}"><span>${i.ok ? '✓' : '!'} ${esc(i.label)}</span><em>${esc(i.value)}</em></li>`).join('')}</ul></details>`;
 }

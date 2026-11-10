@@ -3,10 +3,11 @@
 // functional vision profile -> send to the remote optometrist -> Vision Passport.
 import * as E from './engine/adaptive.js';
 import { QUESTION_BY_ID, questionText } from './engine/questions.js';
-import { buildProfile } from './engine/profile.js';
+import { buildProfile, RULES_VERSION } from './engine/profile.js';
 import { validateRx } from './engine/rx.js';
 import { PERSONAS, PERSONA_BY_KEY } from './engine/personas.js';
 import { tr, LANGS } from './i18n.js';
+import { PACK_BY_CODE } from './lang/index.js';
 import * as V from './voice.js';
 import * as store from './store.js';
 import { passportText, whatsappLink, smsLink, shortCode } from './passport.js';
@@ -14,7 +15,8 @@ import * as G from './measure/geometry.js';
 import * as A from './measure/acuity.js';
 import { profileHtml } from './profile_view.js';
 
-const APP_VERSION = '0.2.0';
+const APP_VERSION = '0.3.0';
+const LOW_CONFIDENCE = 0.6; // below this, a spoken answer must be confirmed by tap
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -50,15 +52,25 @@ function updateHeader() {
   const vb = $('#voiceToggle');
   if (vb) { vb.textContent = settings.voice ? `🔊 ${t('voiceOn')}` : `🔇 ${t('voiceOff')}`; vb.setAttribute('aria-pressed', String(settings.voice)); }
   const sb = $('#syncBadge');
-  store.allCases().then((list) => {
-    const pending = list.filter((c) => c.sync !== 'sent').length;
+  store.pendingCount().then((pending) => {
     if (sb) { sb.textContent = pending ? `⟳ ${pending}` : '✓'; sb.title = pending ? `${pending} waiting to sync` : 'All synced'; }
   }).catch(() => {});
+  const lb = $('#lockBtn');
+  if (lb) { lb.hidden = !store.isUnlocked(); lb.textContent = '🔒'; lb.title = t('lock'); lb.setAttribute('aria-label', t('lock')); }
+}
+
+// Encrypted autosave of the case in progress: a crash, a reload or a call
+// never loses a patient's answers.
+function saveDraft() {
+  if (!C || !store.isUnlocked()) return;
+  const { still, ...state } = C;
+  store.saveDraft(state).catch(() => {});
 }
 
 // ====================================================================== home
-function home() {
+async function home() {
   C = null;
+  const draft = await store.loadDraft().catch(() => null);
   const langBtns = Object.entries(LANGS).map(([k, v]) => `<button class="chip lang ${settings.lang === k ? 'on' : ''}" data-lang="${k}">${v}</button>`).join('');
   const demos = PERSONAS.map((p) => `<button class="demo" data-demo="${p.key}"><b>${esc(p.name)}</b><span>${esc(p.blurb)}</span><i>${LANGS[p.lang]}</i></button>`).join('');
   setScreen(`
@@ -66,6 +78,9 @@ function home() {
       <p class="eyebrow">${esc(settings.site)}</p>
       <h1>${t('appTagline')}</h1>
     </section>
+    ${draft ? `<section class="card resume"><b>${t('resume')}</b>
+      <p class="muted small">${esc(draft.patient?.name || shortCode(draft.id))} · ${LANGS[draft.lang] || ''} · ${draft.session?.trace?.filter((x) => x.qid && !x.event).length || 0} answers</p>
+      <div class="row gap"><button class="btn primary" id="resumeBtn">↻ ${t('resume')}</button><button class="btn ghost" id="discardBtn">✕</button></div></section>` : ''}
     <section class="card">
       <h2>${t('language')}</h2>
       <div class="row wrap">${langBtns}</div>
@@ -79,6 +94,7 @@ function home() {
     <section class="row wrap gap">
       <button class="btn" id="inboxBtn">📥 ${t('results')}</button>
       <button class="btn" id="calBtn">📏 ${t('calibrate')}</button>
+      <button class="btn" id="checkBtn">🩻 Phone check</button>
       <a class="btn" href="portal.html" target="_blank" rel="noopener">🩺 Optometrist portal</a>
     </section>
     <details class="card small">
@@ -86,8 +102,13 @@ function home() {
       <label>${t('site')}<input id="siteIn" value="${esc(settings.site)}"></label>
       <label>Type<select id="siteType"><option value="store" ${settings.siteType === 'store' ? 'selected' : ''}>Optical store</option><option value="camp" ${settings.siteType === 'camp' ? 'selected' : ''}>Eye camp</option></select></label>
       <label>${t('operator')}<input id="opIn" value="${esc(settings.operator)}"></label>
-      <p class="muted small">Voice: ${V.sttSupported() ? 'speech recognition available' : 'no speech recognition in this browser (tap mode)'} · TTS voices: ${['en', 'hi', 'ta'].map((l) => `${l} ${V.hasVoice(l) ? '✓' : '✗'}`).join(', ')}</p>
+      <p class="muted small">App ${APP_VERSION} · rules ${RULES_VERSION} · data on this phone is encrypted (AES-256-GCM, PIN-protected)</p>
     </details>`, 'home');
+  if (draft) {
+    $('#resumeBtn').onclick = () => resumeDraft(draft);
+    $('#discardBtn').onclick = async () => { await store.clearDraft(); home(); };
+  }
+  $('#checkBtn').onclick = phoneCheck;
   $$('.lang', main).forEach((b) => b.onclick = () => { settings.lang = b.dataset.lang; save('dd.settings', settings); home(); });
   $('#newBtn').onclick = () => startCase(settings.lang);
   $$('.demo', main).forEach((b) => b.onclick = () => startCase(PERSONA_BY_KEY[b.dataset.demo].lang, PERSONA_BY_KEY[b.dataset.demo]));
@@ -107,6 +128,12 @@ function startCase(lang, persona = null) {
   };
   C.session.id = C.id;
   register();
+}
+
+function resumeDraft(draft) {
+  C = draft;
+  if (!C.consent) { register(); return; }
+  if (E.nextQuestion(C.session)) interview(); else checks();
 }
 
 // ====================================================================== register + consent
@@ -136,6 +163,7 @@ function register() {
   $('#agree').onclick = () => {
     C.patient = { name: $('#pName').value.trim(), phone: $('#pPhone').value.trim(), village: $('#pVillage').value.trim() };
     C.consent = { given: true, at: new Date().toISOString(), lang: C.lang, textVersion: 'consent-v1', method: 'verbal, recorded by operator' };
+    saveDraft();
     interview();
   };
   $('#disagree').onclick = home;
@@ -223,9 +251,10 @@ async function interview() {
     </div>`, 'interview');
 
   const my = turn;
-  const commit = (value, raw = null, mode = 'tap') => {
+  const commit = (value, raw = null, mode = 'tap', extra = {}) => {
     if (my !== turn) return;
-    E.submitAnswer(C.session, q.id, value, { raw, mode });
+    E.submitAnswer(C.session, q.id, value, { raw, mode, ...extra });
+    saveDraft();
     interview();
   };
   wireControls(q, commit);
@@ -297,8 +326,15 @@ async function voiceTurn(q, text, my, commit, again) {
     if (my !== turn) return;
     if (res) {
       $('#transcript').textContent = `“${res.transcript}”`;
-      const hit = res.alternatives.map((alt) => ({ alt, r: E.interpret(q, alt, q.asr || C.lang) })).find((x) => x.r.ok);
-      if (hit) { await confirmHeard(q, hit.r, hit.alt, my, commit, 'voice'); return; }
+      const idx = res.alternatives.findIndex((alt) => E.interpret(q, alt.text, q.asr || C.lang).ok);
+      if (idx !== -1) {
+        const alt = res.alternatives[idx];
+        const r = E.interpret(q, alt.text, q.asr || C.lang);
+        // second-guess or low engine confidence: the operator confirms by tap
+        const lowConfidence = idx > 0 || (alt.confidence > 0 && alt.confidence < LOW_CONFIDENCE);
+        await confirmHeard(q, r, alt.text, my, commit, 'voice', { confidence: alt.confidence, lowConfidence });
+        return;
+      }
     }
     if (attempt === 0) { setVState('speaking'); await V.speak(t('notUnderstood'), C.lang); if (my !== turn) return; }
   }
@@ -336,20 +372,21 @@ function reflectHeard(q, value) {
   const next = $('#multiNext'); if (next) next.disabled = !value.length;
 }
 
-async function confirmHeard(q, r, raw, my, commit, mode) {
+async function confirmHeard(q, r, raw, my, commit, mode, extra = {}) {
   reflectHeard(q, r.value);
   const box = $('#heard');
   const critical = (q.module === 'redflag' || q.id === 'child_white') && r.value === true;
-  const needsTap = critical || r.ambiguous || (q.type === 'rx' && r.value.warnings?.length);
+  const needsTap = critical || r.ambiguous || extra.lowConfidence || (q.type === 'rx' && r.value.warnings?.length);
   box.hidden = false;
   box.innerHTML = `<span>${t('heard')}: <b>${esc(valueLabel(q, r.value))}</b></span>
-    ${needsTap ? `<button class="btn primary" id="okHeard">✓ ${t('next')}</button>` : ''}<button class="btn ghost" id="chgHeard">${t('change')}</button>`;
+    ${needsTap ? `<button class="btn primary" id="okHeard">✓ ${t('next')}</button>` : ''}<button class="btn ghost" id="chgHeard">${t('change')}</button>
+    ${extra.lowConfidence ? `<p class="small warn-text">${t('confirmLow')}</p>` : ''}`;
   if (q.type === 'rx' && r.value.warnings?.length) box.insertAdjacentHTML('beforeend', `<p class="muted small">${esc(r.value.warnings.join('; '))}</p>`);
   let cancelled = false;
   $('#chgHeard').onclick = () => { cancelled = true; box.hidden = true; setVState('idle'); };
-  if (needsTap) { $('#okHeard').onclick = () => commit(r.value, raw, mode); return; }
+  if (needsTap) { $('#okHeard').onclick = () => commit(r.value, raw, mode, extra); return; }
   await sleep(C.demo ? 650 : 1300);
-  if (!cancelled && my === turn) commit(r.value, raw, mode);
+  if (!cancelled && my === turn) commit(r.value, raw, mode, extra);
 }
 
 // ====================================================================== checks hub
@@ -371,6 +408,9 @@ function checkSummary(k) {
 }
 
 function checks() {
+  // record how trustworthy the phone's measurements are, for the reviewer
+  C.measurements.calibration = { screen: Boolean(calib.pxPerMm), camera: Boolean(calib.focalNorm) };
+  saveDraft();
   const prof = buildProfile(C.session.answers, C.measurements);
   const list = prof.checks.map((k) => `<li class="check ${checkDone(k) ? 'ok' : ''}">
       <div><b>${t(`chk_${k}`)}</b><span class="muted small">${esc(checkSummary(k))}</span></div>
@@ -463,7 +503,8 @@ function checkReading() {
 
 function checkNear() {
   const samples = [];
-  const words = { en: 'the quick brown fox reads small print', hi: 'छोटे अक्षर पढ़िए और बताइए', ta: 'சிறிய எழுத்துகளைப் படியுங்கள்' }[C.lang];
+  const words = { en: 'the quick brown fox reads small print', hi: 'छोटे अक्षर पढ़िए और बताइए', ta: 'சிறிய எழுத்துகளைப் படியுங்கள்' }[C.lang]
+    || PACK_BY_CODE[C.lang]?.nearWords || 'the quick brown fox reads small print';
   const size = Math.max(7, 1.0 * pxPerMm()); // ~N5-N6 print
   cameraScreen({
     key: 'near_point', title: t('chk_near_point'), instruction: t('bringCloser'),
@@ -583,20 +624,29 @@ function checkPd() {
     key: 'pd', title: t('chk_pd'), instruction: t('pdAsk'),
     extraHtml: '<canvas id="still" class="still" hidden></canvas><div id="pdOut" class="pdout"></div>',
     actions: `<button class="btn primary" id="capBtn">${t('capture')}</button>`,
-    onFrame: (f) => { const ro = $('#readout'); if (!ro) return; last = f; ro.innerHTML = f ? `<b>${Math.round(f.distanceMm / 10)} cm</b>` : t('noFace'); },
+    onFrame: (f) => {
+      const ro = $('#readout'); if (!ro) return;
+      last = f;
+      if (!f) { ro.textContent = t('noFace'); return; }
+      const q = G.faceQuality(f.eyes);
+      ro.innerHTML = `<b>${Math.round(f.distanceMm / 10)} cm</b> ${q.ok ? '✓' : `· ${t('holdStraight')}`}`;
+    },
   });
   setTimeout(() => {
     $('#manualSave').onclick = () => { const v = Number($('#manualIn').value); if (v >= 45 && v <= 80) { C.measurements.pd = { binocularMm: v, method: 'manual (PD ruler)' }; checks(); } };
     const cap = $('#capBtn'); if (!cap) return;
     cap.onclick = () => {
       if (!last) return;
+      // a tilted or turned head shortens the apparent PD: refuse the capture
+      const quality = G.faceQuality(last.eyes);
+      if (!quality.ok) { $('#pdOut').innerHTML = `<p class="warn-text">${t('holdStraight')} (tilt ${quality.rollDeg}°, turn ${quality.yawPct}%)</p>`; return; }
       const vid = $('#vid'); const cv = $('#still');
       cv.width = last.W; cv.height = last.H; cv.hidden = false;
       const snap = document.createElement('canvas');
       snap.width = last.W; snap.height = last.H; snap.getContext('2d').drawImage(vid, 0, 0);
       const g = cv.getContext('2d');
       const f = last; const eyes = f.eyes;
-      let pd = G.measurePd(eyes, { method: 'iris', eyeDistanceMm: f.distanceMm || 400 });
+      let pd = { ...G.measurePd(eyes, { method: 'iris', eyeDistanceMm: f.distanceMm || 400 }), quality };
       const taps = []; let mode = null; let fh = {};
       const draw = () => {
         g.drawImage(snap, 0, 0);
@@ -620,7 +670,7 @@ function checkPd() {
         const p = { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) };
         taps.push(p); draw();
         if (mode === 'card' && taps.length === 2) {
-          pd = G.measurePd(eyes, { method: 'card', cardPx: Math.abs(taps[1].x - taps[0].x), eyeDistanceMm: f.distanceMm || 400 });
+          pd = { ...G.measurePd(eyes, { method: 'card', cardPx: Math.abs(taps[1].x - taps[0].x), eyeDistanceMm: f.distanceMm || 400 }), quality };
           mode = null; out();
         }
         if (mode === 'fh' && taps.length === 2) {
@@ -648,12 +698,15 @@ function buildCasePayload(prof) {
     interview: { answers: C.session.answers, trace: C.session.trace, skipped: C.session.skipped, startedAt: C.session.startedAt, finishedAt: C.session.finishedAt, asked, bank: E.bankSize(), notAsked: E.notAsked(C.session) },
     measurements: C.measurements,
     profile: prof,
-    passport: { lang: C.lang, text: passportText({ id: C.id, patient: C.patient, profile: prof, answers: C.session.answers }, C.lang) },
+    rulesVersion: RULES_VERSION,
+    // the server's copy carries no name; the phone keeps the named copy for sharing
+    passport: { lang: C.lang, text: passportText({ id: C.id, patient: {}, profile: prof, answers: C.session.answers }, C.lang) },
+    passportLocal: passportText({ id: C.id, patient: C.patient, profile: prof, answers: C.session.answers }, C.lang),
   };
 }
 
 function summary() {
-  const prof = buildProfile(C.session.answers, C.measurements);
+  const prof = buildProfile(C.session.answers, C.measurements, { trace: C.session.trace });
   const payload = buildCasePayload(prof);
   const mins = Math.max(1, Math.round((Date.now() - new Date(C.session.startedAt).getTime()) / 60000));
   setScreen(`
@@ -666,19 +719,21 @@ function summary() {
     <p id="sendState" class="muted small center"></p>
     <section class="card passport" id="passportCard" hidden>
       <h2>${t('passport')}</h2>
-      <pre lang="${C.lang}">${esc(payload.passport.text)}</pre>
+      <pre lang="${C.lang}">${esc(payload.passportLocal)}</pre>
       <div class="row gap wrap">
-        <a class="btn" target="_blank" rel="noopener" href="${esc(whatsappLink(C.patient.phone, payload.passport.text))}">${t('shareWa')}</a>
-        <a class="btn" href="${esc(smsLink(C.patient.phone, payload.passport.text))}">${t('shareSms')}</a>
+        <a class="btn" target="_blank" rel="noopener" href="${esc(whatsappLink(C.patient.phone, payload.passportLocal))}">${t('shareWa')}</a>
+        <a class="btn" href="${esc(smsLink(C.patient.phone, payload.passportLocal))}">${t('shareSms')}</a>
       </div>
     </section>
     <button class="btn ghost big" id="nextPt">${t('newPatient')} →</button>`, 'summary');
   $('#sendBtn').onclick = async () => {
     $('#sendBtn').disabled = true;
     await store.putCase({ ...payload, sync: 'queued' });
+    await store.clearDraft();
     $('#sendState').textContent = t('queued');
     const n = await store.syncPending();
-    $('#sendState').textContent = n ? `✓ ${t('sent')}` : t('queued');
+    const hub = await store.getHubKey({ refresh: false });
+    $('#sendState').textContent = `${n ? `✓ ${t('sent')}` : t('queued')} · 🔐 ${hub ? 'name and phone sealed so only the optometrist can read them' : 'name and phone stay on this phone'}`;
     $('#passportCard').hidden = false;
     updateHeader();
   };
@@ -691,6 +746,7 @@ async function inbox() {
   await store.pullReviews();
   const list = await store.allCases();
   const rows = list.map((c) => {
+    if (c.unreadable) return `<li class="inrow muted">${esc(shortCode(c.id))}: encrypted with an older PIN</li>`;
     const lane = c.profile?.triage?.lane || 'green';
     const rv = c.review;
     return `<li class="inrow"><span class="dot ${lane}"></span><div><b>${esc(c.patient?.name || shortCode(c.id))}</b>
@@ -750,12 +806,144 @@ function calibration() {
   };
 }
 
+// ====================================================================== PIN lock
+// Patient data on the phone is encrypted; the PIN unlocks the key for this
+// session. Five wrong PINs start an escalating wait.
+const FAILS_KEY = 'dd.pinFails';
+const fails = () => load(FAILS_KEY, { n: 0, until: 0 });
+const lockoutRemaining = () => Math.max(0, fails().until - Date.now());
+const resetAttempts = () => save(FAILS_KEY, { n: 0, until: 0 });
+function recordFailure() {
+  const f = fails(); f.n += 1;
+  if (f.n >= 5) f.until = Date.now() + 30000 * 2 ** (f.n - 5);
+  save(FAILS_KEY, f);
+}
+
+function pinScreen(mode, next) {
+  setScreen(`<section class="card pin">
+    <h2>🔐 ${mode === 'set' ? t('pinSetTitle') : t('pinEnterTitle')}</h2>
+    ${mode === 'set' ? `<p class="muted small">${t('pinSetHint')}</p>` : ''}
+    <input id="pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••••" aria-label="PIN">
+    ${mode === 'set' ? `<input id="pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="${esc(t('pinConfirm'))}" aria-label="${esc(t('pinConfirm'))}">` : ''}
+    <button class="btn primary big" id="pinGo">${mode === 'set' ? '✓' : '🔓'} ${t('next')}</button>
+    <p id="pinErr" class="err" role="alert"></p>
+    ${mode === 'enter' ? `<button class="btn ghost small" id="pinReset">${t('forgotPin')}</button>` : ''}
+  </section>`, `pin-${mode}`);
+  const go = async () => {
+    const err = $('#pinErr');
+    const p1 = $('#pin1').value.trim();
+    if (!/^\d{6}$/.test(p1)) { err.textContent = '6 digits'; return; }
+    const wait = lockoutRemaining();
+    if (mode === 'enter' && wait > 0) { err.textContent = `Too many attempts: wait ${Math.ceil(wait / 1000)} s`; return; }
+    $('#pinGo').disabled = true;
+    try {
+      if (mode === 'set') {
+        if (p1 !== $('#pin2').value.trim()) { err.textContent = t('pinMismatch'); $('#pinGo').disabled = false; return; }
+        await store.setupPin(p1);
+      } else {
+        await store.unlock(p1);
+      }
+      resetAttempts();
+      next();
+    } catch {
+      recordFailure();
+      err.textContent = t('pinWrong');
+      $('#pinGo').disabled = false;
+      $('#pin1').value = '';
+    }
+  };
+  $('#pinGo').onclick = go;
+  $$('input', main).forEach((i) => { i.onkeydown = (e) => { if (e.key === 'Enter') go(); }; });
+  $('#pin1').focus();
+  const rb = $('#pinReset');
+  if (rb) rb.onclick = async () => { if (confirm(`${t('forgotPin')}?`)) { await store.resetVault(); pinScreen('set', next); } };
+}
+
+async function lockNow() {
+  if (C && store.isUnlocked()) { const { still, ...s } = C; await store.saveDraft(s).catch(() => {}); }
+  store.lock();
+  C = null;
+  pinScreen('enter', () => home());
+}
+
+// ====================================================================== phone check
+// Pre-flight for a field session or a demo: everything that can silently fail.
+async function phoneCheck() {
+  const rows = [];
+  const add = (label, ok, detail = '') => rows.push(`<li class="pc ${ok === null ? 'na' : ok ? 'ok' : 'bad'}"><b>${ok === null ? '–' : ok ? '✓' : '✗'} ${esc(label)}</b><span class="muted small">${esc(detail)}</span></li>`);
+  add('Secure connection (HTTPS)', window.isSecureContext, window.isSecureContext ? location.origin : 'Microphone and camera need HTTPS (or localhost).');
+  add('Speech recognition', V.sttSupported(), V.sttSupported() ? 'Chrome speech recognition' : 'Not in this browser: tap mode only');
+  for (const [k, v] of Object.entries(LANGS)) {
+    const voice = V.voiceFor(k);
+    add(`Voice: ${v}`, Boolean(voice), voice ? voice.name : 'Install it: Settings › Text-to-speech › Speech Services by Google › Install voice data');
+  }
+  add('Screen calibrated (eye-chart size)', Boolean(calib.pxPerMm), calib.pxPerMm ? `${calib.pxPerMm.toFixed(2)} px/mm` : 'Calibrate › Screen size');
+  add('Camera calibrated (distances)', Boolean(calib.focalNorm), calib.focalNorm ? 'about ±5%' : 'Calibrate › Camera at 40 cm (otherwise ±15%)');
+  let persisted = null;
+  try { persisted = await navigator.storage?.persisted?.(); } catch { persisted = null; }
+  add('Storage protected from clean-up', persisted ?? null, persisted ? 'Queued cases will not be evicted' : 'Not granted yet (Chrome grants it to installed or often-used sites)');
+  add('Patient data encrypted on this phone', store.isUnlocked(), 'AES-256-GCM; key unlocked by your PIN; locks after 15 min idle');
+  let health = null;
+  try { const r = await fetch(`${store.API}/health`, { cache: 'no-store' }); health = r.ok ? await r.json() : null; } catch { health = null; }
+  add('Bridge server reachable', Boolean(health), health ? `${health.cases} cases on the server` : 'Offline: cases queue and send later');
+  const hub = await store.getHubKey();
+  add('Optometrist hub key', Boolean(hub), hub ? `key ${hub.kid.slice(0, 10)}…: names and phones sealed to the hub` : 'No hub key yet: names and phones stay on this phone');
+  let bat = null;
+  try { bat = await navigator.getBattery?.(); } catch { bat = null; }
+  if (bat) add('Battery', bat.level >= 0.3 || bat.charging, `${Math.round(bat.level * 100)}%${bat.charging ? ', charging' : ''}`);
+  add('Cases waiting to send', true, String(await store.pendingCount()));
+  setScreen(`<section class="card"><h2>Phone check</h2><ul class="pcheck">${rows.join('')}</ul>
+      <h3>Try it</h3>
+      <div class="row gap wrap">${Object.entries(LANGS).map(([k, v]) => `<button class="chip" data-say="${k}">🔊 ${v}</button>`).join('')}</div>
+      <div class="row gap wrap"><button class="btn" id="micTest">🎙 Test microphone (${LANGS[settings.lang]})</button><button class="btn" id="camTest">📷 Test camera + face model</button></div>
+      <div id="tryOut" class="muted"></div>
+      <p class="muted small">App ${APP_VERSION} · rules ${RULES_VERSION}</p></section>
+    <button class="btn ghost" id="home">← Home</button>`, 'phonecheck');
+  const ageQ = QUESTION_BY_ID.age;
+  $$('[data-say]', main).forEach((b) => { b.onclick = () => V.speak(questionText(ageQ, E.stateOf(E.createSession()), b.dataset.say), b.dataset.say); });
+  $('#micTest').onclick = async () => {
+    $('#tryOut').textContent = 'Listening… say an age, e.g. “fifty four”';
+    const r = await V.listen(settings.lang);
+    const v = r ? E.interpret(ageQ, r.transcript, settings.lang) : null;
+    $('#tryOut').textContent = r ? `Heard “${r.transcript}” (confidence ${Math.round((r.confidence || 0) * 100)}%) → ${v?.ok ? v.value : 'not understood'}` : 'Nothing heard: check the microphone permission';
+  };
+  $('#camTest').onclick = async () => {
+    const out = $('#tryOut');
+    out.innerHTML = '<div class="cam"><video id="vid" playsinline muted></video><div id="readout" class="readout">Loading face model…</div></div>';
+    let stream = null; let stop = null; let face = null; let cancelled = false;
+    cleanup = () => { cancelled = true; stop?.(); face?.stopCamera(stream); };
+    try {
+      face = await import('./measure/face.js');
+      const t0 = performance.now();
+      const vid = $('#vid');
+      const [lm, s] = await Promise.all([face.loadLandmarker(), face.startCamera(vid)]);
+      stream = s;
+      if (cancelled) { face.stopCamera(s); return; }
+      const ms = Math.round(performance.now() - t0);
+      stop = face.track(vid, lm, (f) => {
+        const ro = $('#readout'); if (!ro) return;
+        ro.innerHTML = f ? `face ✓ <b>${Math.round(f.distanceMm / 10)} cm</b> · ready in ${ms} ms` : `looking for a face · ready in ${ms} ms`;
+      }, focalPxFor);
+    } catch (e) { if (!cancelled) out.textContent = `Camera or face model failed: ${e.message || e}`; }
+  };
+  $('#home').onclick = home;
+}
+
 // ====================================================================== boot
 $('#voiceToggle').onclick = () => { settings.voice = !settings.voice; save('dd.settings', settings); if (!settings.voice) V.stopAll(); updateHeader(); };
-$('#homeLink').onclick = (e) => { e.preventDefault(); home(); };
+$('#homeLink').onclick = (e) => { e.preventDefault(); if (store.isUnlocked()) home(); };
+$('#lockBtn').onclick = lockNow;
+['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, store.touch, { passive: true }));
+setInterval(() => { if (store.idleTooLong()) lockNow(); }, 30000);
+
+async function boot() {
+  if (!store.hasVault()) pinScreen('set', route);
+  else if (!store.isUnlocked()) pinScreen('enter', route);
+  else route();
+}
 
 // Deep links for demos and screenshots: ?demo=kumar[&screen=summary|checks]
-async function boot() {
+async function route() {
   const q = new URLSearchParams(location.search);
   const demo = q.get('demo');
   if (demo && PERSONA_BY_KEY[demo]) {

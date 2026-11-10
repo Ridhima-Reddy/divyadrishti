@@ -13,7 +13,7 @@ const idFor = (key) => {
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
 };
 
-const RECEIVED_MIN_AGO = { ravi: 25, murugan: 190, priya: 50, lakshmi: 75, kumar: 300, fatima: 330, arjun: 1500, selvi: 40 };
+const RECEIVED_MIN_AGO = { ravi: 25, murugan: 190, priya: 50, lakshmi: 75, kumar: 300, fatima: 330, arjun: 1500, selvi: 40, ramulu: 110, sunita: 20, manjula: 65 };
 const REVIEWS = {
   kumar: {
     reviewer: { name: 'Optom. A. Meenakshi', regNo: 'TN-OPT-0000 (demo)' }, decision: 'approve', lensCategory: 'office',
@@ -47,7 +47,7 @@ const out = PERSONAS.map((p) => {
   const minsAgo = RECEIVED_MIN_AGO[p.key] ?? 60;
   const created = new Date(Date.now() - (minsAgo + 8) * 60000).toISOString();
   const session = runPersona(p);
-  const profile = buildProfile(session.answers, p.measure);
+  const profile = buildProfile(session.answers, p.measure, { trace: session.trace });
   const asked = session.trace.filter((x) => x.qid && !x.event).length;
   const patient = { name: p.name, phone: p.phone, village: p.village, age: session.answers.age, sex: session.answers.sex };
   const c = {
@@ -58,6 +58,7 @@ const out = PERSONAS.map((p) => {
     interview: { answers: session.answers, trace: session.trace, skipped: session.skipped, startedAt: session.startedAt, finishedAt: session.finishedAt, asked, bank: bankSize(), notAsked: notAsked(session) },
     measurements: p.measure,
     profile,
+    rulesVersion: profile.rulesVersion,
     passport: { lang: p.lang, text: passportText({ id, patient, profile, answers: session.answers }, p.lang) },
   };
   const seed = { case: c, receivedMinutesAgo: minsAgo };

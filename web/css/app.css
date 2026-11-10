@@ -164,3 +164,19 @@ input[type=range] { padding: 0; border: 0; background: none; }
 .dot { width: 12px; height: 12px; border-radius: 50%; }
 .dot.red { background: var(--red); } .dot.amber { background: #d99a00; } .dot.green { background: var(--green); }
 details summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+
+/* v0.3: PIN, resume, phone check, decision path, data quality */
+.pin input { font-size: 1.6rem; letter-spacing: .4em; text-align: center; margin: 10px 0; }
+.resume { border-color: var(--teal); background: var(--teal-soft); }
+.pcheck { list-style: none; padding: 0; margin: 0; }
+.pc { display: flex; flex-direction: column; padding: 8px 0; border-top: 1px solid var(--line); }
+.pc.ok b { color: var(--green); } .pc.bad b { color: var(--red); } .pc.na b { color: var(--muted); }
+.dpath, .quality { margin-top: 12px; font-size: .88rem; }
+.dpath ol { margin: 6px 0; padding-left: 1.2rem; }
+.dpath li { margin: 4px 0; display: flex; flex-direction: column; }
+.dpath li.fail b { color: var(--muted); font-weight: 600; }
+.dpath li.pass b { color: var(--green); }
+.dpath li span, .quality em { font-style: normal; color: var(--muted); font-size: .8rem; }
+.quality ul { list-style: none; margin: 6px 0; padding: 0; }
+.quality li { display: flex; flex-direction: column; padding: 4px 0; border-top: 1px dashed var(--line); }
+.quality li.warn span { color: var(--amber); font-weight: 600; }

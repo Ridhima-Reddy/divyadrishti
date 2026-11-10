@@ -50,3 +50,7 @@ textarea { display: block; width: 100%; min-height: 70px; margin-top: .25rem; pa
 }
 .pp { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: .9rem; background: var(--bg); padding: 10px; border-radius: 10px; margin: 0 0 10px; }
 .detail, .dgrid > div { min-width: 0; }
+#hubBanner { padding: 8px 16px; font-size: .9rem; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+#hubBanner .btn { min-height: 36px; padding: .3rem .8rem; }
+.hubok { background: var(--green-soft); color: var(--green); }
+.hubwarn { background: var(--amber-soft); color: var(--amber); }

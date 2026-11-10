@@ -110,6 +110,56 @@ export const PERSONAS = [
     },
     measure: { readingDistanceCm: 42, nearPointCm: 30, acuity: { distanceM: 2, R: { logmar: 0.0 }, L: { logmar: 0.1 } } },
   },
+  {
+    key: 'ramulu', name: 'G. Ramulu', phone: '+91 98490 00327', village: 'Uppal, Hyderabad 500039', lang: 'te',
+    site: 'Sri Sai Opticals, Uppal', siteType: 'store',
+    blurb: '59, auto driver, diabetic 6 years, glare at night',
+    say: {
+      age: 'యాభై తొమ్మిది', sex: 'మగ', complaint: 'దూరం మసకగా ఉంది చదవడం కూడా కష్టం', rf_sudden: 'లేదు', rf_pain: 'లేదండి',
+      conditions: 'షుగర్ ఉంది', diabetes_years: 'ఆరు సంవత్సరాలు', retina_exam: 'రెండు సంవత్సరాల క్రితం', glaucoma_family: 'లేదు',
+      eye_surgery: 'లేదు', glasses_now: 'లేదు', occupation: 'ఆటో నడుపుతాను', near_hours: 'ఒక గంట',
+      night_glare: 'అవును రాత్రి లైట్లు కళ్ళు చెదురుతాయి', budget: 'రెండు వేలు',
+    },
+    measure: {
+      acuity: { distanceM: 2, R: { logmar: 0.4 }, L: { logmar: 0.5, pinholeLogmar: 0.3, pinholeImproved: true } },
+      amsler: { R: 'normal', L: 'normal' },
+    },
+  },
+  {
+    key: 'sunita', name: 'Sunita Patil', phone: '+91 98220 00145', village: 'Nashik 422001', lang: 'mr',
+    site: 'Patil Optics, Nashik', siteType: 'store',
+    blurb: '45, teacher, distance glasses, now struggling to read',
+    say: {
+      age: 'पंचेचाळीस', sex: 'स्त्री', complaint: 'जवळचे वाचायला त्रास होतो आणि डोके दुखते', rf_sudden: 'नाही', rf_pain: 'नाही',
+      conditions: 'काही नाही', glaucoma_family: 'नाही', eye_surgery: 'नाही', glasses_now: 'हो', glasses_type: 'दूरचा',
+      glasses_years: 'चार वर्षे', glasses_ok: 'जवळचे धूसर दिसते',
+      rx_known: 'right eye minus one cylinder minus point five axis ninety left eye minus one point two five',
+      frequent_change: 'नाही', occupation: 'मी शिक्षिका आहे', near_hours: 'तीन तास', screen_hours: 'दोन तास',
+      outdoor_hours: 'एक तास', drives: 'हो स्कूटर चालवते', night_glare: 'नाही', budget: 'तीन हजारांपेक्षा जास्त',
+    },
+    measure: {
+      readingDistanceCm: 38, nearPointCm: 40,
+      acuity: { distanceM: 2, R: { logmar: 0.1 }, L: { logmar: 0.1 } },
+      pd: { binocularMm: 61.5, rightMm: 30.5, leftMm: 31, nearMm: 58, method: 'iris' },
+    },
+  },
+  {
+    key: 'manjula', name: 'S. Manjula', phone: '+91 99000 00512', village: 'Bommanahalli, Bengaluru 560068', lang: 'kn',
+    site: 'Eye camp, Bommanahalli', siteType: 'camp',
+    blurb: '52, garment-factory tailor, mother has glaucoma',
+    say: {
+      age: 'ಐವತ್ತೆರಡು', sex: 'ಹೆಂಗಸು', complaint: 'ಹತ್ತಿರ ಓದಲು ಕಷ್ಟ', rf_sudden: 'ಇಲ್ಲ', rf_pain: 'ಇಲ್ಲ', conditions: 'ಬಿಪಿ ಇದೆ',
+      glaucoma_family: 'ಹೌದು ಅಮ್ಮನಿಗೆ ಇದೆ', eye_surgery: 'ಇಲ್ಲ', glasses_now: 'ಹೌದು', glasses_type: 'ಓದಲು',
+      glasses_years: 'ಎರಡು ವರ್ಷ', glasses_ok: 'ಹತ್ತಿರ ಮಸುಕು', rx_known: 'skip', frequent_change: 'ಇಲ್ಲ',
+      occupation: 'ಹೊಲಿಗೆ ಕೆಲಸ', near_hours: 'ಎಂಟು ಗಂಟೆ', outdoor_hours: 'ಅರ್ಧ ಗಂಟೆ', drives: 'ಇಲ್ಲ', night_glare: 'ಇಲ್ಲ',
+      budget: 'ಸಾವಿರ ರೂಪಾಯಿಗಿಂತ ಕಡಿಮೆ',
+    },
+    measure: {
+      readingDistanceCm: 27,
+      acuity: { distanceM: 2, R: { logmar: 0.1 }, L: { logmar: 0.1 } },
+      amsler: { R: 'normal', L: 'normal' },
+    },
+  },
 ];
 
 export const PERSONA_BY_KEY = Object.fromEntries(PERSONAS.map((p) => [p.key, p]));

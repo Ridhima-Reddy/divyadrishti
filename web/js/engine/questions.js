@@ -5,8 +5,10 @@
 //               the reviewing optometrist
 //   urgentOk  - still asked once a red flag has switched the session to urgent
 // s = { a: answers, d: derived state from adaptive.derive() }
-// Hindi and Tamil text: drafted by the team, to be reviewed by native speakers
-// at the pilot sites before use.
+// English, Hindi and Tamil text live here; Telugu, Marathi and Kannada are
+// merged in from js/lang/ packs at the bottom of this file. All drafted by the
+// team, to be reviewed by native speakers at the pilot sites before use.
+import { PACKS } from '../lang/index.js';
 
 const YN = 'yesno';
 
@@ -368,6 +370,30 @@ export const QUESTIONS = [
     reason: () => 'Lens options for near-and-far needs range from low-cost bifocals to progressives; advice must be affordable to be followed.',
   },
 ];
+
+// ---------------------------------------------------------------- merge language packs
+for (const pack of PACKS) {
+  const c = pack.code;
+  for (const q of QUESTIONS) {
+    const tx = pack.q[q.id];
+    if (tx && typeof q.text === 'function') {
+      const prev = q.text; // child/adult variants: wrap, keeping earlier languages
+      q.text = (s) => ({ ...prev(s), [c]: s.d.isChild ? tx.child : tx.adult });
+    } else if (tx && typeof tx === 'string') {
+      q.text[c] = tx;
+    }
+    if (q.unit) q.unit[c] = pack.units.years;
+    const opts = pack.opt[q.id];
+    if (opts && q.options) {
+      for (const o of q.options) {
+        const entry = opts[o.v];
+        if (!entry) continue;
+        o.label[c] = entry[0];
+        o.kw = [...o.kw, ...entry];
+      }
+    }
+  }
+}
 
 export const QUESTION_BY_ID = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
 

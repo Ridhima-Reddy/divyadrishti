@@ -47,7 +47,8 @@ export function speak(text, lang, { rate = 0.92 } = {}) {
 }
 
 let activeRec = null;
-// Resolves with { transcript, alternatives } or null on silence / error.
+// Resolves with { transcript, confidence, alternatives: [{ text, confidence }] }
+// or null on silence / error. Confidence is 0..1 (0 = engine did not say).
 export function listen(lang, { onInterim = () => {}, timeoutMs = 9000 } = {}) {
   return new Promise((resolve) => {
     if (!Rec) { resolve(null); return; }
@@ -63,8 +64,8 @@ export function listen(lang, { onInterim = () => {}, timeoutMs = 9000 } = {}) {
     r.onresult = (e) => {
       const res = e.results[e.results.length - 1];
       if (!res.isFinal) { onInterim(res[0].transcript); return; }
-      const alternatives = Array.from(res).map((x) => x.transcript);
-      finish({ transcript: alternatives[0], alternatives });
+      const alternatives = Array.from(res).map((x) => ({ text: x.transcript, confidence: x.confidence || 0 }));
+      finish({ transcript: alternatives[0].text, confidence: alternatives[0].confidence, alternatives });
     };
     r.onerror = () => finish(null);
     r.onend = () => finish(null);

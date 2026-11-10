@@ -41,7 +41,7 @@ export function remainingEstimate(session) {
 export const bankSize = () => QUESTIONS.length;
 
 const SKIP_WORDS = ['skip', 'pass', 'dont have', 'do not have', 'no slip', 'not available', 'छोड़ें', 'छोड़ो', 'छोड़िए', 'पर्ची नहीं',
-  'தவிர்', 'வேண்டாம்', 'சீட்டு இல்லை'];
+  'தவிர்', 'வேண்டாம்', 'சீட்டு இல்லை', 'वगळा', 'चिठ्ठी नाही', 'దాటవేయి', 'చీటీ లేదు', 'ಬಿಟ್ಟುಬಿಡಿ', 'ಚೀಟಿ ಇಲ್ಲ'];
 
 // Turn a raw spoken/typed answer into a value for question q.
 // Returns { ok, value, ambiguous?, detail? }.
@@ -49,7 +49,7 @@ export function interpret(q, raw, lang = 'en') {
   if (raw === null || raw === undefined || String(raw).trim() === '') return { ok: false };
   switch (q.type) {
     case 'yesno': {
-      const v = parseYesNo(raw);
+      const v = parseYesNo(raw, lang);
       return v === null ? { ok: false } : { ok: true, value: v };
     }
     case 'number': {
@@ -77,7 +77,7 @@ export function interpret(q, raw, lang = 'en') {
       return { ok: true, value: hits };
     }
     case 'rx': {
-      if (containsAny(raw, SKIP_WORDS) || parseYesNo(raw) === false) return { ok: true, value: { skipped: true } };
+      if (containsAny(raw, SKIP_WORDS) || parseYesNo(raw, lang) === false) return { ok: true, value: { skipped: true } };
       const rx = parseRxSpeech(raw);
       if (!rx.ok) return { ok: false, detail: rx };
       return { ok: true, value: { R: rx.R, L: rx.L, text: rx.text, warnings: rx.warnings }, detail: rx };
@@ -102,6 +102,8 @@ export function submitAnswer(session, qid, value, meta = {}) {
     raw: meta.raw ?? null,
     value,
     mode: meta.mode ?? 'tap', // 'voice' | 'tap' | 'typed'
+    confidence: typeof meta.confidence === 'number' ? Math.round(meta.confidence * 100) / 100 : null,
+    lowConfidence: Boolean(meta.lowConfidence), // speech result was uncertain and confirmed by tap
     lang: session.lang,
     at: new Date().toISOString(),
   });

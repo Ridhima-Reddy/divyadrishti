@@ -59,13 +59,17 @@ def case_to_bundle(case: dict) -> dict:
     patient = {
         "resourceType": "Patient",
         "identifier": [{"system": "urn:divyadrishti:case", "value": case["id"]}],
-        "name": [{"text": p.get("name") or "Unnamed"}],
+        "name": [{"text": p.get("name") or "Pseudonymised (identity sealed to the optometrist hub)"}],
         "gender": gender,
     }
     if p.get("phone"):
         patient["telecom"] = [{"system": "phone", "value": p["phone"]}]
     if p.get("village"):
         patient["address"] = [{"text": p["village"], "country": "IN"}]
+    elif p.get("pin"):
+        patient["address"] = [{"postalCode": p["pin"], "country": "IN"}]
+    if p.get("sealed"):
+        patient["extension"] = [{"url": "urn:divyadrishti:sealed-identity", "valueString": f"{p['sealed'].get('alg')} kid {p['sealed'].get('kid')}"}]
     pid = add(patient)
     subj = _ref(pid)
 

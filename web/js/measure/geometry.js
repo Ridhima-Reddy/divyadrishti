@@ -83,6 +83,18 @@ export function measurePd(eyes, { method = 'iris', cardPx = null, eyeDistanceMm 
 
 export const fittingHeightMm = (pupilY, rimY, mmPerPx) => round1((rimY - pupilY) * mmPerPx);
 
+// Head pose from the eye landmarks: a tilted (roll) or turned (yaw) head
+// shortens the apparent PD and shifts monocular PDs, so capture is blocked
+// until the head is straight. Thresholds: roll <= 4°, left/right asymmetry <= 12%
+// (normal facial asymmetry is a few percent).
+export function faceQuality(eyes, { maxRollDeg = 4, maxYawPct = 12 } = {}) {
+  const rollDeg = (Math.atan2(eyes.os.y - eyes.od.y, eyes.os.x - eyes.od.x) * 180) / Math.PI;
+  const r = Math.abs(eyes.bridge.x - eyes.od.x);
+  const l = Math.abs(eyes.os.x - eyes.bridge.x);
+  const yawPct = (Math.abs(r - l) / ((r + l) / 2)) * 100;
+  return { rollDeg: round1(rollDeg), yawPct: round1(yawPct), ok: Math.abs(rollDeg) <= maxRollDeg && yawPct <= maxYawPct };
+}
+
 // Prentice's rule: induced prism (Δ) = decentration (cm) × lens power (D).
 export const prenticePrismD = (decentrationMm, powerD) => (Math.abs(decentrationMm) / 10) * Math.abs(powerD);
 

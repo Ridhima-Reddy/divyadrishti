@@ -16,7 +16,8 @@ test('Kumar (54, accountant): intermediate-dominant, office lens, green', () => 
   assert.equal(pr.recommendation.category, 'office');
   assert.equal(pr.triage.lane, 'green');
   assert.equal(pr.presbyopia.amplitudeSource, 'measured near point');
-  assert.ok(pr.recommendation.notes.some((n) => n.includes('blue-light')), 'blue-light myth note for screen users');
+  const blue = pr.recommendation.notes.find((n) => /blue-light/i.test(n));
+  assert.ok(blue && blue.includes('not a treatment') && blue.includes('intermediate add'), 'blue-light note: optional, evidence, and the real fix');
 });
 
 test('Lakshmi (47, tailor, diabetic): readers at her measured 29 cm, amber for retina', () => {

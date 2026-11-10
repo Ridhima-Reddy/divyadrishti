@@ -1,9 +1,10 @@
 // Offline shell: the field app must open in a village with no signal.
 // API calls are never cached (cases queue in IndexedDB instead).
-const CACHE = 'dd-shell-v2';
+const CACHE = 'dd-shell-v3';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest', 'icon.svg',
-  'js/app.js', 'js/i18n.js', 'js/voice.js', 'js/store.js', 'js/passport.js', 'js/profile_view.js',
+  'js/app.js', 'js/i18n.js', 'js/voice.js', 'js/store.js', 'js/passport.js', 'js/profile_view.js', 'js/crypto.js',
+  'js/lang/index.js', 'js/lang/te.js', 'js/lang/mr.js', 'js/lang/kn.js',
   'js/engine/adaptive.js', 'js/engine/questions.js', 'js/engine/profile.js', 'js/engine/parse.js', 'js/engine/rx.js', 'js/engine/personas.js',
   'js/measure/geometry.js', 'js/measure/acuity.js', 'js/measure/face.js',
 ];

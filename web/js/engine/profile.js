@@ -252,12 +252,17 @@ export function recommendLens(a, m, prof) {
   const coatings = [];
   const rationale = [];
   let category; let title; let example = null;
+  // Decision path: every rule checked, in order, with the values it saw.
+  // The chain short-circuits, so only rules that were actually evaluated appear.
+  const decisionPath = [];
+  const check = (rule, passed, detail) => { decisionPath.push({ rule, passed: Boolean(passed), detail }); return Boolean(passed); };
+  const pct = (x) => `${Math.round(x * 100)}%`;
 
-  if (prof.triage.lane === 'red') {
+  if (check('Red-flag lane', prof.triage.lane === 'red', `lane ${prof.triage.lane}`)) {
     return {
       category: 'urgent_referral', title: 'No glasses today: urgent referral',
       rationale: ['A red-flag symptom needs a doctor first; new glasses could delay care.'],
-      coatings: [], notes: [], centrationNeeded: false, example: null,
+      coatings: [], notes: [], centrationNeeded: false, example: null, decisionPath,
     };
   }
   const near = zones.near.share; const inter = zones.intermediate.share; const far = zones.distance.share;
@@ -266,8 +271,9 @@ export function recommendLens(a, m, prof) {
     || a.glasses_type === 'bifocal' || a.glasses_type === 'progressive' || (m.acuity && (worstLogmar(m.acuity) ?? 0) >= 0.3);
   const fallRisk = d.age >= 65 && a.falls === true;
   const budget = a.budget || 'mid';
+  const addDetail = pres ? `add +${pres.addD.toFixed(2)} D at ${pres.workingDistanceCm} cm, status ${pres.status}` : 'child: not assessed';
 
-  if (d.isChild) {
+  if (check('Child under 16', d.isChild, `age ${d.age}`)) {
     category = 'child_refraction';
     title = 'Cycloplegic refraction, then single-vision lenses';
     rationale.push('Children’s focusing is strong enough to hide long-sightedness; only a dilated (cycloplegic) refraction gives the true power.');
@@ -278,8 +284,9 @@ export function recommendLens(a, m, prof) {
       example = 'e.g. ZEISS MyoCare (ages 6-12), after confirmation by the optometrist';
     }
     coatings.push('Polycarbonate or other impact-resistant material for children');
-  } else if (!needsNear) {
-    if (farComplaint || a.glasses_now === true) {
+  } else if (!check('Needs a reading add', needsNear, addDetail)) {
+    if (check('Distance complaint or already wears glasses', farComplaint || a.glasses_now === true,
+      `distance complaint ${farComplaint ? 'yes' : 'no'}, glasses ${a.glasses_now === true ? 'yes' : 'no'}`)) {
       category = 'sv_distance';
       title = 'Single-vision lenses for distance';
       rationale.push('No reading add needed yet at this age and working distance.');
@@ -292,18 +299,23 @@ export function recommendLens(a, m, prof) {
       title = 'No new glasses indicated by the interview';
       rationale.push('No distance or near complaint and no add needed; confirm with the vision checks.');
     }
-  } else if (fallRisk && far >= 0.25) {
+  } else if (check('Fall at 65+ and active outdoors', fallRisk && far >= 0.25,
+    `age ${d.age}, fall ${a.falls === true ? 'yes' : 'no'}, distance ${pct(far)} of day`)) {
     category = 'separate_pairs';
     title = 'Two pairs: single-vision distance for walking + reading glasses';
     rationale.push('Fall reported at 65+: multifocals blur steps and kerbs. In older people who are active outdoors, single-vision distance glasses reduced outdoor falls (VISIBLE trial).');
-  } else if (near >= 0.5 && far < 0.25 && inter < 0.25 && !farComplaint) {
+  } else if (check('Mostly close work, little else (near ≥50%, others <25%, no distance complaint)',
+    near >= 0.5 && far < 0.25 && inter < 0.25 && !farComplaint,
+    `near ${pct(near)}, arm’s length ${pct(inter)}, distance ${pct(far)}, distance complaint ${farComplaint ? 'yes' : 'no'}`)) {
     category = 'readers';
     title = `Reading glasses at ${zones.near.workingDistanceCm} cm`;
     rationale.push(`Mostly close work (${Math.round(near * 100)}% of the day) and no distance complaint.`);
     if (!a.rx_known || (!a.rx_known.R && !a.rx_known.L)) {
       notes.push('If both eyes see well far away and there is no astigmatism complaint, ready-made readers are a low-cost option once the optometrist approves the add.');
     }
-  } else if (dominance === 'intermediate' || (near + inter >= 0.75 && far < 0.2)) {
+  } else if (check('Arm’s-length work dominates, or close + arm’s length ≥75%',
+    dominance === 'intermediate' || (near + inter >= 0.75 && far < 0.2),
+    `dominance ${dominance}, close + arm’s length ${pct(near + inter)}, distance ${pct(far)}`)) {
     category = 'office';
     title = 'Office (near-variable) lens for work, plus distance glasses if needed';
     rationale.push(dominance === 'intermediate'
@@ -311,12 +323,15 @@ export function recommendLens(a, m, prof) {
       : `Almost the whole day is close and arm’s-length work (${Math.round((near + inter) * 100)}%): a work lens gives wider near and intermediate zones than a progressive.`);
     notes.push(`If only one pair is affordable: a progressive with the ${dominance === 'intermediate' ? 'Intermediate' : 'Near'} design emphasis.`);
     example = `e.g. ZEISS SmartLife Progressive with the ${dominance === 'intermediate' ? 'Intermediate' : 'Near'} design option (one-pair alternative)`;
-  } else if (budget === 'low' || (a.glasses_type === 'bifocal' && a.glasses_ok === 'fine')) {
+  } else if (check('Low budget, or already comfortable in bifocals',
+    budget === 'low' || (a.glasses_type === 'bifocal' && a.glasses_ok === 'fine'),
+    `budget ${budget}, current glasses ${a.glasses_type || 'none'}`)) {
     category = 'bifocal';
     title = 'Bifocal (distance + near)';
     rationale.push(budget === 'low' ? 'Needs both distance and near within a low budget.' : 'Already comfortable in bifocals.');
     if (inter >= 0.25) notes.push('Bifocals have no arm’s-length zone; screens and counters will be awkward.');
   } else {
+    check('Otherwise: progressive with the profile’s design emphasis', true, `design ${designEmphasis}`);
     category = 'progressive';
     title = `Progressive lens, ${designEmphasis} design`;
     rationale.push(`Needs distance and near (${Math.round(far * 100)}% far, ${Math.round(near * 100)}% near, ${Math.round(inter * 100)}% arm’s length).`);
@@ -333,10 +348,46 @@ export function recommendLens(a, m, prof) {
   if (!d.isChild && outdoor >= 4) coatings.push('UV protection; photochromic lenses or sunglasses for long hours in the sun');
   if (['labour', 'fine'].includes(d.occ)) coatings.push('Scratch-resistant, impact-resistant material for work');
   if ((a.screen_hours ?? 0) >= 2 || has(a.complaint, 'strain')) {
-    notes.push('A blue-light filter is not needed for eye strain: a Cochrane review (2023) found no short-term benefit. Breaks and correct power matter more.');
+    // Cochrane review (Singh et al. 2023, 17 RCTs): blue-light filtering lenses probably make no
+    // difference to eye strain, sleep or retinal health; no consistent harms. Offer as a
+    // preference, never as the treatment, and fix what does cause screen strain.
+    const interFix = pres && pres.status !== 'none' ? ' (for this patient, an intermediate add for the screen distance)' : '';
+    notes.push(`Blue-light filter: optional, not a treatment. A Cochrane review of 17 trials (2023) found it probably makes no difference to eye strain, sleep or retinal health, and no harm. What relieves screen strain: the right power at screen distance${interFix}, an anti-reflective coating, blinking and 20-20-20 breaks.`);
   }
   const centrationNeeded = ['progressive', 'office', 'bifocal'].includes(category);
-  return { category, title, rationale, coatings, notes, centrationNeeded, example };
+  return { category, title, rationale, coatings, notes, centrationNeeded, example, decisionPath };
+}
+
+// ------------------------------------------------------------------ data quality
+// How much of the profile rests on what the patient said, what the phone
+// measured, and how trustworthy those measurements were. Shown to the optometrist.
+export function dataQuality(a, m, prof, trace = []) {
+  const items = [];
+  const z = prof.vision;
+  const cal = m.calibration || {};
+  items.push({ key: 'zones', label: 'Daily hours reported by the patient', value: `${z.inputsReported} of 3 (rest from occupation)`, ok: z.inputsReported >= 2 });
+  items.push({
+    key: 'nearDistance', label: 'Near working distance',
+    value: z.nearDistanceMeasured ? `measured${cal.camera ? ', calibrated camera (±5%)' : ', uncalibrated camera (±15%)'}` : 'typical for occupation (not measured)',
+    ok: z.nearDistanceMeasured,
+  });
+  if (prof.presbyopia) {
+    items.push({ key: 'amplitude', label: 'Focusing range', value: prof.presbyopia.measuredNearPoint ? 'measured near point' : prof.presbyopia.amplitudeSource, ok: prof.presbyopia.measuredNearPoint || prof.derived.pseudophakic });
+  }
+  if (m.acuity?.R) items.push({ key: 'acuity', label: 'Eye-chart letter size', value: cal.screen ? 'screen calibrated' : 'screen not calibrated: sizes approximate', ok: Boolean(cal.screen) });
+  if (m.pd?.binocularMm) {
+    const q = m.pd.quality;
+    items.push({ key: 'pd', label: 'Pupillary distance', value: `${m.pd.method}${m.pd.uncertaintyMm ? `, ±${m.pd.uncertaintyMm} mm` : ''}${q ? `, head roll ${q.rollDeg}°, turn ${q.yawPct}%` : ''}`, ok: !q || q.ok });
+  }
+  const answered = trace.filter((t) => t.qid && !t.event);
+  if (answered.length) {
+    const voice = answered.filter((t) => t.mode === 'voice').length;
+    const low = answered.filter((t) => t.lowConfidence).length;
+    items.push({ key: 'answers', label: 'Answers', value: `${voice} by voice, ${answered.length - voice} by tap${low ? `; ${low} low-confidence, confirmed by tap` : ''}`, ok: true });
+  }
+  if (m.simulated?.length) items.push({ key: 'simulated', label: 'Simulated measurements (demo)', value: m.simulated.join(', '), ok: false });
+  const okShare = items.filter((i) => i.ok).length / items.length;
+  return { items, level: okShare >= 0.75 ? 'high' : okShare >= 0.5 ? 'medium' : 'low' };
 }
 
 // ------------------------------------------------------------------ which checks to run
@@ -369,7 +420,11 @@ export function adviceKeys(a, prof) {
 }
 
 // ------------------------------------------------------------------ full profile
-export function buildProfile(answers, measurements = {}) {
+// Bump when any rule, threshold or question changes: every case records the
+// version that produced it, so a reviewer can reproduce the decision.
+export const RULES_VERSION = '2026.11-r2';
+
+export function buildProfile(answers, measurements = {}, meta = {}) {
   const a = answers || {};
   const m = measurements || {};
   const d = derive(a);
@@ -382,6 +437,8 @@ export function buildProfile(answers, measurements = {}) {
   prof.recommendation = recommendLens(a, m, prof);
   prof.advice = adviceKeys(a, prof);
   prof.checks = suggestedChecks(a, m);
+  prof.quality = dataQuality(a, m, prof, meta.trace || []);
+  prof.rulesVersion = RULES_VERSION;
   prof.summary = oneLine(prof);
   return prof;
 }

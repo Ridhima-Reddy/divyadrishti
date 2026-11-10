@@ -1,8 +1,12 @@
 // Remote Optometrist Bridge: review queue, case detail, decision, reply.
+// Patient identity arrives sealed to this hub's key and is opened only here,
+// in the optometrist's browser; the server never sees names or phone numbers.
 import { profileHtml, esc } from './profile_view.js';
 import { LANGS } from './i18n.js';
 import { passportText, shortCode, whatsappLink } from './passport.js';
 import { QUESTION_BY_ID } from './engine/questions.js';
+import { PACKS } from './lang/index.js';
+import { generateHubKeyPair, exportJwk, importHubPrivateKey, openFromHub, jwkThumbprint } from './crypto.js';
 
 const API = new URLSearchParams(location.search).get('api') || '/api';
 const $ = (s, r = document) => r.querySelector(s);
@@ -11,6 +15,10 @@ const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; 
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* ignore */ } };
 
 const me = load('dd.reviewer', { name: 'Optom. A. Meenakshi', regNo: 'TN-OPT-0000 (demo)' });
+// Deployed servers require a portal token. Open portal.html#token=XXXX once:
+// the fragment never reaches the server or its logs, and is removed at once.
+const frag = new URLSearchParams(location.hash.slice(1));
+if (frag.get('token')) { save('dd.portalToken', frag.get('token')); history.replaceState(null, '', location.pathname + location.search); }
 const token = load('dd.portalToken', null);
 let laneFilter = '';
 let selected = new URLSearchParams(location.search).get('case');
@@ -32,6 +40,95 @@ const PLACES = {
   in_person: { en: 'the next eye camp or the vision centre', hi: 'अगले आँखों के कैंप या विज़न सेंटर', ta: 'அடுத்த கண் முகாம் அல்லது பார்வை மையம்' },
   urgent: { en: 'the partner eye hospital', hi: 'सहयोगी आँखों के अस्पताल', ta: 'இணைந்த கண் மருத்துவமனை' },
 };
+for (const p of PACKS) {
+  for (const k of Object.keys(REPLY)) REPLY[k][p.code] = p.reply[k];
+  for (const k of Object.keys(PLACES)) PLACES[k][p.code] = p.places[k];
+}
+
+const headers = (extra = {}) => ({ 'X-Actor': `portal:${me.name}`, ...(token ? { 'X-Portal-Token': token } : {}), ...extra });
+
+// ---------------------------------------------------------------- hub keys
+// The hub's private key lives only in this browser (IndexedDB, non-extractable).
+// A recovery file is downloaded once at setup, to restore it on another device.
+const HUB_DB = 'divyadrishti-hub';
+function hubDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(HUB_DB, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('keys');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function hubGet() {
+  const d = await hubDb();
+  return new Promise((resolve) => { const r = d.transaction('keys').objectStore('keys').get('hub'); r.onsuccess = () => resolve(r.result || null); r.onerror = () => resolve(null); });
+}
+async function hubPut(v) {
+  const d = await hubDb();
+  return new Promise((resolve, reject) => { const t = d.transaction('keys', 'readwrite'); t.objectStore('keys').put(v, 'hub'); t.oncomplete = resolve; t.onerror = () => reject(t.error); });
+}
+let hub = null; // { kid, key: CryptoKey (private, non-extractable) }
+let serverKid = null;
+const identities = new Map();
+
+async function loadHub() {
+  hub = await hubGet();
+  try { const r = await fetch(`${API}/hub/key`, { headers: headers() }); serverKid = r.ok ? (await r.json()).kid : null; } catch { serverKid = null; }
+  renderHubBanner();
+}
+
+function download(name, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+async function setupHub() {
+  const pair = await generateHubKeyPair();
+  const pub = await exportJwk(pair.publicKey);
+  const priv = await exportJwk(pair.privateKey);
+  const kid = await jwkThumbprint(pub);
+  const r = await fetch(`${API}/hub/key${serverKid ? '?replace=true' : ''}`, { method: 'PUT', headers: headers({ 'Content-Type': 'application/json' }), body: JSON.stringify({ jwk: pub }) });
+  if (!r.ok) { alert(`Could not register the hub key (${r.status})`); return; }
+  download(`divyadrishti-hub-recovery-${kid.slice(0, 8)}.json`, JSON.stringify({ kid, jwk: priv, note: 'DivyaDrishti hub private key. Keep offline; anyone with this file can read patient identities.' }));
+  await hubPut({ kid, key: await importHubPrivateKey(priv) });
+  identities.clear();
+  await loadHub(); await refreshList(); if (selected) showCase(selected);
+}
+
+async function importRecovery(file) {
+  try {
+    const { kid, jwk } = JSON.parse(await file.text());
+    await hubPut({ kid, key: await importHubPrivateKey(jwk) });
+    identities.clear();
+    await loadHub(); await refreshList(); if (selected) showCase(selected);
+  } catch { alert('That is not a valid hub recovery file.'); }
+}
+
+function renderHubBanner() {
+  const el = $('#hubBanner'); if (!el) return;
+  if (hub && serverKid === hub.kid) { el.innerHTML = `🔐 Identity encryption on · hub key ${esc(hub.kid.slice(0, 10))}…`; el.className = 'hubok'; return; }
+  el.className = 'hubwarn';
+  el.innerHTML = `${!serverKid ? 'No hub key yet: field phones keep names and phones to themselves.' : 'This browser cannot open sealed identities.'}
+    <button class="btn" id="hubSetup">${serverKid ? 'Replace hub key' : 'Set up identity encryption'}</button>
+    <label class="btn ghost">Import recovery file<input type="file" id="hubImport" accept="application/json" hidden></label>`;
+  $('#hubSetup').onclick = setupHub;
+  $('#hubImport').onchange = (e) => e.target.files[0] && importRecovery(e.target.files[0]);
+}
+
+// Who is this patient? Demo cases carry synthetic names; real ones are sealed.
+async function identityOf(id, p = {}) {
+  if (p.name) return { name: p.name, phone: p.phone, village: p.village, how: 'demo (synthetic, unencrypted)' };
+  if (!p.sealed) return { name: null, how: 'kept on the field phone' };
+  if (identities.has(id)) return identities.get(id);
+  let out = { name: null, how: 'sealed: this browser has no matching hub key' };
+  if (hub && p.sealed.kid === hub.kid) {
+    try { out = { ...(await openFromHub(p.sealed, hub.key, id)), how: 'sealed to this hub, opened here' }; } catch { out = { name: null, how: 'sealed: could not be opened' }; }
+  }
+  identities.set(id, out);
+  return out;
+}
 
 function ago(iso) {
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -46,16 +143,18 @@ function slaText(r) {
 
 async function refreshList() {
   try {
-    rows = await (await fetch(`${API}/cases`)).json();
+    rows = await (await fetch(`${API}/cases`, { headers: headers() })).json();
   } catch { $('#listMeta').textContent = 'Server unreachable: retrying…'; return; }
   const openOnly = $('#openOnly').checked;
   const shown = rows.filter((r) => (!laneFilter || r.lane === laneFilter) && (!openOnly || r.status !== 'reviewed'));
-  $('#cases').innerHTML = shown.map((r) => {
+  const ids = await Promise.all(shown.map((r) => identityOf(r.id, r.patient || {})));
+  $('#cases').innerHTML = shown.map((r, i) => {
     const s = slaText(r);
     const p = r.patient || {};
+    const who = ids[i].name ? esc(ids[i].name) : `${esc(shortCode(r.id))}${p.sealed ? ' 🔐' : ''}`;
     return `<li class="crow ${r.id === selected ? 'sel' : ''}" data-id="${esc(r.id)}">
       <span class="bar ${r.lane}"></span>
-      <div><b>${esc(p.name || shortCode(r.id))}</b><span class="sub">${esc(p.age ?? '?')} · ${esc(p.sex || '')} · ${esc(r.site?.name || '')} · ${LANGS[r.lang] || ''}</span>
+      <div><b>${who}</b><span class="sub">${esc(p.age ?? '?')} · ${esc(p.sex || '')} · ${esc(r.site?.name || '')} · ${LANGS[r.lang] || ''}</span>
       <span class="sub">${esc((r.flags || []).slice(0, 2).join(' · ') || r.summary || '')}</span></div>
       <div class="sla ${s.cls}">${s.txt}<br><span class="muted">${ago(r.receivedAt)}</span>${r.demo ? '<br><span class="muted">demo</span>' : ''}</div></li>`;
   }).join('') || '<li class="muted">No cases.</li>';
@@ -119,16 +218,19 @@ function fillMessage(c) {
 async function showCase(id) {
   const det = $('#detail');
   let c;
-  try { c = await (await fetch(`${API}/cases/${id}`)).json(); } catch { det.innerHTML = '<p class="err">Could not load the case.</p>'; return; }
+  try { c = await (await fetch(`${API}/cases/${id}`, { headers: headers() })).json(); } catch { det.innerHTML = '<p class="err">Could not load the case.</p>'; return; }
   if (!c || !c.profile) { det.innerHTML = '<p class="err">Case not found.</p>'; return; }
   const p = c.patient || {};
+  const who = await identityOf(c.id, p);
   const rv = c.review;
-  const passport = passportText({ id: c.id, patient: p, profile: c.profile, answers: c.interview?.answers, review: rv }, c.lang);
+  const passport = passportText({ id: c.id, patient: { name: who.name || '' }, profile: c.profile, answers: c.interview?.answers, review: rv }, c.lang);
+  let audit = [];
+  try { audit = await (await fetch(`${API}/audit?case_id=${encodeURIComponent(c.id)}`, { headers: headers() })).json(); } catch { audit = []; }
   det.innerHTML = `
     <div class="dhead">
       <div><p class="eyebrow">${esc(shortCode(c.id))} · ${esc(c.site?.name || '')} (${esc(c.site?.type || '')}) · ${LANGS[c.lang]} · ${ago(c.server.receivedAt)}${c.demo ? ' · synthetic demo case' : ''}</p>
-        <h1>${esc(p.name || 'Unnamed')} · ${esc(p.age ?? '?')} ${esc(p.sex || '')}</h1>
-        <p class="muted">${esc(p.village || '')} · consent ${c.consent?.given ? `recorded ${esc(c.consent.lang)} ${esc((c.consent.at || '').slice(0, 16).replace('T', ' '))}` : 'MISSING'} · operator: ${esc(c.operator || 'unknown')}</p></div>
+        <h1>${esc(who.name || `Patient ${shortCode(c.id)}`)} · ${esc(p.age ?? '?')} ${esc(p.sex || '')}</h1>
+        <p class="muted">${esc(who.village || (p.pin ? `PIN ${p.pin}` : ''))} · 🔐 identity: ${esc(who.how)} · consent ${c.consent?.given ? `recorded ${esc(c.consent.lang)} ${esc((c.consent.at || '').slice(0, 16).replace('T', ' '))}` : 'MISSING'} · operator: ${esc(c.operator || 'unknown')}${c.rulesVersion || c.profile.rulesVersion ? ` · rules ${esc(c.rulesVersion || c.profile.rulesVersion)}` : ''}</p></div>
       <div class="row gap wrap"><a class="btn" href="${API}/cases/${esc(c.id)}/fhir" target="_blank" rel="noopener">FHIR R4 bundle</a>
         <button class="btn ghost" id="eraseBtn" title="Patient asked for their data to be deleted">Erase</button></div>
     </div>
@@ -140,10 +242,13 @@ async function showCase(id) {
         ${rv ? `<section class="card reviewed"><h2>✓ ${esc(rv.decisionLabel)}</h2><p>${esc(rv.nextStep)}</p>${rv.notes ? `<p class="small">${esc(rv.notes)}</p>` : ''}
           <p class="muted small">${esc(rv.reviewer?.name)} · ${esc((rv.reviewedAt || '').slice(0, 16).replace('T', ' '))}</p></section>` : reviewForm(c)}
         <section class="card"><h2>Vision Passport (${LANGS[c.lang]})</h2><pre class="pp" lang="${c.lang}">${esc(passport)}</pre>
-          ${p.phone ? `<a class="btn" target="_blank" rel="noopener" href="${esc(whatsappLink(p.phone, passport))}">Send on WhatsApp</a>` : ''}</section>
+          ${who.phone ? `<a class="btn" target="_blank" rel="noopener" href="${esc(whatsappLink(who.phone, passport))}">Send on WhatsApp</a>` : '<p class="muted small">The phone number is not on the server: the field phone sends the reply from its inbox.</p>'}</section>
       </div>
     </div>
-    <section class="card"><h2>Adaptive interview</h2>${traceHtml(c)}</section>`;
+    <section class="card"><h2>Adaptive interview</h2>${traceHtml(c)}</section>
+    <section class="card"><h2>Access log</h2><p class="muted small">Every view, review, export and erasure of this case, append-only. No personal data is logged.</p>
+      <table class="trace"><tr><th>When (UTC)</th><th>Who</th><th>What</th><th>Detail</th></tr>
+      ${audit.map((a) => `<tr><td>${esc((a.at || '').replace('T', ' ').slice(0, 19))}</td><td>${esc(a.actor)}</td><td>${esc(a.action.replace(/_/g, ' '))}</td><td>${esc(a.detail || '')}</td></tr>`).join('')}</table></section>`;
   const form = $('#rvForm');
   if (form) {
     fillMessage(c);
@@ -155,15 +260,14 @@ async function showCase(id) {
         reviewer: me, decision: fd.get('decision'), lensCategory: fd.get('lensCategory'), designEmphasis: fd.get('designEmphasis'),
         addD: fd.get('addD') === '' ? null : Number(fd.get('addD')), nextStep: fd.get('nextStep'), notes: fd.get('notes'), messageToPatient: fd.get('messageToPatient'),
       };
-      const headers = { 'Content-Type': 'application/json', ...(token ? { 'X-Portal-Token': token } : {}) };
-      const r = await fetch(`${API}/cases/${c.id}/review`, { method: 'POST', headers, body: JSON.stringify(body) });
+      const r = await fetch(`${API}/cases/${c.id}/review`, { method: 'POST', headers: headers({ 'Content-Type': 'application/json' }), body: JSON.stringify(body) });
       if (!r.ok) { $('#rvErr').textContent = `Could not save (${r.status})`; return; }
       await refreshList(); showCase(c.id);
     };
   }
   $('#eraseBtn').onclick = async () => {
     if (!confirm('Erase this case permanently? Use only when the patient asks for deletion.')) return;
-    const r = await fetch(`${API}/cases/${c.id}`, { method: 'DELETE', headers: token ? { 'X-Portal-Token': token } : {} });
+    const r = await fetch(`${API}/cases/${c.id}`, { method: 'DELETE', headers: headers() });
     if (r.ok) { selected = null; det.innerHTML = '<p class="muted">Case erased.</p>'; refreshList(); }
   };
 }
@@ -171,7 +275,7 @@ async function showCase(id) {
 async function planning() {
   const el = $('#planningTab');
   let s;
-  try { s = await (await fetch(`${API}/stats`)).json(); } catch { el.innerHTML = '<p class="err">Server unreachable.</p>'; return; }
+  try { s = await (await fetch(`${API}/stats`, { headers: headers() })).json(); } catch { el.innerHTML = '<p class="err">Server unreachable.</p>'; return; }
   const maxFlag = Math.max(1, ...s.topFlags.map((f) => f[1]));
   const places = Object.entries(s.byPlace).sort((a, b) => (b[1].amber + b[1].red) - (a[1].amber + a[1].red));
   const maxPlace = Math.max(1, ...places.map(([, v]) => v.cases));
@@ -214,6 +318,7 @@ $('#me').onclick = () => {
   me.name = n; me.regNo = reg; save('dd.reviewer', me); $('#me').textContent = `🩺 ${me.name}`;
 };
 
+await loadHub();
 await refreshList();
 if (!selected && rows.length) selected = rows[0].id;
 if (selected) showCase(selected);

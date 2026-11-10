@@ -44,7 +44,23 @@ Every rule below is implemented in `web/js/engine/profile.js` and `web/js/engine
 7. Low budget, or already comfortable in bifocals → bifocal.
 8. Otherwise → progressive with the profile's design emphasis.
 
-Coatings: anti-reflective for night driving and glare; UV and photochromic for 4+ h of sun; impact-resistant for children and manual work. **No blue-light filter for eye strain** (Cochrane 2023 found no short-term benefit); the app says so explicitly, because it corrects a claim from our own idea-stage deck.
+Coatings: anti-reflective for night driving and glare; UV and photochromic for 4+ h of sun; impact-resistant for children and manual work.
+
+### Blue-light ("blue ray") lenses for laptop users: checked again
+
+Many stores, chains included, sell blue-cut lenses as a fix for screen strain. The evidence does not support that claim:
+
+- **Cochrane review (Singh et al., 2023, 17 randomised trials):** blue-light filtering lenses *probably make no difference* to eye strain from computer use (short-term follow-up, low-certainty evidence). The authors do not know whether they help sleep (very low certainty), found no study of retinal (macular) protection, and found no consistent harms. Their conclusion: the findings do not support prescribing them to the general population. Typical lenses filter only about 10–25% of blue light.
+- **American Academy of Ophthalmology:** does not recommend any special eyewear for computer use. Screen strain comes from *how* we use screens (reduced blinking and sustained focusing at close range), not from the screen's light.
+- **Newer studies (2024–2025)** are mostly observational or small and do not change the picture.
+
+**What the app does:** it never presents a blue-light filter as a treatment. It may be offered as a preference: it is harmless, and some in-material designs also block UV and cut reflections. The app states the evidence and recommends what does relieve screen strain:
+1. the right power at the screen distance (for presbyopes, an intermediate add or office lens; this is where the engine's Intermediate design emphasis comes from);
+2. correcting small uncorrected errors;
+3. an anti-reflective coating;
+4. blinking and 20-20-20 breaks.
+
+This corrects a claim in our own idea-stage deck.
 
 ## 6. Child myopia risk score
 
@@ -63,7 +79,8 @@ Coatings: anti-reflective for night driving and glare; UV and photochromic for 4
 - Hofstetter HW. A useful age-amplitude formula. *Optom World* 1950;38:42–45.
 - He M et al. Effect of time spent outdoors at school on the development of myopia among children in China. *JAMA* 2015;314(11):1142–1148.
 - Haran MJ et al. Effect on falls of providing single lens distance vision glasses to multifocal glasses wearers: VISIBLE randomised controlled trial. *BMJ* 2010;340:c2265.
-- Singh S et al. Blue-light filtering spectacle lenses for visual performance, sleep, and macular health in adults. *Cochrane Database Syst Rev* 2023.
+- Singh S et al. Blue-light filtering spectacle lenses for visual performance, sleep, and macular health in adults. *Cochrane Database Syst Rev* 2023 (CD013244.pub2).
+- American Academy of Ophthalmology: no special eyewear recommended for computer use; screen strain comes from usage habits.
 - Bastawrous A et al. Development and validation of a smartphone-based visual acuity test (Peek Acuity). *JAMA Ophthalmol* 2015;133(8):930–937. Mean difference vs ETDRS 0.07 logMAR; used by lay health workers.
 - Google Research. MediaPipe Iris: real-time iris tracking and depth estimation (2020).
 - Jung & Chu. A comparative analysis of interpupillary distance measurement techniques. *Clin Optom* 2024. Han et al. Comparing smartphone applications for IPD. *Cureus* 2023.
