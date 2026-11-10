@@ -39,7 +39,7 @@ export function track(video, landmarker, onFrame, focalPxFor) {
   let running = true;
   let lastTime = -1;
   const loop = () => {
-    if (!running) return;
+    if (!running || !video || !video.isConnected) return;
     if (video.readyState >= 2 && video.currentTime !== lastTime) {
       lastTime = video.currentTime;
       let res = null;

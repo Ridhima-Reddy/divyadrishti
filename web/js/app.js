@@ -422,14 +422,18 @@ async function cameraScreen({ key, title, instruction, extraHtml = '', onFrame, 
   $('#backChecks').onclick = checks;
   wireDemo();
   if (settings.voice) V.speak(instruction.replace(/<[^>]+>/g, ''), C.lang);
-  let stream = null; let stop = null; let face = null;
-  cleanup = () => { stop?.(); face?.stopCamera(stream); };
+  // the operator may leave before the model loads: never start a camera for a screen that is gone
+  let stream = null; let stop = null; let face = null; let cancelled = false;
+  const vid = $('#vid');
+  cleanup = () => { cancelled = true; stop?.(); face?.stopCamera(stream); };
   try {
     face = await import('./measure/face.js');
-    const [lm, s] = await Promise.all([face.loadLandmarker(), face.startCamera($('#vid'))]);
+    const [lm, s] = await Promise.all([face.loadLandmarker(), face.startCamera(vid)]);
     stream = s;
-    stop = face.track($('#vid'), lm, onFrame, focalPxFor);
+    if (cancelled) { face.stopCamera(stream); return; }
+    stop = face.track(vid, lm, onFrame, focalPxFor);
   } catch (e) {
+    if (cancelled) return;
     const ro = $('#readout');
     if (ro) ro.textContent = t('cameraFail');
   }
@@ -723,12 +727,14 @@ function calibration() {
   $('#saveScreen').onclick = () => { calib.pxPerMm = Number($('#cardRange').value) / G.ID_CARD_MM; save('dd.calibration', calib); $('#scrOut').textContent = `Saved: ${calib.pxPerMm.toFixed(2)} px/mm`; };
   $('#home').onclick = home;
   const irisSamples = [];
-  let W = 0; let stream = null; let stop = null;
-  cleanup = () => { stop?.(); stream?.getTracks().forEach((x) => x.stop()); };
+  let W = 0; let stream = null; let stop = null; let cancelled = false;
+  const vid = $('#vid');
+  cleanup = () => { cancelled = true; stop?.(); stream?.getTracks().forEach((x) => x.stop()); };
   import('./measure/face.js').then(async (face) => {
-    const [lm, s] = await Promise.all([face.loadLandmarker(), face.startCamera($('#vid'))]);
+    const [lm, s] = await Promise.all([face.loadLandmarker(), face.startCamera(vid)]);
     stream = s;
-    stop = face.track($('#vid'), lm, (f) => {
+    if (cancelled) { face.stopCamera(s); return; }
+    stop = face.track(vid, lm, (f) => {
       const ro = $('#readout'); if (!ro) return;
       if (!f) { ro.textContent = t('noFace'); return; }
       W = f.W; irisSamples.push(f.eyes.irisPx); if (irisSamples.length > 40) irisSamples.shift();
