@@ -48,3 +48,5 @@ textarea { display: block; width: 100%; min-height: 70px; margin-top: .25rem; pa
   .list { position: static; max-height: none; border-right: 0; }
   .hbar { grid-template-columns: 130px 1fr 32px; }
 }
+.pp { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: .9rem; background: var(--bg); padding: 10px; border-radius: 10px; margin: 0 0 10px; }
+.detail, .dgrid > div { min-width: 0; }
