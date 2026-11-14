@@ -1,3 +1,5 @@
+import { PACK_BY_CODE } from '../lang/index.js';
+
 // Multilingual parsing of spoken (speech-recognition) or typed answers.
 // Languages: English (en), Hindi (hi), Tamil (ta), Telugu (te), Marathi (mr),
 // Kannada (kn), including romanised and code-mixed speech ("sugar irukku",
@@ -66,15 +68,16 @@ const NO_BASE = [
   'not really', 'no problem', 'nothing', 'nahi', 'nahin', 'nai', 'kabhi nahi', 'illa', 'illai', 'ille',
   'illainga', 'kidaiyathu', 'kidayathu', 'venda', 'vendam', 'ledu', 'kaadu', 'vaddu', 'beda', 'nako',
   // Hindi
-  'नहीं', 'नही', 'कभी नहीं', 'नहीं है', 'नही है', 'बिल्कुल नहीं', 'कोई नहीं', 'कुछ नहीं',
+  'नहीं', 'नही', 'कभी नहीं', 'नहीं है', 'नही है', 'बिल्कुल नहीं', 'कोई नहीं', 'कुछ नहीं', 'नहीं जी', 'नही जी', 'जी नहीं',
+  'ना जी', 'नहीं भाई', 'ऐसा कुछ नहीं',
   // Tamil
   'இல்லை', 'இல்ல', 'இல்லீங்க', 'இல்லைங்க', 'கிடையாது', 'வேண்டாம்', 'இல்லே', 'ஒன்றும் இல்லை', 'எதுவும் இல்லை',
   // Marathi
-  'नाही', 'नाय', 'नको', 'काही नाही', 'अजिबात नाही', 'कधीच नाही',
+  'नाही', 'नाय', 'नको', 'काही नाही', 'अजिबात नाही', 'कधीच नाही', 'नाही हो', 'नाय हो', 'नाही ना',
   // Telugu
   'లేదు', 'లేవు', 'కాదు', 'వద్దు', 'లేదండి', 'ఏమీ లేదు', 'ఎప్పుడూ లేదు',
   // Kannada
-  'ಇಲ್ಲ', 'ಇಲ್ಲಾ', 'ಬೇಡ', 'ಅಲ್ಲ', 'ಏನೂ ಇಲ್ಲ', 'ಯಾವತ್ತೂ ಇಲ್ಲ',
+  'ಇಲ್ಲ', 'ಇಲ್ಲಾ', 'ಬೇಡ', 'ಅಲ್ಲ', 'ಏನೂ ಇಲ್ಲ', 'ಯಾವತ್ತೂ ಇಲ್ಲ', 'ಇಲ್ರೀ', 'ಇಲ್ಲಪ್ಪ', 'ಇಲ್ಲಮ್ಮ',
 ];
 const YES_BASE = [
   'yes', 'yeah', 'yep', 'ya', 'yah', 'yup', 'i do', 'i have', 'it does', 'sometimes', 'definitely',
@@ -83,27 +86,33 @@ const YES_BASE = [
   // Hindi
   'हाँ', 'हां', 'जी', 'जी हाँ', 'जी हां', 'हाँ जी', 'हां जी', 'है', 'बिल्कुल', 'कभी कभी',
   // Tamil
-  'ஆமா', 'ஆமாம்', 'ஆம்', 'ஆமாங்க', 'உண்டு', 'இருக்கு', 'இருக்கிறது', 'சில நேரம்', 'சில சமயம்',
+  'ஆமா', 'ஆமாம்', 'ஆம்', 'ஆமாங்க', 'உண்டு', 'இருக்கு', 'இருக்குங்க', 'இருக்கிறது', 'சில நேரம்', 'சில சமயம்',
   // Marathi (unambiguous)
   'होय', 'आहे', 'आहेत', 'कधी कधी',
   // Telugu
-  'అవును', 'ఔను', 'అవునండి', 'ఉంది', 'ఉన్నాయి', 'ఉన్నది', 'కొన్నిసార్లు',
+  'అవును', 'ఔను', 'అవునండి', 'అవునండీ', 'ఉంది', 'ఉందండి', 'ఉన్నాయి', 'ఉన్నది', 'కొన్నిసార్లు',
   // Kannada
-  'ಹೌದು', 'ಇದೆ', 'ಇವೆ', 'ಕೆಲವೊಮ್ಮೆ',
+  'ಹೌದು', 'ಇದೆ', 'ಇವೆ', 'ಕೆಲವೊಮ್ಮೆ', 'ಹೌದ್ರೀ', 'ಹೌದಪ್ಪ', 'ಹೂಂ', 'ಇದ್ಯೆ', 'ಐತೆ',
 ];
 // Short Devanagari words that mean yes/no in one language only:
 // Hindi "हा"/"ना" vs Marathi "हा" (this) and "ना" (tag particle).
 const YES_ONLY = { mr: ['हो', 'ho', 'हो ना', 'होय ना'], hi: ['हा', 'ha', 'hai'], en: ['ha', 'hai'] };
 const NO_ONLY = { hi: ['ना', 'न', 'na'], en: ['na'], ta: ['na'], te: ['na'], kn: ['na'] };
 
+// Words that mean yes only when said alone (politeness or copula).
+const WEAK_YES = new Set(['जी', 'है', 'हैं', 'ji', 'hai', 'आहे', 'आहेत']);
+
 const yesNoLists = new Map();
 // One list of [word, polarity], longest first, so "नहीं है" (no) beats "है" (yes)
 // and Marathi "हो ना" (yes) beats "ना".
+// Language packs may add colloquial yes/no words for their own language only
+// (pack.yesNo = { yes: [...], no: [...] }), so they cannot collide elsewhere.
 function listFor(lang) {
   if (!yesNoLists.has(lang)) {
+    const extra = PACK_BY_CODE[lang]?.yesNo || {};
     const all = [
-      ...[...NO_BASE, ...(NO_ONLY[lang] || [])].map((w) => [w, false]),
-      ...[...YES_BASE, ...(YES_ONLY[lang] || [])].map((w) => [w, true]),
+      ...[...NO_BASE, ...(NO_ONLY[lang] || []), ...(extra.no || [])].map((w) => [w, false]),
+      ...[...YES_BASE, ...(YES_ONLY[lang] || []), ...(extra.yes || [])].map((w) => [w, true]),
     ];
     yesNoLists.set(lang, byLengthDesc(all, (x) => x[0]));
   }
@@ -115,10 +124,18 @@ export function parseYesNo(text, lang = 'hi') {
   if (!rest) return null;
   let yes = 0;
   let no = 0;
+  let weak = 0;
   for (const [w, polarity] of listFor(lang)) {
     let r = consume(rest, w);
-    while (r.hit) { if (polarity) yes++; else no++; rest = r.rest; r = consume(rest, w); }
+    while (r.hit) {
+      if (!polarity) no++;
+      else if (WEAK_YES.has(w)) weak++;
+      else yes++;
+      rest = r.rest; r = consume(rest, w);
+    }
   }
+  // "कुछ नहीं जी", "नहीं दिखता है": a polite "ji" or a copula "hai" does not cancel a no
+  if (!yes && !no && weak) return true;
   if (no && !yes) return false;
   if (yes && !no) return true;
   return null; // empty or contradictory: ask again or tap
@@ -187,7 +204,7 @@ const SAVA = ['सवा', 'सव्वा', 'sawa', 'sava']; // +0.25
 const PAUNE = ['पौने', 'पावणे', 'paune']; // -0.25
 
 const TA_UNITS = {
-  'பூஜ்யம்': 0, 'ஒன்று': 1, 'ஒண்ணு': 1, 'ஒரு': 1, 'இரண்டு': 2, 'ரெண்டு': 2, 'மூன்று': 3, 'மூணு': 3,
+  'பூஜ்யம்': 0, 'ஒன்று': 1, 'ஒண்ணு': 1, 'ஒன்னு': 1, 'ஒரு': 1, 'இரண்டு': 2, 'ரெண்டு': 2, 'மூன்று': 3, 'மூணு': 3,
   'நான்கு': 4, 'நாலு': 4, 'ஐந்து': 5, 'அஞ்சு': 5, 'ஆறு': 6, 'ஏழு': 7, 'எட்டு': 8, 'ஒன்பது': 9, 'ஒம்பது': 9,
 };
 const TA_COMPLETE = {

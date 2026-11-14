@@ -23,7 +23,8 @@ export const b64 = (buf) => {
   return btoa(s);
 };
 export const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
-const b64url = (buf) => b64(buf).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+export const b64url = (buf) => b64(buf).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+export const unb64url = (s) => unb64(s.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(s.length / 4) * 4, '='));
 
 export const PBKDF2_ITERATIONS = 310000;
 

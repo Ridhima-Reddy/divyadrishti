@@ -4,19 +4,26 @@ Every rule below is implemented in `web/js/engine/profile.js` and `web/js/engine
 
 ## 1. Adaptive anamnesis
 
-- 30-question bank in clinical order: core → red flags → child → medical → current glasses → visual tasks → preference.
+- 38-question bank in clinical order: core → red flags → child → medical → current glasses → visual tasks → preference.
 - A question is asked only when its answer can change triage or the lens decision for this patient (its `when` rule). Examples: farmers are not asked about computer screens (the occupation prior already says 0 h); glaucoma family history and cataract surgery are asked from 40; falls from 65; budget only when the lens choice spans a price range.
-- **Urgent mode:** a red flag drops every remaining non-urgent question.
+- **Red-flag screen: one symptom per question,** each about something NEW or SUDDEN: sudden drop in sight, new flashes or floaters, new double vision, a red or painful eye, an injury in the last few days. Follow-up questions are asked only after a yes (when did it start; is there a fixed curtain; does the double vision go away with one eye covered; neurological signs; which symptoms come with the red eye; what kind of injury). The earlier version asked one compound question and sent every yes to hospital the same day; see section 2.
+- **Urgent mode:** only an *emergency* finding drops the remaining lifestyle questions. Urgent and lower findings keep the full interview, because the glasses decision is still needed.
 - Each asked question is logged with the reason it was asked, the patient's own words and the parsed value.
-- Measured on the 8 synthetic personas: 7 to 21 questions asked out of 30, median 16. The red-flag patient finishes in 7.
+- Measured on the 13 synthetic personas: 16 to 24 questions asked out of 38, median 18. The emergency patient finishes in 7.
 
-## 2. Triage lanes
+## 2. Triage: five tiers with a time to care
 
-| Lane | Triggers | Target |
-|---|---|---|
-| **Red** (same day, no glasses today) | sudden vision loss / flashes / curtain / new double vision; painful red eye with blur, haloes or injury; white pupil reflex in a child | optometrist call-back within 2 h, same-day hospital |
-| **Amber** (referral) | diabetes with retina check overdue (>1 y or never); glaucoma in a first-degree relative, age 40+; possible cataract (50+ with glare/faded colours, unstable power, or reduced vision a pinhole does not improve); reduced vision unexplained by glasses (pinhole test); worse than 6/60; Amsler distortion; child squint or difficulty with the board; anisometropia ≥ 2 D; high myopia ≤ −6 D; high hyperopia; cylinder ≥ 3 D; discomfort with current progressives (centration check) | review within 24 h |
-| **Green** (sign-off) | none of the above | batch review within 72 h |
+The full table, generated from the code, is in **[REFERRAL_RULES.md](REFERRAL_RULES.md)** (43 rules, each with the exact criteria, time to care, action and reference, plus the presentations that are deliberately *not* flagged). It is also shown in the field app (🚦 Referral rules) and the portal.
+
+| Tier | Time to care | Lane | Examples |
+|---|---|---|---|
+| **Emergency** | same day | red | chemical or high-speed injury; fixed curtain; flashes/floaters with a sudden drop; sudden loss within 2 days; painful red eye with haloes (angle closure); contact-lens wearer with a painful red eye; new double vision with headache or droopy lid; child's squint with headache/vomiting, or with a white pupil glow |
+| **Urgent** | 18 h to 2 weeks, stated per rule | amber | scratch from a leaf or crop (antibiotic ointment within 18 h, Bhaktapur study); new flashes or floaters without a curtain (dilated exam within 24 h); painful red eye with blur (24 h) or without (48 h); new double vision without neurological signs (48 h); new Amsler distortion (macula within 1 working day, NICE NG82); white pupil glow (2 weeks, NICE NG12) |
+| **Soon** | 2 to 6 weeks | amber | operable cataract (best vision 6/18 or worse); vision a pinhole does not fix; worse than 6/60; child needing glasses or with a squint; diabetes 5+ years never checked; long-standing Amsler distortion; contrast below 1.0 log CS |
+| **Routine** | next camp / 3 months | green | early cataract with useful vision; diabetic check due; glaucoma in a parent or sibling at 40+; receded convergence; double vision in one eye only; red eye with only itching or discharge; high refractive error |
+| **Note** | no referral | green | possible red-green colour vision difference |
+
+What changed (rules 2026.11-r3) and why: the old rules put any "yes" to a compound question (sudden blur, flashes, curtain *or* double vision) and any red eye with blur into the red lane, so long-standing floaters or conjunctivitis sent people to hospital the same day. Now the red lane holds only presentations that UK guidance (College of Optometrists Annex 4 and CMGs) treats as emergencies; everything else carries the time limit its guideline actually sets. On the demo set, 1 of 13 patients is an emergency (the fixed curtain), 2 are urgent (new floaters; a cane-leaf scratch), 3 are soon and the rest routine.
 
 ## 3. Functional Vision Profile
 
@@ -73,6 +80,25 @@ This corrects a claim in our own idea-stage deck.
 - **Prentice's rule** (prism = decentration in cm × power) converts PD uncertainty into induced prism for *this patient's* power, so a ±2 mm PD is fine at −1 D and not at −6 D.
 - **Acuity:** tumbling E, 5 arc-minutes at logMAR 0, sized from the screen calibration (card-matching slider). Staircase: pass 2 of 3, 0.2 steps then 0.1. Paper-pinhole retest when vision is 6/19 or worse: improvement by 2 lines means refractive error; no improvement means eye disease, so refer.
 - Smartphone PD apps read slightly low against pupillometers and are considered screening-grade (Jung & Chu 2024; Han et al. 2023). **Validation against a pupillometer, autorefractor and tape is the first pilot task.**
+
+## 8. Vision tests on the phone (the five ZEISS online screening checks, plus more)
+
+ZEISS's Online Vision Screening Check covers visual acuity and contrast (Landolt C), colour (number plates), astigmatism (stripe pattern) and the central field (Amsler). The field app has all five, plus duochrome, near vision, three camera measurements and camera lensometry. Every test is listed on the tests screen; the engine marks which ones matter for the patient and why.
+
+| Test | Method | Result recorded | Used for | Limits |
+|---|---|---|---|---|
+| Distance acuity | Tumbling E or Landolt C at 2 m, 2-of-3 staircase, pinhole retest below 6/19 | logMAR per eye, pinhole | every decision; cataract and "not glasses" rules | screen size must be calibrated |
+| Contrast sensitivity | Landolt C (~3°) at falling Weber contrast in 0.15 log steps, 2 of 3 to pass; grey level computed for sRGB and the achieved contrast recorded | log CS per eye | cataract sign at 50+; reduced (<1.35) routine, marked (<1.0) soon | brightness and room light not calibrated |
+| Colour vision | 1 demonstration + 5 generated dot plates (red-green confusion colours, matched lightness) | plates read, normal / possible red-green / inconclusive | note only (never a referral) | uncalibrated screen colours; screening, not diagnosis |
+| Astigmatism | clock dial; darkest line tapped; rule of 30 for the minus-cyl axis | even, or line + axis per eye | starting point for the optometrist | subjective |
+| Amsler grid | 5 mm grid, per eye; if abnormal, "new or long-standing?" | normal/abnormal per eye, onset | new: macula within 1 working day; old: soon | |
+| Duochrome | red/green halves with black rings at 2 m, with or without current glasses | red / green / equal per eye | red: needs more minus; green: less minus or more plus | at 2 m a slight green bias is expected (0.5 D vergence) |
+| Near vision | N24 to N5 lines at the measured reading distance, in the patient's language | smallest N line, distance, with/without glasses | confirms the add | font x-height differs from Times |
+| Reading distance | camera (iris as a ruler) | cm | add and design | ±5% calibrated, ±15% not |
+| Focusing range (NPA) | camera, phone brought closer until print blurs | cm, dioptres | measured amplitude instead of the age table | |
+| Convergence (NPC) | camera, phone brought towards the nose until double | cm (or "closer than the camera can measure") | receded beyond 6 cm (<40) / 10 cm (40+): routine binocular check | face is lost below ~10 cm; manual ruler entry available |
+| PD and fitting height | camera with head-pose gate, optional ID-card scale | mm | centration | |
+| Lensometry | rear camera through the current glasses at a checkerboard 40 cm away, lens halfway; magnification matrix from the pattern's lattice (autocorrelation) through the lens vs. two clear patches either side; F = (L/ab)(I − M⁻¹) | sph / cyl × axis per lens | current Rx when there is no prescription slip; anisometropia / high-error rules | estimate (±0.50 D expected); keep the target square to the phone; progressives give only the zone looked through; strong plus (> +10 D at these distances) cannot be read |
 
 ## References
 

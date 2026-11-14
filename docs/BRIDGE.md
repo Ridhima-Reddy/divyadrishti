@@ -26,7 +26,7 @@ A comprehensive exam takes the optometrist the full chair time. Reviewing a stru
 
 ## Closing the loop
 
-- The review returns to the phone. The patient gets a **Vision Passport**: profile, suggested lens, next step and two tips, in their own language, one WhatsApp/SMS message long. It works at any store or camp.
+- The review returns to the phone. The patient gets a **Vision Passport**: profile, suggested lens, next step and two tips, in their own language, short enough to read on one screen. It is shared as an encrypted, expiring link (QR scanned in the store, or the link sent by SMS/WhatsApp with the PIN said in person), never as plaintext health data. It works at any store or camp.
 - Pooled, de-identified counts (the portal's *Camp planning* view) show where referrals cluster by PIN code and which specialist camp to run next. Example: many diabetics overdue for retina checks in 631501 means bringing a fundus camera there next.
 
 ## Data and compliance (designed in, to be confirmed with counsel)
@@ -41,7 +41,7 @@ A comprehensive exam takes the optometrist the full chair time. Reviewing a stru
 
 1. **Validate the measurements.** On 30 adults: PD against a pupillometer, reading distance and near point against a tape, acuity against the store chart. Report the errors honestly.
 2. **Clinical review.** Two optometrists review the rule set and 50 cases blind: agreement with the app's lane and lens category.
-3. **Language.** Native-speaker review of the Tamil and Hindi text; record 200 real answers to measure parse accuracy.
+3. **Language.** Native-speaker review of the Hindi, Tamil, Telugu, Marathi and Kannada text (already rewritten in the spoken register); record 200 real answers to measure parse accuracy.
 4. **Live pilot.** Three Velachery-type stores and one Kanchipuram camp. KPIs: minutes per patient, questions asked, review minutes per case, % green, referral completion at 30 days, remakes.
 
 ## What it means for ZEISS

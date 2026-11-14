@@ -13,12 +13,31 @@ test('every persona completes the interview from spoken answers', () => {
   }
 });
 
-test('age is always first; red flags are always asked', () => {
+test('age is always first; the red-flag screen is always asked', () => {
   for (const p of PERSONAS) {
-    const ids = askedIds(runPersona(p));
+    const s = runPersona(p);
+    const ids = askedIds(s);
     assert.equal(ids[0], 'age', p.key);
-    assert.ok(ids.includes('rf_sudden') && ids.includes('rf_pain'), p.key);
+    assert.ok(ids.includes('rf_vision_drop'), p.key);
+    // without an emergency, every one-symptom screening question is asked
+    if (!s.trace.some((t) => t.event === 'urgent_mode')) {
+      for (const q of ['rf_flashes', 'rf_double', 'rf_red', 'rf_injury']) assert.ok(ids.includes(q), `${p.key} ${q}`);
+    }
   }
+});
+
+test('follow-ups are asked only after a yes', () => {
+  const ids = askedIds(runPersona(PERSONA_BY_KEY.kumar));
+  for (const q of ['rf_onset', 'rf_curtain', 'rf_double_cover', 'rf_double_neuro', 'rf_red_detail', 'rf_injury_type']) assert.ok(!ids.includes(q), q);
+  const santosh = askedIds(runPersona(PERSONA_BY_KEY.santosh));
+  assert.ok(santosh.includes('rf_red_detail') && santosh.includes('rf_injury_type'));
+});
+
+test('a non-emergency red flag keeps the full interview', () => {
+  const s = runPersona(PERSONA_BY_KEY.gopal); // new floaters: urgent, not emergency
+  assert.ok(!s.trace.some((t) => t.event === 'urgent_mode'));
+  assert.ok(askedIds(s).includes('occupation'));
+  assert.equal(s.answers.rf_curtain, false);
 });
 
 test('a red flag switches to urgent mode and drops lifestyle questions', () => {
@@ -29,7 +48,8 @@ test('a red flag switches to urgent mode and drops lifestyle questions', () => {
   assert.ok(!ids.includes('glasses_now'));
   assert.ok(!ids.includes('diabetes_years'), 'non-urgent follow-ups are dropped');
   assert.ok(ids.length <= 8, `urgent path asked ${ids.length}`);
-  assert.deepEqual(s.answers.rf_sudden_which, ['curtain']);
+  assert.equal(s.answers.rf_curtain, true);
+  assert.equal(s.answers.rf_onset, 'lt2d');
 });
 
 test('children get the child branch and skip adult questions', () => {

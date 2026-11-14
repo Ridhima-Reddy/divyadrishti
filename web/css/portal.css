@@ -54,3 +54,9 @@ textarea { display: block; width: 100%; min-height: 70px; margin-top: .25rem; pa
 #hubBanner .btn { min-height: 36px; padding: .3rem .8rem; }
 .hubok { background: var(--green-soft); color: var(--green); }
 .hubwarn { background: var(--amber-soft); color: var(--amber); }
+
+/* v0.4 */
+.rules-tab { max-width: 1280px; }
+.crow .tier { font-size: .62rem; padding: .05rem .4rem; }
+#ppShare .qr svg { width: 180px; height: 180px; }
+@media (min-width: 1500px) { .layout { grid-template-columns: 400px 1fr; } }

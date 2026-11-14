@@ -13,6 +13,8 @@ Privacy by design:
 - Every read, review, export and erasure is written to an append-only audit log
   (no personal data in it).
 - Reviewed cases are purged after DD_RETENTION_DAYS (default 180).
+- Share links (/api/shares) hold only ciphertext; the key stays in the link's
+  URL fragment. They expire, run out of views or are revoked, then are purged.
 - Security headers on every response; API responses are never cached.
 
 Run:  uvicorn server.app:app --reload --port 8000   (from the repo root)
@@ -21,8 +23,11 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import json
 import os
+import re
+import secrets
 import sqlite3
 import threading
 from contextlib import asynccontextmanager
@@ -34,11 +39,11 @@ from typing import Any, Literal, Optional
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError, field_validator, model_validator
 
 from .fhir import case_to_bundle
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 ROOT = Path(__file__).resolve().parent.parent
 WEB = ROOT / "web"
 DB_PATH = Path(os.environ.get("DD_DB", ROOT / "server" / "data" / "divyadrishti.db"))
@@ -105,7 +110,13 @@ class Store:
                 payload TEXT NOT NULL, review TEXT, reviewed_at TEXT);
             CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT);
             CREATE TABLE IF NOT EXISTS audit (
-                id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT, actor TEXT, action TEXT, case_id TEXT, detail TEXT);"""
+                id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT, actor TEXT, action TEXT, case_id TEXT, detail TEXT);
+            -- encrypted share links: ciphertext only, the key never reaches the server
+            CREATE TABLE IF NOT EXISTS shares (
+                id TEXT PRIMARY KEY, kind TEXT NOT NULL, ciphertext TEXT, iv TEXT, salt TEXT, iterations INTEGER,
+                created_at TEXT NOT NULL, expires_at TEXT NOT NULL, max_views INTEGER NOT NULL,
+                views INTEGER NOT NULL DEFAULT 0, revoked INTEGER NOT NULL DEFAULT 0,
+                delete_hash TEXT NOT NULL, case_ref TEXT);"""
         )
         self.db.commit()
         self.last_purge: Optional[datetime] = None
@@ -187,18 +198,82 @@ class Store:
             self.db.commit()
         return ids
 
+    # -- encrypted share links (ciphertext only; see the share endpoints below)
+    def share_insert(self, s: dict) -> bool:
+        """False if the id is already taken."""
+        with self.lock:
+            try:
+                self.db.execute(
+                    "INSERT INTO shares (id, kind, ciphertext, iv, salt, iterations, created_at, expires_at, max_views,"
+                    " delete_hash, case_ref) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                    (s["id"], s["kind"], s["ciphertext"], s["iv"], s["salt"], s["iterations"], s["created_at"],
+                     s["expires_at"], s["max_views"], s["delete_hash"], s["case_ref"]),
+                )
+            except sqlite3.IntegrityError:
+                return False
+            self.db.commit()
+            return True
+
+    def share_open(self, share_id: str, at: datetime) -> tuple[str, Optional[dict]]:
+        """Count one view. Returns ('ok', row) or (refusal, row): missing, revoked, expired, used.
+        The ciphertext is wiped as the last allowed view is served."""
+        with self.lock:
+            row = self.db.execute("SELECT * FROM shares WHERE id = ?", (share_id,)).fetchone()
+            if not row:
+                return "missing", None
+            s = dict(row)
+            if s["revoked"]:
+                return "revoked", s
+            if datetime.fromisoformat(s["expires_at"]) <= at:
+                return "expired", s
+            if s["views"] >= s["max_views"] or not s["ciphertext"]:
+                return "used", s
+            s["views"] += 1
+            if s["views"] >= s["max_views"]:
+                self.db.execute("UPDATE shares SET views = ?, ciphertext = NULL, iv = NULL, salt = NULL WHERE id = ?",
+                                (s["views"], share_id))
+            else:
+                self.db.execute("UPDATE shares SET views = ? WHERE id = ?", (s["views"], share_id))
+            self.db.commit()
+            return "ok", s
+
+    def share_revoke(self, share_id: str, token: str) -> tuple[str, Optional[dict]]:
+        """Returns ('revoked' | 'forbidden' | 'missing', row). Revoking wipes the ciphertext."""
+        with self.lock:
+            row = self.db.execute("SELECT * FROM shares WHERE id = ?", (share_id,)).fetchone()
+            if not row:
+                return "missing", None
+            if not hmac.compare_digest(row["delete_hash"], hashlib.sha256(token.encode()).hexdigest()):
+                return "forbidden", dict(row)
+            self.db.execute("UPDATE shares SET revoked = 1, ciphertext = NULL, iv = NULL, salt = NULL WHERE id = ?",
+                            (share_id,))
+            self.db.commit()
+            return "revoked", dict(row)
+
+    def purge_shares(self, at: datetime) -> int:
+        """Delete every share that can no longer be opened: expired, revoked or out of views."""
+        with self.lock:
+            cur = self.db.execute("DELETE FROM shares WHERE expires_at <= ? OR revoked = 1 OR views >= max_views",
+                                  (iso(at),))
+            self.db.commit()
+            return cur.rowcount
+
 
 store = Store(DB_PATH)
 
 
 def purge_expired(force: bool = False) -> int:
+    """Retention: purge old reviewed cases and dead share links. Returns how many rows went."""
     if not force and store.last_purge and now() - store.last_purge < timedelta(hours=1):
         return 0
     store.last_purge = now()
     ids = store.purge_reviewed_before(now() - timedelta(days=RETENTION_DAYS))
     for i in ids:
         store.audit("system", "retention_purge", i, f"reviewed more than {RETENTION_DAYS} days ago")
-    return len(ids)
+    shares = store.purge_shares(now())
+    if shares:
+        store.audit("system", "share_purge", None, f"{shares} expired, revoked or used-up share links deleted")
+    return len(ids) + shares
 
 
 def seed_if_empty() -> int:
@@ -254,16 +329,86 @@ class HubKeyIn(BaseModel):
     jwk: dict
 
 
+# -- encrypted share links: the record a sender's browser uploads (ciphertext only)
+SHARE_ID = r"^[A-Za-z0-9_-]{22}$"          # 16 random bytes, base64url, chosen by the client (it is the AAD)
+MAX_SHARE_CIPHERTEXT = 65_536              # bytes after base64 decoding
+MAX_SHARE_BODY = 128_000                   # raw request bytes
+
+
+def _unb64(value: str, what: str) -> bytes:
+    try:
+        return base64.b64decode(value, validate=True)
+    except ValueError as e:  # binascii.Error is a ValueError
+        raise ValueError(f"{what} must be base64") from e
+
+
+class ShareIn(BaseModel):
+    model_config = {"extra": "forbid"}  # no room for plaintext fields
+    id: str = Field(pattern=SHARE_ID)
+    kind: Literal["passport", "referral", "case"] = "case"
+    ciphertext: str = Field(min_length=24, max_length=4 * ((MAX_SHARE_CIPHERTEXT + 2) // 3))
+    iv: str = Field(max_length=24)
+    salt: Optional[str] = Field(default=None, max_length=88)
+    iterations: Optional[int] = Field(default=None, ge=100_000, le=10_000_000)
+    expiresDays: float = Field(default=7, gt=0, le=30)
+    maxViews: int = Field(default=20, ge=1, le=100)
+    caseRef: Optional[str] = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9_.:-]+$")
+
+    @field_validator("id")
+    @classmethod
+    def _canonical_id(cls, v: str) -> str:
+        if b64url(base64.urlsafe_b64decode(v + "==")) != v:
+            raise ValueError("id must be 16 bytes, base64url")
+        return v
+
+    @field_validator("ciphertext")
+    @classmethod
+    def _ciphertext(cls, v: str) -> str:
+        n = len(_unb64(v, "ciphertext"))
+        if not 17 <= n <= MAX_SHARE_CIPHERTEXT:
+            raise ValueError(f"ciphertext must be 17 to {MAX_SHARE_CIPHERTEXT} bytes")
+        return v
+
+    @field_validator("iv")
+    @classmethod
+    def _iv(cls, v: str) -> str:
+        if len(_unb64(v, "iv")) != 12:
+            raise ValueError("iv must be 12 bytes")
+        return v
+
+    @field_validator("salt")
+    @classmethod
+    def _salt(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not 16 <= len(_unb64(v, "salt")) <= 64:
+            raise ValueError("salt must be 16 to 64 bytes")
+        return v
+
+    @model_validator(mode="after")
+    def _pin_fields_together(self) -> "ShareIn":
+        if (self.salt is None) != (self.iterations is None):
+            raise ValueError("salt and iterations go together (PIN-protected shares)")
+        return self
+
+
 # ---------------------------------------------------------------- helpers
 IDENTITY_FIELDS = ("name", "phone", "village")
+
+
+def review_hours(lane: str, triage: dict) -> int:
+    """Review deadline: the case's own (from its most urgent finding) if valid, else the lane's."""
+    h = triage.get("reviewWithinHours")
+    if isinstance(h, (int, float)) and 1 <= h <= 72:
+        return int(min(h, SLA_HOURS.get(lane, 72)))
+    return SLA_HOURS.get(lane, 72)
 
 
 def row_summary(r: sqlite3.Row) -> dict[str, Any]:
     payload = json.loads(r["payload"])
     review = json.loads(r["review"]) if r["review"] else None
     received = datetime.fromisoformat(r["received_at"])
-    due = received + timedelta(hours=SLA_HOURS.get(r["lane"], 72))
     prof = payload.get("profile", {})
+    tri = prof.get("triage", {}) or {}
+    due = received + timedelta(hours=review_hours(r["lane"], tri))
     p = payload.get("patient", {}) or {}
     return {
         "id": r["id"],
@@ -280,7 +425,9 @@ def row_summary(r: sqlite3.Row) -> dict[str, Any]:
         "demo": bool(r["demo"]),
         "summary": prof.get("summary"),
         "dominance": prof.get("vision", {}).get("dominance"),
-        "flags": [f.get("title") for f in prof.get("triage", {}).get("flags", [])],
+        "urgency": tri.get("urgency"),
+        "within": tri.get("within"),
+        "flags": [f.get("title") for f in tri.get("flags", [])],
         "review": {"decision": review["decision"], "decisionLabel": review.get("decisionLabel"), "reviewer": review["reviewer"]["name"]} if review else None,
     }
 
@@ -482,10 +629,13 @@ def stats() -> dict:
     places: dict[str, dict[str, int]] = {}
     langs: dict[str, int] = {}
     asked, review_mins = [], []
+    by_urgency: dict[str, int] = {}
     for c in cases:
         prof = c.get("profile", {})
         lane = prof.get("triage", {}).get("lane", "green")
         by_lane[lane] = by_lane.get(lane, 0) + 1
+        u = prof.get("triage", {}).get("urgency") or "none"
+        by_urgency[u] = by_urgency.get(u, 0) + 1
         for f in prof.get("triage", {}).get("flags", []):
             flags[f["title"]] = flags.get(f["title"], 0) + 1
         rc = prof.get("recommendation", {}).get("category")
@@ -509,6 +659,7 @@ def stats() -> dict:
     return {
         "cases": len(cases),
         "byLane": by_lane,
+        "byUrgency": by_urgency,
         "reviewed": sum(1 for c in cases if c.get("review")),
         "overdue": sum(1 for c in cases if c["server"]["overdue"]),
         "topFlags": sorted(flags.items(), key=lambda x: -x[1])[:8],
@@ -520,6 +671,84 @@ def stats() -> dict:
         "medianReviewMinutes": round(median(review_mins)) if review_mins else None,
         "retentionDays": RETENTION_DAYS,
     }
+
+
+# ---------------------------------------------------------------- encrypted share links
+# The sender's browser encrypts a patient file (web/js/share.js) and uploads only
+# the ciphertext. The key stays in the link's URL fragment (share.html#<id>.<key>),
+# which browsers never send, so this server cannot read what it stores. Links
+# expire, run out of views or are revoked; dead links are wiped and purged.
+# The audit log records each create / view / revoke with an id prefix only.
+SHARE_REFUSAL = {"revoked": "revoked", "expired": "expired", "used": "no views left"}
+
+
+def _share_ref(share_id: str) -> str:
+    return f"share {share_id[:6]}"
+
+
+def _validation_brief(e: ValidationError) -> str:
+    """Field and message only: never echo the submitted values."""
+    return "; ".join(f"{'.'.join(str(p) for p in err['loc']) or 'body'}: {err['msg']}" for err in e.errors()[:5])
+
+
+@app.post("/api/shares", status_code=201)
+async def create_share(request: Request) -> JSONResponse:
+    body = await request.body()
+    if len(body) > MAX_SHARE_BODY:
+        raise HTTPException(413, "share too large")
+    try:
+        share = ShareIn.model_validate_json(body)
+    except ValidationError as e:
+        raise HTTPException(422, f"invalid share: {_validation_brief(e)}") from None
+    purge_expired()  # rate-limited; keeps dead links from piling up
+    created = now()
+    expires = created + timedelta(days=share.expiresDays)
+    token = secrets.token_urlsafe(32)
+    stored = store.share_insert({
+        "id": share.id, "kind": share.kind, "ciphertext": share.ciphertext, "iv": share.iv, "salt": share.salt,
+        "iterations": share.iterations, "created_at": iso(created), "expires_at": iso(expires),
+        "max_views": share.maxViews, "delete_hash": hashlib.sha256(token.encode()).hexdigest(), "case_ref": share.caseRef,
+    })
+    if not stored:
+        raise HTTPException(409, "share id already in use")
+    store.audit(actor_of(request), "share_created", share.caseRef,
+                f"{_share_ref(share.id)}; {share.kind}; {'PIN' if share.salt else 'no PIN'}; "
+                f"expires {iso(expires)}; max {share.maxViews} views")
+    return JSONResponse({"id": share.id, "expiresAt": iso(expires), "maxViews": share.maxViews, "deleteToken": token},
+                        status_code=201)
+
+
+@app.get("/api/shares/{share_id}")
+def view_share(share_id: str, request: Request) -> dict:
+    """Counts one view. Cache-Control: no-store and Referrer-Policy: no-referrer come from the middleware."""
+    if not re.fullmatch(SHARE_ID, share_id):
+        raise HTTPException(404, "share not found")
+    status, s = store.share_open(share_id, now())
+    if status == "missing":
+        raise HTTPException(404, "share not found")
+    if status != "ok":
+        store.audit(actor_of(request), "share_refused", s["case_ref"], f"{_share_ref(share_id)}; {SHARE_REFUSAL[status]}")
+        raise HTTPException(410, SHARE_REFUSAL[status])
+    left = s["max_views"] - s["views"]
+    store.audit(actor_of(request), "share_viewed", s["case_ref"], f"{_share_ref(share_id)}; {left} views left")
+    return {
+        "ciphertext": s["ciphertext"], "iv": s["iv"], "salt": s["salt"], "iterations": s["iterations"], "kind": s["kind"],
+        "expiresAt": s["expires_at"], "viewsLeft": left, "pin": s["salt"] is not None,
+    }
+
+
+@app.delete("/api/shares/{share_id}")
+def revoke_share(share_id: str, request: Request, x_delete_token: Optional[str] = Header(None)) -> dict:
+    if not re.fullmatch(SHARE_ID, share_id):
+        raise HTTPException(404, "share not found")
+    status, s = store.share_revoke(share_id, x_delete_token or "")
+    if status == "missing":
+        raise HTTPException(404, "share not found")
+    if status == "forbidden":
+        store.audit(actor_of(request), "share_revoke_denied", s["case_ref"], f"{_share_ref(share_id)}; wrong delete token")
+        raise HTTPException(403, "wrong delete token")
+    store.audit(actor_of(request), "share_revoked", s["case_ref"], f"{_share_ref(share_id)}; ciphertext wiped")
+    return {"id": share_id, "status": "revoked"}
 
 
 # static web apps (field app at /, portal at /portal.html); mounted last

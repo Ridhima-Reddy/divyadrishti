@@ -47,9 +47,19 @@ export function speak(text, lang, { rate = 0.92 } = {}) {
 }
 
 let activeRec = null;
+let finishActive = null;
+let cancelActive = null;
+
+// Listening that gives people time to answer. Older patients pause, think and
+// restart ("enna... oru anju varusham irukkum"), so recognition runs
+// continuously and ends only after a pause in speech:
+//   waitMs     how long to wait for speech to start            (default 10 s)
+//   silenceMs  pause after speech that counts as "finished"    (default 2.5 s)
+//   maxMs      hard limit for one answer                        (default 30 s)
+// The operator can end it early with finishListening() ("Done speaking").
 // Resolves with { transcript, confidence, alternatives: [{ text, confidence }] }
 // or null on silence / error. Confidence is 0..1 (0 = engine did not say).
-export function listen(lang, { onInterim = () => {}, timeoutMs = 9000 } = {}) {
+export function listen(lang, { onInterim = () => {}, onState = () => {}, waitMs = 10000, silenceMs = 2500, maxMs = 30000 } = {}) {
   return new Promise((resolve) => {
     if (!Rec) { resolve(null); return; }
     stopListening();
@@ -57,25 +67,70 @@ export function listen(lang, { onInterim = () => {}, timeoutMs = 9000 } = {}) {
     r.lang = LOCALE[lang] || lang || 'en-IN';
     r.interimResults = true;
     r.maxAlternatives = 3;
-    r.continuous = false;
+    r.continuous = true;
+    const finals = []; // [{ text, alternatives }]
+    let interim = '';
     let finished = false;
-    const finish = (val) => { if (finished) return; finished = true; clearTimeout(timer); activeRec = null; try { r.stop(); } catch { /* already stopped */ } resolve(val); };
-    const timer = setTimeout(() => finish(null), timeoutMs);
-    r.onresult = (e) => {
-      const res = e.results[e.results.length - 1];
-      if (!res.isFinal) { onInterim(res[0].transcript); return; }
-      const alternatives = Array.from(res).map((x) => ({ text: x.transcript, confidence: x.confidence || 0 }));
-      finish({ transcript: alternatives[0].text, confidence: alternatives[0].confidence, alternatives });
+    let silenceTimer = null;
+    const joined = (extra = '') => [...finals.map((f) => f.text), extra].join(' ').replace(/\s+/g, ' ').trim();
+    const result = () => {
+      const text = joined(interim);
+      if (!text) return null;
+      const last = finals.at(-1);
+      const head = finals.slice(0, -1).map((f) => f.text).join(' ');
+      const alternatives = last && !interim
+        ? last.alternatives.map((a) => ({ text: `${head} ${a.text}`.trim(), confidence: a.confidence }))
+        : [{ text, confidence: 0 }];
+      return { transcript: alternatives[0].text, confidence: alternatives[0].confidence, alternatives };
     };
-    r.onerror = () => finish(null);
-    r.onend = () => finish(null);
+    const end = (value) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(waitTimer); clearTimeout(maxTimer); clearTimeout(silenceTimer);
+      activeRec = null; finishActive = null; cancelActive = null;
+      try { r.stop(); } catch { /* already stopped */ }
+      onState('done');
+      resolve(value);
+    };
+    const finish = () => end(result());
+    const armSilence = () => { clearTimeout(silenceTimer); silenceTimer = setTimeout(finish, silenceMs); };
+    const waitTimer = setTimeout(() => { if (!finals.length && !interim) finish(); }, waitMs);
+    const maxTimer = setTimeout(finish, maxMs);
+    r.onspeechstart = () => { clearTimeout(waitTimer); onState('hearing'); };
+    r.onresult = (e) => {
+      clearTimeout(waitTimer);
+      interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const res = e.results[i];
+        const text = res[0].transcript.trim();
+        if (!res.isFinal) { interim = `${interim} ${text}`.trim(); continue; }
+        const alternatives = Array.from(res).map((x) => ({ text: x.transcript.trim(), confidence: x.confidence || 0 }));
+        // Chrome on Android can resend the whole utterance as a longer final: keep one copy
+        const prev = finals.at(-1);
+        if (prev && text.startsWith(prev.text)) finals[finals.length - 1] = { text, alternatives };
+        else if (!(prev && prev.text.startsWith(text))) finals.push({ text, alternatives });
+      }
+      onInterim(joined(interim));
+      armSilence();
+    };
+    r.onspeechend = armSilence;
+    r.onerror = (e) => { if (e.error === 'no-speech' && !finals.length) finish(); else if (e.error !== 'no-speech') finish(); };
+    // some browsers end continuous sessions on their own: restart until our timers decide
+    r.onend = () => { if (!finished) { try { r.start(); } catch { finish(); } } };
     activeRec = r;
-    try { r.start(); } catch { finish(null); }
+    finishActive = finish;
+    cancelActive = () => end(null);
+    try { r.start(); onState('listening'); } catch { finish(); }
   });
 }
 
+// "Done speaking": end the current answer now and use what was heard.
+export function finishListening() { if (finishActive) finishActive(); }
+
 export function stopListening() {
-  if (activeRec) { try { activeRec.abort(); } catch { /* ignore */ } activeRec = null; }
+  const r = activeRec;
+  if (cancelActive) cancelActive();
+  if (r) { r.onend = null; try { r.abort(); } catch { /* ignore */ } }
 }
 
 export function stopAll() {

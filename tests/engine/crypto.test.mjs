@@ -50,7 +50,7 @@ test('decision path explains the lens choice, rule by rule', () => {
   const s = runPersona(p);
   const pr = buildProfile(s.answers, p.measure, { trace: s.trace });
   const path = pr.recommendation.decisionPath;
-  assert.equal(path[0].rule, 'Red-flag lane');
+  assert.equal(path[0].rule, 'Emergency finding (red lane)');
   assert.equal(path.at(-1).passed, true);
   assert.ok(path.at(-1).rule.startsWith('Arm’s-length work dominates'));
   assert.ok(path.slice(0, -1).every((x) => x.passed === false || x.rule === 'Needs a reading add'));

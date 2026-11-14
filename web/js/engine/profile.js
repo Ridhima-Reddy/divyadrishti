@@ -4,6 +4,7 @@
 // with optometrists before clinical use. The optometrist confirms every power.
 
 import { rxFindings } from './rx.js';
+import { evaluate, emergencyFromAnswers } from './redflags.js';
 
 // Typical hours/day per zone and habitual near working distance by occupation.
 // inter = non-screen arm's-length work (counter, cooking, loom, dashboard);
@@ -39,7 +40,8 @@ export function derive(a = {}) {
   const occ = isChild ? 'student' : a.occupation ?? null;
   const pseudophakic = a.eye_surgery === 'cataract';
   const presbyopeLikely = age !== null && (age >= 40 || pseudophakic || (age >= 35 && has(a.complaint, 'near_blur')));
-  const urgent = a.rf_sudden === true || a.rf_pain_severe === true || a.child_white === true;
+  // urgent mode = an emergency finding already decidable from the answers
+  const urgent = emergencyFromAnswers(a).length > 0;
   const diabetic = has(a.conditions, 'diabetes');
   return { age, isChild, occ, pseudophakic, presbyopeLikely, urgent, diabetic };
 }
@@ -150,97 +152,11 @@ const worstLogmar = (acuity) => {
 };
 
 // ------------------------------------------------------------------ flags / triage
-const flag = (lane, code, title, detail, ref, action) => ({ lane, code, title, detail, ref, action });
-
+// The graded rules live in redflags.js (one table, rendered in the app, the
+// portal and the docs). Lane: red = emergency only; amber = urgent or soon;
+// green = routine or nothing.
 export function triage(a, m = {}, extras = {}) {
-  const d = derive(a);
-  const f = [];
-  // ---- red: same-day referral
-  if (a.rf_sudden === true) {
-    const which = (a.rf_sudden_which || []).join(', ') || 'unspecified';
-    f.push(flag('red', 'SUDDEN_VISION_CHANGE', 'Sudden change in vision',
-      `Reported: ${which}. Possible retinal detachment, vascular occlusion or neurological cause.`,
-      'redflags', 'Same-day ophthalmologist. Do not dispense glasses today.'));
-  }
-  if (a.rf_pain_severe === true) {
-    f.push(flag('red', 'PAINFUL_RED_EYE', 'Painful red eye with blur, haloes or injury',
-      'Possible acute angle-closure glaucoma, keratitis, chemical or mechanical injury.',
-      'redflags', 'Same-day ophthalmologist. If a chemical splash: rinse with clean water for 15 minutes first.'));
-  }
-  if (a.child_white === true) {
-    f.push(flag('red', 'LEUKOCORIA', 'White pupil reflex in a child',
-      'Leukocoria can indicate congenital cataract or retinoblastoma.', 'leukocoria',
-      'Urgent paediatric ophthalmology referral this week.'));
-  }
-  // ---- amber: optometrist / doctor review, scheduled
-  if (a.rf_pain === true && a.rf_pain_severe !== true) {
-    f.push(flag('amber', 'RED_EYE', 'Red or uncomfortable eye', 'No blur, haloes or injury reported.',
-      'redflags', 'Optometrist review within 2-3 days; sooner if it worsens.'));
-  }
-  if (d.diabetic && a.retina_exam && a.retina_exam !== 'within_1y') {
-    const yrs = a.diabetes_years != null ? `${a.diabetes_years} years of diabetes; ` : '';
-    f.push(flag('amber', 'DIABETES_RETINA_DUE', 'Diabetic retina check overdue',
-      `${yrs}last dilated retina check: ${a.retina_exam === 'never' ? 'never' : 'over a year ago'}.`,
-      'diabetes', 'Dilated fundus exam or retinal photo at the next camp or vision centre.'));
-  }
-  if (a.glaucoma_family === true && d.age >= 40) {
-    f.push(flag('amber', 'GLAUCOMA_FAMILY', 'Family history of glaucoma, age 40+',
-      'First-degree relatives have a markedly higher risk; glaucoma is painless until late.', 'glaucoma',
-      'Eye pressure and optic-nerve check.'));
-  }
-  const cataractSigns = [];
-  if (d.age >= 50 && a.night_glare === true) cataractSigns.push('night glare or faded colours');
-  if (d.age >= 50 && a.frequent_change === true) cataractSigns.push('power changing often');
-  const wl = worstLogmar(m.acuity);
-  const pinholeFailed = ['R', 'L'].some((e) => m.acuity?.[e]?.logmar >= 0.5 && m.acuity?.[e]?.pinholeImproved === false);
-  if (d.age >= 50 && pinholeFailed) cataractSigns.push('reduced vision not improved by pinhole');
-  if (cataractSigns.length && !d.pseudophakic) {
-    f.push(flag('amber', 'CATARACT_SUSPECT', 'Possible cataract', cataractSigns.join('; ') + '.', 'cataract',
-      'Slit-lamp exam at the next camp or vision centre; cataract surgery restores sight better than new glasses.'));
-  } else if (a.frequent_change === true) {
-    f.push(flag('amber', 'UNSTABLE_POWER', 'Glasses power changing often',
-      'Check blood sugar control, cataract and keratoconus.', 'cataract', 'Optometrist review before a new prescription.'));
-  }
-  if (pinholeFailed && !(d.age >= 50 && cataractSigns.length)) {
-    f.push(flag('amber', 'VA_UNEXPLAINED', 'Reduced vision not explained by glasses',
-      'Vision 6/18 or worse that a pinhole does not improve points to eye disease, not refractive error.',
-      'pinhole', 'Optometrist or ophthalmologist examination.'));
-  }
-  if (wl !== null && wl > 1.0) {
-    f.push(flag('amber', 'SEVERE_VI', 'Vision worse than 6/60 in at least one eye',
-      'Severe visual impairment or worse.', 'who_vi', 'Full eye examination; check for cataract.'));
-  }
-  if (m.amsler && (m.amsler.R === 'abnormal' || m.amsler.L === 'abnormal')) {
-    f.push(flag('amber', 'AMSLER_DISTORTION', 'Wavy or missing lines on the central grid',
-      `Eye: ${['R', 'L'].filter((e) => m.amsler[e] === 'abnormal').join(' & ')}. Possible macular disease (AMD, diabetic macular oedema).`,
-      'amsler', 'Macula check within 1-2 weeks; same day if it started suddenly.'));
-  }
-  if (a.child_squint === true) {
-    f.push(flag('amber', 'CHILD_SQUINT', 'Squint or head tilt in a child', 'Risk of amblyopia (lazy eye).',
-      'amblyopia', 'Paediatric optometrist or ophthalmologist within weeks: treatable only in childhood.'));
-  }
-  if (a.child_board === true) {
-    f.push(flag('amber', 'CHILD_REFRACTION', 'Child likely needs glasses',
-      'Difficulty with the school board. Children need cycloplegic refraction; phone estimates are unsafe.',
-      'child_refraction', 'Cycloplegic refraction by an optometrist.'));
-  }
-  if (a.glasses_type === 'progressive' && a.glasses_ok === 'discomfort') {
-    f.push(flag('amber', 'PROGRESSIVE_INTOLERANCE', 'Discomfort with current progressives',
-      'Often a fitting-height or PD error rather than the power.', 'centration',
-      'Check centration (PD, fitting height) before changing the lens.'));
-  }
-  for (const x of extras.rxFindings || []) {
-    if (x.code === 'ANISOMETROPIA') f.push(flag('amber', 'ANISOMETROPIA', 'Large difference between the eyes',
-      `${x.diff.toFixed(2)} D difference in spherical equivalent.`, 'anisometropia', 'Optometrist review; in children, amblyopia check.'));
-    if (x.code === 'HIGH_MYOPIA') f.push(flag('amber', 'HIGH_MYOPIA', `High myopia (${x.eye})`,
-      `Spherical equivalent ${x.se.toFixed(2)} D: higher risk of retinal detachment and glaucoma.`, 'high_myopia', 'Annual retina check.'));
-    if (x.code === 'HIGH_HYPEROPIA') f.push(flag('amber', 'HIGH_HYPEROPIA', `High hyperopia (${x.eye})`,
-      `Spherical equivalent +${x.se.toFixed(2)} D: angle-closure risk in adults, amblyopia risk in children.`, 'high_myopia', 'Optometrist review.'));
-    if (x.code === 'HIGH_ASTIGMATISM') f.push(flag('amber', 'HIGH_ASTIGMATISM', `High astigmatism (${x.eye})`,
-      `Cylinder ${x.cyl} D: rule out keratoconus.`, 'high_myopia', 'Optometrist review (corneal topography if available).'));
-  }
-  const lane = f.some((x) => x.lane === 'red') ? 'red' : f.some((x) => x.lane === 'amber') ? 'amber' : 'green';
-  return { lane, flags: f };
+  return evaluate(a, m, extras, { final: true });
 }
 
 // ------------------------------------------------------------------ lens category
@@ -258,10 +174,10 @@ export function recommendLens(a, m, prof) {
   const check = (rule, passed, detail) => { decisionPath.push({ rule, passed: Boolean(passed), detail }); return Boolean(passed); };
   const pct = (x) => `${Math.round(x * 100)}%`;
 
-  if (check('Red-flag lane', prof.triage.lane === 'red', `lane ${prof.triage.lane}`)) {
+  if (check('Emergency finding (red lane)', prof.triage.lane === 'red', `urgency ${prof.triage.urgency}`)) {
     return {
-      category: 'urgent_referral', title: 'No glasses today: urgent referral',
-      rationale: ['A red-flag symptom needs a doctor first; new glasses could delay care.'],
+      category: 'urgent_referral', title: 'No glasses today: same-day referral',
+      rationale: ['An emergency finding needs a doctor today; new glasses could delay care.'],
       coatings: [], notes: [], centrationNeeded: false, example: null, decisionPath,
     };
   }
@@ -354,6 +270,7 @@ export function recommendLens(a, m, prof) {
     const interFix = pres && pres.status !== 'none' ? ' (for this patient, an intermediate add for the screen distance)' : '';
     notes.push(`Blue-light filter: optional, not a treatment. A Cochrane review of 17 trials (2023) found it probably makes no difference to eye strain, sleep or retinal health, and no harm. What relieves screen strain: the right power at screen distance${interFix}, an anti-reflective coating, blinking and 20-20-20 breaks.`);
   }
+  if (prof.triage.urgency === 'urgent') notes.unshift(`Hold dispensing until the urgent check (${prof.triage.within}) is done; the prescription may change.`);
   const centrationNeeded = ['progressive', 'office', 'bifocal'].includes(category);
   return { category, title, rationale, coatings, notes, centrationNeeded, example, decisionPath };
 }
@@ -385,23 +302,109 @@ export function dataQuality(a, m, prof, trace = []) {
     const low = answered.filter((t) => t.lowConfidence).length;
     items.push({ key: 'answers', label: 'Answers', value: `${voice} by voice, ${answered.length - voice} by tap${low ? `; ${low} low-confidence, confirmed by tap` : ''}`, ok: true });
   }
+  if (m.contrast?.R || m.colour?.result) items.push({ key: 'screen', label: 'Contrast and colour tests', value: `phone screen${cal.screen ? ', size calibrated' : ''}; brightness and colour not calibrated: screening only`, ok: Boolean(cal.screen) });
+  if (m.npc) items.push({ key: 'npc', label: 'Convergence near point', value: m.npc.method === 'camera' ? 'camera distance at the break' : m.npc.method || 'manual', ok: m.npc.cm != null || Boolean(m.npc.bound) });
+  if (m.lensometry?.R || m.lensometry?.L) items.push({ key: 'lensometry', label: 'Current glasses power', value: `camera estimate${m.lensometry.quality === 'good' ? '' : ', low quality: confirm on a lensmeter'}`, ok: m.lensometry.quality === 'good' });
   if (m.simulated?.length) items.push({ key: 'simulated', label: 'Simulated measurements (demo)', value: m.simulated.join(', '), ok: false });
   const okShare = items.filter((i) => i.ok).length / items.length;
   return { items, level: okShare >= 0.75 ? 'high' : okShare >= 0.5 ? 'medium' : 'low' };
 }
 
 // ------------------------------------------------------------------ which checks to run
-export function suggestedChecks(a, m = {}) {
+// The full battery is always available on the phone (the five checks of the
+// ZEISS Online Vision Screening plus duochrome, near vision and the camera
+// measurements). The engine marks which ones matter for this patient and why.
+export const CHECK_GROUPS = [
+  { key: 'vision', label: 'Vision tests (the five ZEISS online screening checks)', checks: ['acuity', 'contrast', 'colour', 'astigmatism', 'amsler'] },
+  { key: 'refraction', label: 'Refraction helpers', checks: ['duochrome', 'near_acuity'] },
+  { key: 'camera', label: 'Camera measurements', checks: ['reading_distance', 'near_point', 'npc', 'pd'] },
+  { key: 'glasses', label: 'Current glasses', checks: ['lensometry'] },
+];
+export const ALL_CHECKS = CHECK_GROUPS.flatMap((g) => g.checks);
+
+export function checkPlan(a, m = {}) {
   const d = derive(a);
-  const checks = [];
-  if (d.age !== null && !d.urgent) {
-    if (d.isChild || d.age >= 35 || (a.near_hours ?? 0) >= 3) checks.push('reading_distance');
-    if (!d.isChild && d.age >= 35 && !d.pseudophakic) checks.push('near_point');
+  const age = d.age;
+  const plan = {};
+  const rec = (k, reason) => { plan[k] = { key: k, recommended: true, reason }; };
+  rec('acuity', 'Distance vision in each eye: the baseline for every decision.');
+  if (age !== null && !d.urgent) {
+    if (d.isChild || age >= 35 || (a.near_hours ?? 0) >= 3) rec('reading_distance', 'Sets the reading add for the distance this person actually reads at.');
+    if (!d.isChild && age >= 35 && !d.pseudophakic) rec('near_point', 'Measures remaining focusing power instead of guessing from age.');
+    if (d.presbyopeLikely || has(a.complaint, 'near_blur')) rec('near_acuity', 'Checks small print at the reading distance (confirms the add).');
+    if (age >= 50 || d.diabetic || a.night_glare === true) rec('contrast', 'Low contrast is an early sign of cataract, glaucoma or retinal disease.');
+    if (d.isChild || a.drives === true || d.occ === 'driver') rec('colour', d.isChild ? 'Screens for inherited colour vision differences early.' : 'Drivers must tell traffic-light colours apart.');
+    if (age >= 8 && (a.glasses_now === true || has(a.complaint, 'far_blur') || has(a.complaint, 'strain'))) rec('astigmatism', 'Uneven blur of lines suggests astigmatism and its axis.');
+    if (age >= 8 && (a.glasses_now === true || has(a.complaint, 'far_blur'))) rec('duochrome', a.glasses_now === true ? 'Shows whether the current glasses are over- or under-powered.' : 'Shows whether the eye is short- or long-sighted.');
+    if (has(a.complaint, 'strain') || (age < 40 && (a.near_hours ?? 0) >= 4)) rec('npc', 'Eye-teaming up close: a common cause of strain with close work.');
+    if (d.presbyopeLikely || a.glasses_now === true) rec('pd', 'Centres the new lenses; needed for bifocals and progressives.');
+    if (a.glasses_now === true && !(a.rx_known && (a.rx_known.R || a.rx_known.L))) rec('lensometry', 'No prescription slip: estimates the power of the glasses worn now.');
   }
-  checks.push('acuity');
-  if (d.age >= 50 || d.diabetic || has(a.rf_sudden_which, 'drop')) checks.push('amsler');
-  if (!d.urgent && (d.presbyopeLikely || a.glasses_now === true)) checks.push('pd');
-  return checks;
+  if (age >= 50 || d.diabetic || a.rf_vision_drop === true) rec('amsler', 'Central distortion is the earliest sign of macular disease.');
+  return ALL_CHECKS.map((k) => plan[k] || { key: k, recommended: false, reason: '' });
+}
+
+export function suggestedChecks(a, m = {}) {
+  return checkPlan(a, m).filter((c) => c.recommended).map((c) => c.key);
+}
+
+// ------------------------------------------------------------------ test findings
+// Plain-language meaning of each completed test, for the profile and the
+// reviewing optometrist. Findings that change urgency are also rules in redflags.js.
+export function testFindings(a, m = {}) {
+  const f = [];
+  const age = typeof a.age === 'number' ? a.age : null;
+  const both = (o, fn) => ['R', 'L'].filter((e) => o?.[e] != null).map((e) => `${e} ${fn(o[e])}`).join(' · ');
+  if (m.contrast && (m.contrast.R || m.contrast.L)) {
+    const v = ['R', 'L'].map((e) => m.contrast[e]?.logCS).filter((x) => typeof x === 'number');
+    const low = Math.min(...v);
+    f.push({ test: 'contrast', result: both(m.contrast, (x) => `${x.logCS.toFixed(2)} log CS`), meaning: low >= 1.5 ? 'Normal range for a phone screen test.' : low >= 1.35 ? 'Borderline: recheck in good light.' : 'Reduced: see the referral rules.' });
+  }
+  if (m.colour?.result) {
+    f.push({ test: 'colour', result: `${m.colour.correct} of ${m.colour.plates} plates`, meaning: m.colour.result === 'normal' ? 'No red-green difference detected.' : m.colour.result === 'possible_rg' ? 'Possible red-green colour vision difference (usually inherited).' : 'Inconclusive: repeat in good light.' });
+  }
+  if (m.astigmatism && (m.astigmatism.R || m.astigmatism.L)) {
+    const uneven = ['R', 'L'].some((e) => m.astigmatism[e] && !m.astigmatism[e].even);
+    f.push({ test: 'astigmatism', result: both(m.astigmatism, (x) => (x.even ? 'all lines even' : `darker ${x.line} o'clock line, axis about ${x.axis}°`)), meaning: uneven ? 'Uneven lines suggest astigmatism; the axis is a starting point for the optometrist (rule of 30).' : 'No sign of significant astigmatism.' });
+  }
+  if (m.duochrome && (m.duochrome.R || m.duochrome.L)) {
+    const words = { red: 'red side clearer', green: 'green side clearer', equal: 'both equal' };
+    const g = m.duochrome.withGlasses ? ' than the current glasses' : '';
+    const meaning = ['R', 'L'].map((e) => {
+      const v = m.duochrome[e];
+      if (!v) return null;
+      if (v === 'red') return `${e}: needs more minus (or less plus)${g}`;
+      if (v === 'green') return `${e}: needs less minus (or more plus)${g}; at 2 m a slight green bias is expected`;
+      return `${e}: balanced`;
+    }).filter(Boolean).join('; ');
+    f.push({ test: 'duochrome', result: `${both(m.duochrome, (x) => words[x] || x)}${m.duochrome.withGlasses ? ' (with current glasses)' : ' (without glasses)'}`, meaning });
+  }
+  if (m.nearAcuity?.N) {
+    const n = m.nearAcuity.N;
+    f.push({ test: 'near_acuity', result: `N${n} at ${m.nearAcuity.distanceCm} cm${m.nearAcuity.withGlasses ? ' with reading glasses' : ''}`, meaning: n <= 6 ? 'Reads newspaper print comfortably.' : n <= 8 ? 'Reads normal print with effort.' : 'Cannot read normal print at this distance: a reading add (or a stronger one) is needed.' });
+  }
+  if (m.npc?.cm != null) {
+    const limit = age !== null && age >= 40 ? 10 : 6;
+    f.push({ test: 'npc', result: `${Math.round(m.npc.cm)} cm${m.npc.method === 'camera' ? ' (camera)' : ''}`, meaning: m.npc.cm > limit ? `Receded (limit ${limit} cm): eye-teaming weak up close.` : 'Normal eye-teaming up close.' });
+  } else if (m.npc?.bound) {
+    f.push({ test: 'npc', result: m.npc.bound, meaning: 'Closer than the camera can measure: normal for most ages.' });
+  }
+  if (m.lensometry && (m.lensometry.R || m.lensometry.L)) {
+    const fmt = (r) => `${r.sph > 0 ? '+' : ''}${r.sph.toFixed(2)}${r.cyl ? ` / ${r.cyl.toFixed(2)} × ${r.axis}` : ' DS'}`;
+    f.push({ test: 'lensometry', result: both(m.lensometry, fmt), meaning: 'Estimated power of the current glasses (camera, about ±0.50 D): the optometrist confirms on a lensmeter.' });
+  }
+  return f;
+}
+
+// Current glasses power: the slip if read out, else the camera lensometry estimate.
+export function currentRx(a, m = {}) {
+  if (a.rx_known && (a.rx_known.R || a.rx_known.L)) return { rx: a.rx_known, source: 'prescription slip' };
+  const l = m.lensometry;
+  if (l && (l.R || l.L)) {
+    const eye = (r) => (r ? { sph: r.sph, cyl: r.cyl || 0, axis: r.cyl ? r.axis : undefined } : null);
+    return { rx: { R: eye(l.R), L: eye(l.L) }, source: 'camera lensometry (estimate)' };
+  }
+  return null;
 }
 
 // ------------------------------------------------------------------ advice
@@ -422,7 +425,7 @@ export function adviceKeys(a, prof) {
 // ------------------------------------------------------------------ full profile
 // Bump when any rule, threshold or question changes: every case records the
 // version that produced it, so a reviewer can reproduce the decision.
-export const RULES_VERSION = '2026.11-r2';
+export const RULES_VERSION = '2026.11-r3';
 
 export function buildProfile(answers, measurements = {}, meta = {}) {
   const a = answers || {};
@@ -431,12 +434,16 @@ export function buildProfile(answers, measurements = {}, meta = {}) {
   const vision = visualZones(a, m);
   const pres = d.isChild ? null : presbyopia(a, m, vision.zones);
   const risk = myopiaRisk(a, m);
-  const rxf = a.rx_known && (a.rx_known.R || a.rx_known.L) ? rxFindings(a.rx_known) : [];
+  const cur = currentRx(a, m);
+  const rxf = cur ? rxFindings(cur.rx) : [];
   const tri = triage(a, m, { rxFindings: rxf });
   const prof = { derived: d, vision, presbyopia: pres, myopiaRisk: risk, triage: tri };
   prof.recommendation = recommendLens(a, m, prof);
   prof.advice = adviceKeys(a, prof);
-  prof.checks = suggestedChecks(a, m);
+  prof.checkPlan = checkPlan(a, m);
+  prof.checks = prof.checkPlan.filter((c) => c.recommended).map((c) => c.key);
+  prof.findings = testFindings(a, m);
+  prof.currentRx = cur ? { source: cur.source } : null;
   prof.quality = dataQuality(a, m, prof, meta.trace || []);
   prof.rulesVersion = RULES_VERSION;
   prof.summary = oneLine(prof);

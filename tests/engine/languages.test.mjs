@@ -6,21 +6,24 @@ import { QUESTIONS, QUESTION_BY_ID, questionText } from '../../web/js/engine/que
 import { stateOf, createSession } from '../../web/js/engine/adaptive.js';
 import { PERSONA_BY_KEY } from '../../web/js/engine/personas.js';
 import { buildProfile } from '../../web/js/engine/profile.js';
-import { LANGS, LOCALE, tr, P, pt } from '../../web/js/i18n.js';
+import { LANGS, LOCALE, tr, P, pt, S } from '../../web/js/i18n.js';
+import { PACK_BY_CODE } from '../../web/js/lang/index.js';
 import { passportText } from '../../web/js/passport.js';
 import { runPersona, askedIds } from './helpers.mjs';
 
 const NEW = ['te', 'mr', 'kn'];
+// every Indian language lives in a pack and must be complete
+const PACKED = ['hi', 'ta', 'te', 'mr', 'kn'];
 
 test('six languages registered with speech locales', () => {
   assert.deepEqual(Object.keys(LANGS).sort(), ['en', 'hi', 'kn', 'mr', 'ta', 'te']);
   assert.equal(LOCALE.te, 'te-IN'); assert.equal(LOCALE.mr, 'mr-IN'); assert.equal(LOCALE.kn, 'kn-IN');
 });
 
-test('every question, option label and unit exists in every new language', () => {
+test('every question, option label and unit exists in every Indian language', () => {
   const adult = stateOf(Object.assign(createSession(), { answers: { age: 50 } }));
   const child = stateOf(Object.assign(createSession(), { answers: { age: 9 } }));
-  for (const c of NEW) {
+  for (const c of PACKED) {
     for (const q of QUESTIONS) {
       for (const s of [adult, child]) {
         const txt = questionText(q, s, c);
@@ -32,12 +35,16 @@ test('every question, option label and unit exists in every new language', () =>
   }
 });
 
-test('every UI and passport string exists in every new language', () => {
-  for (const c of NEW) {
+test('every UI, passport and reply string exists in every Indian language', () => {
+  for (const c of PACKED) {
+    const pack = PACK_BY_CODE[c];
+    for (const k of Object.keys(S)) assert.ok(pack.ui[k], `${c} ui.${k}`);
     for (const k of ['consentText', 'urgentBanner', 'acuitySetup', 'pinSetTitle', 'confirmLow']) assert.notEqual(tr(k, c), tr(k, 'en'), `${c} ${k}`);
-    for (const group of ['lane', 'zone', 'lens', 'flag', 'advice']) {
+    for (const group of ['lane', 'need', 'zone', 'lens', 'advice']) {
       for (const [k, v] of Object.entries(P[group])) assert.ok(v[c], `${c} passport ${group}.${k}`);
     }
+    for (const k of ['approve', 'modify', 'in_person', 'urgent']) assert.ok(pack.reply[k], `${c} reply.${k}`);
+    assert.ok(pack.places.in_person && pack.places.urgent && pack.nearWords, c);
     assert.ok(pt(P.title, c));
   }
 });
@@ -111,14 +118,16 @@ test('spoken prescription eye words in the new languages', () => {
   assert.equal(r.R.sph, -2); assert.equal(r.L.sph, -1.5);
 });
 
-test('Ramulu (Telugu, 59, auto driver, diabetic): amber, progressive, glare coating', () => {
+test('Ramulu (Telugu, 59, auto driver, diabetic): green with routine referrals, glare coating', () => {
   const p = PERSONA_BY_KEY.ramulu;
   const s = runPersona(p);
   assert.ok(!askedIds(s).includes('screen_hours') && !askedIds(s).includes('drives'));
   const pr = buildProfile(s.answers, p.measure);
-  assert.equal(pr.triage.lane, 'amber');
+  // last retina check 2 years ago, early cataract signs with useful vision: routine, glasses can proceed
+  assert.equal(pr.triage.lane, 'green');
+  assert.equal(pr.triage.urgency, 'routine');
   const codes = pr.triage.flags.map((f) => f.code);
-  assert.ok(codes.includes('DIABETES_RETINA_DUE') && codes.includes('CATARACT_SUSPECT'), codes.join());
+  assert.ok(codes.includes('DIABETES_RETINA_DUE') && codes.includes('CATARACT_EARLY'), codes.join());
   assert.equal(pr.vision.dominance, 'distance');
   assert.ok(pr.recommendation.coatings.some((c) => c.includes('night driving')));
 });
@@ -134,13 +143,13 @@ test('Sunita (Marathi, 45, teacher): green, progressive, prescription parsed', (
   assert.equal(pr.presbyopia.amplitudeSource, 'measured near point');
 });
 
-test('Manjula (Kannada, 52, tailor, glaucoma in mother): amber, readers at her measured 27 cm', () => {
+test('Manjula (Kannada, 52, tailor, glaucoma in mother): green with a routine glaucoma check, readers at 27 cm', () => {
   const p = PERSONA_BY_KEY.manjula;
   const s = runPersona(p);
   assert.equal(s.answers.age, 52);
   const pr = buildProfile(s.answers, p.measure);
-  assert.equal(pr.triage.lane, 'amber');
-  assert.ok(pr.triage.flags.some((f) => f.code === 'GLAUCOMA_FAMILY'));
+  assert.equal(pr.triage.lane, 'green');
+  assert.ok(pr.triage.flags.some((f) => f.code === 'GLAUCOMA_FAMILY' && f.tier === 'routine'));
   assert.equal(pr.recommendation.category, 'readers');
   assert.equal(pr.vision.zones.near.workingDistanceCm, 27);
 });

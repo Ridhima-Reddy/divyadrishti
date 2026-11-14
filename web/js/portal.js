@@ -1,9 +1,11 @@
 // Remote Optometrist Bridge: review queue, case detail, decision, reply.
 // Patient identity arrives sealed to this hub's key and is opened only here,
 // in the optometrist's browser; the server never sees names or phone numbers.
-import { profileHtml, esc } from './profile_view.js';
+import { profileHtml, esc, rulesTableHtml, urgencyLine, TEST_NAME } from './profile_view.js';
+import { TIERS } from './engine/redflags.js';
+import { snellen } from './measure/acuity.js';
 import { LANGS } from './i18n.js';
-import { passportText, shortCode, whatsappLink } from './passport.js';
+import { passportText, shortCode, whatsappLink, smsLink } from './passport.js';
 import { QUESTION_BY_ID } from './engine/questions.js';
 import { PACKS } from './lang/index.js';
 import { generateHubKeyPair, exportJwk, importHubPrivateKey, openFromHub, jwkThumbprint } from './crypto.js';
@@ -31,14 +33,14 @@ const LENS = {
 };
 const DECISION = { approve: 'Approve', modify: 'Approve with changes', in_person: 'In-person examination', urgent: 'Urgent referral' };
 const REPLY = {
-  approve: { en: 'Your glasses are approved. Please collect them at {site}.', hi: 'आपका चश्मा मंज़ूर हो गया है। कृपया {site} से ले लें।', ta: 'உங்கள் கண்ணாடி அங்கீகரிக்கப்பட்டது. {site}-இல் பெற்றுக்கொள்ளுங்கள்.' },
-  modify: { en: 'Your glasses are approved with a small change. Please visit {site}.', hi: 'आपका चश्मा थोड़े बदलाव के साथ मंज़ूर हुआ है। कृपया {site} आइए।', ta: 'சிறிய மாற்றத்துடன் உங்கள் கண்ணாடி அங்கீகரிக்கப்பட்டது. {site}-க்கு வாருங்கள்.' },
-  in_person: { en: 'Please come for a full eye examination at {place}.', hi: 'कृपया पूरी आँखों की जाँच के लिए {place} आइए।', ta: 'முழு கண் பரிசோதனைக்கு {place}-க்கு வாருங்கள்.' },
-  urgent: { en: 'Please go to {place} today. This cannot wait.', hi: 'कृपया आज ही {place} जाइए। इसमें देर नहीं करनी चाहिए।', ta: 'தயவுசெய்து இன்றே {place}-க்குச் செல்லுங்கள். இதைத் தள்ளிப்போடக் கூடாது.' },
+  approve: { en: 'Your glasses are approved. Please collect them at {site}.' },
+  modify: { en: 'Your glasses are approved with a small change. Please visit {site}.' },
+  in_person: { en: 'Please come for a full eye examination at {place}.' },
+  urgent: { en: 'Please go to {place} today. This cannot wait.' },
 };
 const PLACES = {
-  in_person: { en: 'the next eye camp or the vision centre', hi: 'अगले आँखों के कैंप या विज़न सेंटर', ta: 'அடுத்த கண் முகாம் அல்லது பார்வை மையம்' },
-  urgent: { en: 'the partner eye hospital', hi: 'सहयोगी आँखों के अस्पताल', ta: 'இணைந்த கண் மருத்துவமனை' },
+  in_person: { en: 'the next eye camp or the vision centre' },
+  urgent: { en: 'the partner eye hospital' },
 };
 for (const p of PACKS) {
   for (const k of Object.keys(REPLY)) REPLY[k][p.code] = p.reply[k];
@@ -155,11 +157,12 @@ async function refreshList() {
     return `<li class="crow ${r.id === selected ? 'sel' : ''}" data-id="${esc(r.id)}">
       <span class="bar ${r.lane}"></span>
       <div><b>${who}</b><span class="sub">${esc(p.age ?? '?')} · ${esc(p.sex || '')} · ${esc(r.site?.name || '')} · ${LANGS[r.lang] || ''}</span>
+      ${r.urgency && r.urgency !== 'none' ? `<span class="sub"><span class="tier ${esc(r.urgency)}">${esc(TIERS[r.urgency]?.label || r.urgency)}</span> ${esc(r.within || '')}</span>` : ''}
       <span class="sub">${esc((r.flags || []).slice(0, 2).join(' · ') || r.summary || '')}</span></div>
       <div class="sla ${s.cls}">${s.txt}<br><span class="muted">${ago(r.receivedAt)}</span>${r.demo ? '<br><span class="muted">demo</span>' : ''}</div></li>`;
   }).join('') || '<li class="muted">No cases.</li>';
   const open = rows.filter((r) => r.status !== 'reviewed');
-  $('#listMeta').textContent = `${open.length} open · ${open.filter((r) => r.lane === 'red').length} red · ${rows.filter((r) => r.overdue).length} overdue · targets: red 2 h, amber 24 h, green 72 h`;
+  $('#listMeta').textContent = `${open.length} open · ${open.filter((r) => r.lane === 'red').length} emergency · ${rows.filter((r) => r.overdue).length} overdue · review targets: emergency 2 h, urgent 24 h, soon and routine 72 h`;
   $$('.crow').forEach((li) => li.onclick = () => { selected = li.dataset.id; history.replaceState(null, '', `?case=${selected}`); refreshList(); showCase(selected); });
 }
 
@@ -190,7 +193,8 @@ function traceHtml(c) {
 function reviewForm(c) {
   const rec = c.profile.recommendation;
   const lane = c.profile.triage.lane;
-  const def = lane === 'red' ? 'urgent' : lane === 'amber' ? 'in_person' : 'approve';
+  const u = c.profile.triage.urgency;
+  const def = lane === 'red' ? 'urgent' : u === 'urgent' || u === 'soon' || (!u && lane === 'amber') ? 'in_person' : 'approve';
   const lensOpts = Object.entries(LENS).map(([k, v]) => `<option value="${k}" ${k === rec.category ? 'selected' : ''}>${v}</option>`).join('');
   const emph = ['Balanced', 'Intermediate', 'Near'].map((k) => `<option ${k === c.profile.vision.designEmphasis ? 'selected' : ''}>${k}</option>`).join('');
   const add = c.profile.presbyopia?.addD || '';
@@ -242,13 +246,20 @@ async function showCase(id) {
         ${rv ? `<section class="card reviewed"><h2>✓ ${esc(rv.decisionLabel)}</h2><p>${esc(rv.nextStep)}</p>${rv.notes ? `<p class="small">${esc(rv.notes)}</p>` : ''}
           <p class="muted small">${esc(rv.reviewer?.name)} · ${esc((rv.reviewedAt || '').slice(0, 16).replace('T', ' '))}</p></section>` : reviewForm(c)}
         <section class="card"><h2>Vision Passport (${LANGS[c.lang]})</h2><pre class="pp" lang="${c.lang}">${esc(passport)}</pre>
-          ${who.phone ? `<a class="btn" target="_blank" rel="noopener" href="${esc(whatsappLink(who.phone, passport))}">Send on WhatsApp</a>` : '<p class="muted small">The phone number is not on the server: the field phone sends the reply from its inbox.</p>'}</section>
+          <div class="sharebox" id="ppShare">
+            <p class="small">🔐 Send as an encrypted link (key in the link, optional PIN said on the phone). Plain WhatsApp/SMS text is not used for patient files.</p>
+            <div class="row gap wrap"><button class="btn primary" id="shareLetter">Referral letter (PIN)</button><button class="btn" id="sharePassport">Passport link</button></div>
+            <div id="shareResult"></div>
+          </div>
+          ${who.phone ? '' : '<p class="muted small">The patient’s phone number is not on the server: the field phone can also share the passport from its inbox.</p>'}</section>
       </div>
     </div>
     <section class="card"><h2>Adaptive interview</h2>${traceHtml(c)}</section>
     <section class="card"><h2>Access log</h2><p class="muted small">Every view, review, export and erasure of this case, append-only. No personal data is logged.</p>
       <table class="trace"><tr><th>When (UTC)</th><th>Who</th><th>What</th><th>Detail</th></tr>
       ${audit.map((a) => `<tr><td>${esc((a.at || '').replace('T', ' ').slice(0, 19))}</td><td>${esc(a.actor)}</td><td>${esc(a.action.replace(/_/g, ' '))}</td><td>${esc(a.detail || '')}</td></tr>`).join('')}</table></section>`;
+  $('#shareLetter').onclick = () => makeShare(c, who, 'referral');
+  $('#sharePassport').onclick = () => makeShare(c, who, 'passport', passport);
   const form = $('#rvForm');
   if (form) {
     fillMessage(c);
@@ -272,6 +283,64 @@ async function showCase(id) {
   };
 }
 
+// ---------------------------------------------------------------- referral letter + secure share
+// A referral letter for the receiving eye hospital or vision centre, built from
+// the case. It leaves this browser only as ciphertext: AES-256 key in the link's
+// fragment, a PIN said on the phone, 7-day expiry, view limit, revocable.
+function referralDoc(c, who) {
+  const tri = c.profile.triage;
+  const m = c.measurements || {};
+  const a = c.interview?.answers || {};
+  const p = c.patient || {};
+  const urgent = tri.lane === 'red';
+  const redflagLines = (c.interview?.trace || []).filter((t) => t.module === 'redflag' && t.qid)
+    .map((t) => `${t.questionEn} — ${typeof t.value === 'boolean' ? (t.value ? 'Yes' : 'No') : Array.isArray(t.value) ? t.value.join(', ') : t.value}`);
+  const findings = [];
+  if (m.acuity?.R) findings.push(`Distance vision (phone, 2 m): R ${snellen(m.acuity.R.logmar)} · L ${snellen(m.acuity.L?.logmar ?? null)}${['R', 'L'].filter((e) => m.acuity[e]?.pinholeLogmar !== undefined).map((e) => ` · ${e} pinhole ${snellen(m.acuity[e].pinholeLogmar)}`).join('')}`);
+  if (m.amsler?.R) findings.push(`Amsler: R ${m.amsler.R} · L ${m.amsler.L}${m.amsler.onset ? ` (noticed: ${m.amsler.onset})` : ''}`);
+  for (const f of c.profile.findings || []) findings.push(`${TEST_NAME[f.test] || f.test}: ${f.result} — ${f.meaning}`);
+  return {
+    title: urgent ? 'Emergency referral' : 'Referral letter',
+    to: urgent ? 'Eye casualty / partner eye hospital' : 'Ophthalmologist / vision centre',
+    from: `${me.name}${me.regNo ? ` (${me.regNo})` : ''}, DivyaDrishti optometrist hub`,
+    date: new Date().toLocaleDateString('en-IN'),
+    patient: `${who.name || `Patient ${shortCode(c.id)}`} · ${p.age ?? '?'} ${p.sex || ''} · ref ${shortCode(c.id)}`,
+    re: urgencyLine(tri),
+    lang: 'en',
+    sections: [
+      { heading: 'Reason for referral', items: tri.flags.length ? tri.flags.map((f) => `${f.title} (${f.within}): ${f.detail}`) : ['Routine review'] },
+      { heading: 'Red-flag screen (patient’s answers)', items: redflagLines.length ? redflagLines : ['not recorded'] },
+      { heading: 'Phone-based findings (screening, not diagnostic)', items: findings.length ? findings : ['no tests recorded'] },
+      { heading: 'Requested', text: tri.flags[0]?.action || 'Full eye examination.' },
+      ...(a.conditions?.length ? [{ heading: 'Medical history', text: a.conditions.join(', ') + (a.diabetes_years != null ? ` (diabetes ${a.diabetes_years} years)` : '') }] : []),
+    ],
+    footer: `Screened with DivyaDrishti (rules ${c.rulesVersion || c.profile.rulesVersion || '?'}), reviewed by ${me.name}. Phone measurements are estimates.`,
+  };
+}
+
+async function makeShare(c, who, kind, passport) {
+  const out = $('#shareResult');
+  out.innerHTML = '<p class="muted small">Encrypting…</p>';
+  try {
+    const [{ createShareLink }, { qrSvg }] = await Promise.all([import('./share.js'), import('./qr.js')]);
+    const pin = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1000000).padStart(6, '0');
+    const doc = kind === 'referral' ? referralDoc(c, who) : { text: passport, lang: c.lang };
+    const made = await createShareLink(doc, { pin, kind, expiresDays: 7, maxViews: 20, caseRef: c.id, actor: me.name, api: API });
+    const msg = `DivyaDrishti ${kind === 'referral' ? 'referral letter' : 'Vision Passport'} ${shortCode(c.id)} (encrypted): ${made.url}`;
+    out.innerHTML = `<div class="shareOut"><div class="qr">${qrSvg(made.url, { cellSize: 4, label: 'secure link' }) || ''}</div>
+      <p class="pinshow">PIN ${pin}</p><p class="muted small">Say the PIN on the phone; never write it in the same message. Expires ${esc((made.expiresAt || '').slice(0, 10))}, up to ${made.maxViews} views.</p>
+      <div class="row gap wrap"><button class="btn" id="cpLink">Copy link</button>
+      ${who.phone ? `<a class="btn" href="${esc(smsLink(who.phone, msg))}">SMS link</a><a class="btn" target="_blank" rel="noopener" href="${esc(whatsappLink(who.phone, msg))}">WhatsApp link</a>` : ''}
+      <button class="btn ghost" id="rvLink">Revoke</button></div></div>`;
+    $('#cpLink').onclick = () => navigator.clipboard?.writeText(made.url);
+    $('#rvLink').onclick = async () => {
+      const { revokeShare } = await import('./share.js');
+      await revokeShare(made.id, made.deleteToken, { api: API });
+      out.innerHTML = '<p class="small">✓ Link revoked.</p>';
+    };
+  } catch (e) { out.innerHTML = `<p class="err">Could not create the link: ${esc(e.code || e.message || e)}</p>`; }
+}
+
 async function planning() {
   const el = $('#planningTab');
   let s;
@@ -285,9 +354,9 @@ async function planning() {
     <p class="muted">Pooled, de-identified counts from every store and camp on the bridge: where referrals cluster, which specialist camp to run next, what lens mix to stock.</p>
     <div class="tiles">
       <div class="tile"><div class="n">${s.cases}</div><div class="l">cases</div></div>
-      <div class="tile"><div class="n" style="color:var(--red)">${s.byLane.red}</div><div class="l">red (same-day)</div></div>
-      <div class="tile"><div class="n" style="color:#b07c00">${s.byLane.amber}</div><div class="l">amber (referral)</div></div>
-      <div class="tile"><div class="n" style="color:var(--green)">${s.byLane.green}</div><div class="l">green (sign-off)</div></div>
+      <div class="tile"><div class="n" style="color:var(--red)">${s.byLane.red}</div><div class="l">emergency (same day)</div></div>
+      <div class="tile"><div class="n" style="color:#b07c00">${(s.byUrgency?.urgent ?? 0)} / ${(s.byUrgency?.soon ?? 0)}</div><div class="l">urgent / soon referral</div></div>
+      <div class="tile"><div class="n" style="color:var(--green)">${s.byLane.green}</div><div class="l">routine sign-off</div></div>
       <div class="tile"><div class="n">${s.medianQuestionsAsked ?? '–'}</div><div class="l">median questions asked (of 30)</div></div>
       <div class="tile"><div class="n">${s.medianReviewMinutes ?? '–'}</div><div class="l">median minutes to review</div></div>
     </div>
@@ -307,9 +376,10 @@ $$('[data-lane]').forEach((b) => b.onclick = () => { laneFilter = b.dataset.lane
 $('#openOnly').onchange = refreshList;
 $$('[data-tab]').forEach((b) => b.onclick = () => {
   $$('[data-tab]').forEach((x) => x.classList.toggle('on', x === b));
-  const plan = b.dataset.tab === 'planning';
-  $('#queueTab').hidden = plan; $('#planningTab').hidden = !plan;
-  if (plan) planning();
+  const tab = b.dataset.tab;
+  $('#queueTab').hidden = tab !== 'queue'; $('#planningTab').hidden = tab !== 'planning'; $('#rulesTab').hidden = tab !== 'rules';
+  if (tab === 'planning') planning();
+  if (tab === 'rules') $('#rulesTab').innerHTML = `<h1>Referral rules</h1>${rulesTableHtml()}`;
 });
 $('#me').textContent = `🩺 ${me.name}`;
 $('#me').onclick = () => {
@@ -323,4 +393,5 @@ await refreshList();
 if (!selected && rows.length) selected = rows[0].id;
 if (selected) showCase(selected);
 setInterval(refreshList, 8000);
-if (new URLSearchParams(location.search).get('tab') === 'planning') $('[data-tab=planning]').click();
+const startTab = new URLSearchParams(location.search).get('tab');
+if (startTab === 'planning' || startTab === 'rules') $(`[data-tab=${startTab}]`).click();

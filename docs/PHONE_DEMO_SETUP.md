@@ -8,7 +8,7 @@ The microphone and camera only work on `https://` (or `localhost`). Pick one.
 
 | Option | When | Steps |
 |---|---|---|
-| **A. Quick tunnel** (recommended for tomorrow) | Laptop stays on and online during the demo | 1. Install once: `winget install --id Cloudflare.cloudflared`  2. Start the server: `powershell -ExecutionPolicy Bypass -File tools\run_demo.ps1`  3. In a second terminal: `cloudflared tunnel --url http://localhost:8000`  4. Open the `https://….trycloudflare.com` address it prints, on the phone. No account needed; the address changes each run. |
+| **A. Quick tunnel** (recommended for tomorrow) | Laptop stays on and online during the demo | 1. Install once: `winget install --id Cloudflare.cloudflared`  2. Run `powershell -ExecutionPolicy Bypass -File tools\run_demo.ps1 -Tunnel` (starts the server and the Cloudflare quick tunnel together)  3. Open the `https://….trycloudflare.com` address it prints, on the phone. No account needed; the address changes each run. |
 | **B. Cloud Run** (stable link, laptop can be off) | Judges should open it themselves | `gcloud run deploy divyadrishti --source . --region asia-south1 --allow-unauthenticated --max-instances 1 --set-env-vars DD_PORTAL_TOKEN=<choose-a-secret>`. Then open the portal once as `https://<url>/portal.html#token=<secret>`. The demo database lives in the instance and resets when it restarts. |
 | **C. Same Wi-Fi, no install** (fallback) | No internet at the venue | 1. Run `tools\run_demo.ps1` (it prints the laptop's Wi-Fi address). 2. Allow Python through the Windows firewall when asked. 3. On the phone, open `chrome://flags/#unsafely-treat-insecure-origin-as-secure`, add `http://<laptop-ip>:8000`, set it to *Enabled*, relaunch Chrome. |
 
@@ -40,12 +40,15 @@ The microphone and camera only work on `https://` (or `localhost`). Pick one.
 - A **pin and a visiting card** for the pinhole test.
 - A **PD ruler**, if you can borrow one from a store, to compare the camera PD live.
 - Good, even light on the face. No window behind the person.
+- For **lensometry**: open `…/lensometer-target.html` on the laptop (full screen; the test screen shows a QR to it), or print it. Hold the phone 40 cm from the screen (the 40 cm string) and the glasses halfway, temples towards the phone, with clear pattern visible on both sides of the lens. Keep the laptop screen square to the phone.
+- A pair of real glasses with a known prescription to show lensometry live.
 
 ## 5. Running the demo
 
 - **Quiet room? Live voice.** Pick the language, then New patient. A teammate answers in Tamil, Telugu, Hindi, Kannada or Marathi.
-- **Noisy room? Demo patients.** The home screen has 11 synthetic patients across all six languages. They play the full interview with no microphone.
-- Show one **red-flag patient** (M. Ravi): the interview stops after 7 questions.
+- **Noisy room? Demo patients.** The home screen has 13 synthetic patients across all six languages. They play the full interview with no microphone.
+- Show the **graded red flags** side by side: M. Ravi (curtain since last night: emergency, interview stops after 7 questions), T. Gopal (new floaters for 3 days, no curtain: urgent within 24 h, not same day) and Santosh Jadhav (sugarcane-leaf scratch: antibiotic ointment within 18 h). Then open 🚦 *Referral rules* to show what is and is not a red flag.
+- The app opens in the phone's language (English if the phone is not in one of the six). Pick the patient's language and your own app language separately on the home screen.
 - On the laptop: open the case, point out the **decision path**, **data quality**, the trace with the patient's own words, the **🔐 identity line** and the **access log**. Then sign it off and show the reply arriving in the phone's inbox.
 
 ## If something fails

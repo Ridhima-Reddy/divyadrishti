@@ -20,13 +20,14 @@ test('Kumar (54, accountant): intermediate-dominant, office lens, green', () => 
   assert.ok(blue && blue.includes('not a treatment') && blue.includes('intermediate add'), 'blue-light note: optional, evidence, and the real fix');
 });
 
-test('Lakshmi (47, tailor, diabetic): readers at her measured 29 cm, amber for retina', () => {
+test('Lakshmi (47, tailor, diabetic 8 years, never checked): readers at 29 cm, amber (retina within 6 weeks)', () => {
   const pr = profileOf('lakshmi');
   assert.equal(pr.vision.dominance, 'near');
   assert.equal(pr.recommendation.category, 'readers');
   assert.equal(pr.vision.zones.near.workingDistanceCm, 29);
   assert.equal(pr.triage.lane, 'amber');
-  assert.ok(pr.triage.flags.some((f) => f.code === 'DIABETES_RETINA_DUE'));
+  assert.equal(pr.triage.urgency, 'soon');
+  assert.ok(pr.triage.flags.some((f) => f.code === 'DIABETES_RETINA_OVERDUE'));
   assert.ok(pr.presbyopia.addD >= 1.75, `add ${pr.presbyopia.addD}`);
 });
 
@@ -45,18 +46,20 @@ test('Hofstetter minimum amplitude tracks the usual age table at 40 cm', () => {
   assert.equal(add(60), 2.5);
 });
 
-test('Murugan (62, farmer): distance-dominant, low budget bifocal, cataract suspicion', () => {
+test('Murugan (62, farmer): distance-dominant, low budget bifocal, operable cataract (soon, not today)', () => {
   const pr = profileOf('murugan');
   assert.equal(pr.vision.dominance, 'distance');
   assert.equal(pr.recommendation.category, 'bifocal');
   assert.equal(pr.triage.lane, 'amber');
-  const cat = pr.triage.flags.find((f) => f.code === 'CATARACT_SUSPECT');
+  assert.equal(pr.triage.urgency, 'soon');
+  const cat = pr.triage.flags.find((f) => f.code === 'CATARACT_OPERABLE');
   assert.ok(cat && cat.detail.includes('pinhole'));
   assert.ok(pr.recommendation.coatings.some((c) => c.includes('UV')));
 });
 
-test('Priya (9): high myopia risk, child refraction, amber', () => {
+test('Priya (9): high myopia risk, child refraction, amber (soon)', () => {
   const pr = profileOf('priya');
+  assert.equal(pr.triage.urgency, 'soon');
   assert.equal(pr.myopiaRisk.level, 'high');
   assert.equal(pr.recommendation.category, 'child_refraction');
   assert.equal(pr.triage.lane, 'amber');
@@ -64,9 +67,11 @@ test('Priya (9): high myopia risk, child refraction, amber', () => {
   assert.equal(pr.presbyopia, null);
 });
 
-test('Ravi: red lane, no glasses today', () => {
+test('Ravi: sight dropped last night with a curtain: emergency, red lane, no glasses today', () => {
   const pr = profileOf('ravi');
   assert.equal(pr.triage.lane, 'red');
+  assert.equal(pr.triage.urgency, 'emergency');
+  assert.deepEqual(pr.triage.flags.filter((f) => f.tier === 'emergency').map((f) => f.code), ['RETINAL_DETACHMENT_SIGNS']);
   assert.equal(pr.recommendation.category, 'urgent_referral');
   assert.ok(!pr.checks.includes('pd'));
 });

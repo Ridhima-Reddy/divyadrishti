@@ -6,6 +6,9 @@ import { formatRx } from './engine/rx.js';
 
 export const shortCode = (id) => `DD-${(id || '').replace(/-/g, '').slice(0, 6).toUpperCase()}`;
 
+// urgency tier -> passport line (older cases carry only a lane)
+const laneKey = (t) => ({ emergency: 'red', urgent: 'amber', soon: 'soon' }[t.urgency] || (t.urgency ? 'green' : t.lane));
+
 export function passportText({ id, patient, profile, answers, review = null }, lang = 'en') {
   const lines = [];
   lines.push(`${pt(P.title, lang)} · ${shortCode(id)}`);
@@ -17,8 +20,8 @@ export function passportText({ id, patient, profile, answers, review = null }, l
   if (add && ['readers', 'office', 'bifocal', 'progressive', 'separate_pairs'].includes(cat)) lens += ` (add +${Number(add).toFixed(2)})`;
   lines.push(`${pt(P.suggested, lang)}: ${lens}.`);
   if (answers?.rx_known?.R || answers?.rx_known?.L) lines.push(`Rx: ${formatRx(answers.rx_known)}`);
-  lines.push(pt(P.lane[profile.triage.lane], lang));
-  const needs = [...new Set(profile.triage.flags.map((f) => pt(P.flag[f.code] || P.flag.default, lang)))];
+  lines.push(pt(P.lane[laneKey(profile.triage)], lang));
+  const needs = [...new Set(profile.triage.flags.map((f) => pt(P.need[f.need] || P.need.full_exam, lang)))];
   if (needs.length) lines.push(`${pt(P.needed, lang)}: ${needs.join('; ')}.`);
   if (review?.messageToPatient) lines.push(review.messageToPatient);
   const tips = profile.advice.slice(0, 2).map((k) => pt(P.advice[k], lang)).filter(Boolean);
