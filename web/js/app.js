@@ -10,6 +10,26 @@ import { tr, LANGS, P, pt } from './i18n.js';
 import { PACK_BY_CODE } from './lang/index.js';
 import * as V from './voice.js';
 import * as store from './store.js';
+import { ic } from './icons.js';
+import * as remote from './remote.js';
+import * as account from './account.js';
+import { tryOn } from './tryon.js';
+import { openCall, createCall } from './call.js';
+import { setRuleOverrides, TIERS } from './engine/redflags.js';
+import { barChart, donut, hbars, indiaMap, pinToState, lastDays } from './charts_ui.js';
+
+// Referral-rule edits made by the hub optometrists (engine/redflags.js), cached
+// so the phone applies them offline too.
+try { setRuleOverrides(JSON.parse(localStorage.getItem('dd.ruleOverrides') || 'null')); } catch { /* none yet */ }
+async function pullRules() {
+  try {
+    const r = await fetch(`${store.API}/rules`);
+    if (!r.ok) return;
+    const o = await r.json();
+    setRuleOverrides(o);
+    localStorage.setItem('dd.ruleOverrides', JSON.stringify(o));
+  } catch { /* offline: keep the cached edits */ }
+}
 import { passportText, whatsappLink, smsLink, shortCode } from './passport.js';
 import { landoltSvg } from './measure/contrast.js';
 import * as T from './tests_ui.js';
@@ -62,6 +82,7 @@ function setScreen(html, name) {
   main.dataset.screen = name;
   window.scrollTo(0, 0);
   updateHeader();
+  updateTabs(name);
 }
 
 const PL = () => (C ? C.lang : settings.lang);
@@ -71,13 +92,13 @@ const sayP = (text) => { if (settings.voice && text) V.speak(text, C ? C.lang : 
 
 function updateHeader() {
   const vb = $('#voiceToggle');
-  if (vb) { vb.textContent = settings.voice ? `🔊 ${t('voiceOn')}` : `🔇 ${t('voiceOff')}`; vb.setAttribute('aria-pressed', String(settings.voice)); }
+  if (vb) { vb.innerHTML = settings.voice ? `${ic('volume')}<span>${t('voiceOn')}</span>` : `${ic('volumeOff')}<span>${t('voiceOff')}</span>`; vb.setAttribute('aria-pressed', String(settings.voice)); }
   const sb = $('#syncBadge');
   store.pendingCount().then((pending) => {
-    if (sb) { sb.textContent = pending ? `⟳ ${pending}` : '✓'; sb.title = pending ? `${pending} waiting to sync` : 'All synced'; }
+    if (sb) { sb.innerHTML = pending ? `${ic('refresh', { size: 16 })}<span>${pending}</span>` : ic('check', { size: 16 }); sb.classList.toggle('pending', !!pending); sb.title = pending ? `${pending} waiting to sync` : 'All synced'; }
   }).catch(() => {});
   const lb = $('#lockBtn');
-  if (lb) { lb.hidden = !store.isUnlocked(); lb.textContent = '🔒'; lb.title = t('lock'); lb.setAttribute('aria-label', t('lock')); }
+  if (lb) { lb.hidden = !store.isUnlocked(); lb.innerHTML = ic('lock'); lb.title = t('lock'); lb.setAttribute('aria-label', t('lock')); }
 }
 
 // Encrypted autosave of the case in progress: a crash, a reload or a call
@@ -89,72 +110,136 @@ function saveDraft() {
 }
 
 // ====================================================================== home
+// The landing screen adapts to who is using it and what is waiting: greeting by
+// name and time of day, a half-finished patient, new optometrist replies,
+// unsent cases, today's emergencies, phone set-up still to do, today's numbers,
+// and the patient languages this site uses most. Everything is computed on the
+// phone from its own encrypted records; nothing is sent anywhere to decide it.
+async function homeContext() {
+  const all = (await store.allCases().catch(() => [])).filter((c) => !c.unreadable);
+  const today = new Date().toDateString();
+  const todays = all.filter((c) => c.createdAt && new Date(c.createdAt).toDateString() === today);
+  const seen = load('dd.seenReplies', {});
+  const lane = (c) => c.profile?.triage?.lane;
+  sentIds = all.filter((c) => c.sync === 'sent' && Date.now() - new Date(c.createdAt).getTime() < 14 * 864e5).map((c) => c.id);
+  sentNames = Object.fromEntries(all.map((c) => [c.id, c.patient?.name || shortCode(c.id)]));
+  const usage = {};
+  all.filter((c) => !c.demo).slice(0, 60).forEach((c) => { usage[c.lang] = (usage[c.lang] || 0) + 1; });
+  const days = lastDays(7);
+  const onDay = days.map((d) => all.filter((c) => c.createdAt && new Date(c.createdAt).toDateString() === d.key));
+  const tierOf = (c) => c.profile?.triage?.urgency || 'none';
+  return {
+    week: { labels: days.map((d) => d.label), red: onDay.map((l) => l.filter((c) => lane(c) === 'red').length),
+      amber: onDay.map((l) => l.filter((c) => lane(c) === 'amber').length), green: onDay.map((l) => l.filter((c) => lane(c) !== 'red' && lane(c) !== 'amber').length) },
+    mix: { emergency: all.filter((c) => tierOf(c) === 'emergency').length, urgent: all.filter((c) => tierOf(c) === 'urgent').length,
+      soon: all.filter((c) => tierOf(c) === 'soon').length, routine: all.filter((c) => !['emergency', 'urgent', 'soon'].includes(tierOf(c))).length },
+    any: all.length > 0,
+    realCount: all.filter((c) => !c.demo).length,
+    today: todays.length,
+    referred: todays.filter((c) => lane(c) === 'red' || lane(c) === 'amber').length,
+    emergencies: todays.filter((c) => lane(c) === 'red' && !c.review).length,
+    waiting: all.filter((c) => c.sync === 'sent' && !c.review).length,
+    unsent: all.filter((c) => c.sync !== 'sent').length,
+    replies: all.filter((c) => c.review).length,
+    newReplies: all.filter((c) => c.review && !seen[c.id]).length,
+    online: navigator.onLine !== false,
+    usage,
+  };
+}
+
 async function home() {
   C = null;
-  const draft = await store.loadDraft().catch(() => null);
-  const chips = (cur, attr) => Object.entries(LANGS).map(([k, v]) => `<button class="chip lang ${cur === k ? 'on' : ''}" data-${attr}="${k}" lang="${k}" aria-pressed="${cur === k}">${v}</button>`).join('');
-  const demos = PERSONAS.map((p) => `<button class="demo" data-demo="${p.key}"><b>${esc(p.name)}</b><span>${esc(p.blurb)}</span><i>${LANGS[p.lang]}</i></button>`).join('');
+  const [draft, x] = await Promise.all([store.loadDraft().catch(() => null), homeContext()]);
+  const flags = load('dd.flags', { demoTried: false });
+  const hour = new Date().getHours();
+  const greet = t(hour < 12 ? 'gMorning' : hour < 17 ? 'gAfternoon' : 'gEvening');
+  const dateStr = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  const langOrder = Object.keys(LANGS).sort((a, b) => (x.usage[b] || 0) - (x.usage[a] || 0));
+  const chips = (cur, attr, order = Object.keys(LANGS)) => order.map((k) => `<button class="chip lang ${cur === k ? 'on' : ''}" data-${attr}="${k}" lang="${k}" aria-pressed="${cur === k}">${LANGS[k]}</button>`).join('');
+  const demos = PERSONAS.map((p) => `<button class="demo" data-demo="${p.key}"><em class="av" aria-hidden="true">${esc(p.name.replace(/[^\p{L}\s]/gu, '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(-2).join('').toUpperCase())}</em><b>${esc(p.name)}</b><span>${esc(p.blurb)}</span><i>${LANGS[p.lang]}</i></button>`).join('');
+
+  // What needs the operator first, most important on top.
+  const next = [];
+  if (x.emergencies) next.push(`<button class="nx red" data-go="inbox">${ic('alert')}<span>${t('hEmergency', { n: x.emergencies })}</span>${ic('right')}</button>`);
+  if (draft) next.push(`<div class="nx accent">${ic('refresh')}<span><b>${t('resume')}</b><small>${esc(draft.patient?.name || shortCode(draft.id))} · ${LANGS[draft.lang] || ''} · ${draft.session?.trace?.filter((q) => q.qid && !q.event).length || 0} answers</small></span>
+      <span class="row gap"><button class="btn primary small" id="resumeBtn">${t('resume')}</button><button class="btn ghost small" id="discardBtn" aria-label="discard">${ic('x')}</button></span></div>`);
+  if (x.newReplies) next.push(`<button class="nx t2" data-go="inbox">${ic('inbox')}<span>${t('hReplies', { n: x.newReplies })}</span>${ic('right')}</button>`);
+  if (x.unsent) next.push(x.online
+    ? `<div class="nx t3">${ic('send')}<span>${t('hUnsent', { n: x.unsent })}</span><button class="btn small" id="sendNow">${t('hSendNow')}</button></div>`
+    : `<div class="nx t3">${ic('send')}<span>${t('hUnsent', { n: x.unsent })}<small>${t('hOffline')}</small></span></div>`);
+
+  const stats = x.any ? `<section class="stats">
+      <div class="stat"><span>${t('hToday')}</span><b>${x.today}</b></div>
+      <div class="stat"><span>${t('hReferred')}</span><b>${x.referred}</b></div>
+      <div class="stat"><span>${t('hWaiting')}</span><b>${x.waiting}</b></div>
+      <div class="stat"><span>${t('hReplied')}</span><b>${x.replies}</b></div>
+    </section>` : '';
+
+  const steps = [
+    { done: Boolean(calib.pxPerMm), label: t('hSetupScreen'), go: 'cal' },
+    { done: Boolean(calib.focalNorm), label: t('hSetupCamera'), go: 'cal' },
+    { done: Boolean(flags.demoTried), label: t('hSetupDemo'), go: 'demo' },
+  ];
+  const left = steps.filter((st) => !st.done).length;
+  const setup = left && x.realCount < 5 ? `<section class="card setup">
+      <div class="row between"><h2>${t('hSetup')}</h2><span class="muted small mono">${steps.length - left}/${steps.length}</span></div>
+      <div class="progress"><i style="width:${Math.round(((steps.length - left) / steps.length) * 100)}%"></i></div>
+      <ul class="steps">${steps.map((st) => `<li class="${st.done ? 'done' : ''}"><button data-go="${st.go}">${ic(st.done ? 'check' : 'plus', { size: 16 })}<span>${st.label}</span></button></li>`).join('')}</ul>
+    </section>` : '';
+
+  const demoBody = `<p class="muted small">Plays the interview with a scripted patient so you can see the adaptive questions, the tests and the profile without a microphone.</p><div class="demos">${demos}</div>`;
+  const demoCard = x.realCount >= 3
+    ? `<details class="card"><summary>${t('hPractice')}</summary>${demoBody}</details>`
+    : `<section class="card"><h2>${t('demo')}</h2>${demoBody}</section>`;
+
   setScreen(`
-    <section class="hero">
-      <p class="eyebrow">${esc(settings.site)}</p>
-      <h1>${t('appTagline')}</h1>
+    <section class="band hero">
+      <p class="eyebrow">${esc(settings.site)} · ${esc(dateStr)}</p>
+      <h1>${esc(settings.operator ? `${greet}, ${settings.operator}` : greet)}</h1>
+      <p class="lede">${t('appTagline')}</p>
+      ${stats}
+      ${x.any ? `<div class="bandcharts">
+        <div><h3>Patients, last 7 days</h3>${barChart({ labels: x.week.labels, title: 'Patients per day', series: [
+          { name: 'Routine', color: 'var(--c2)', values: x.week.green }, { name: 'Referral', color: 'var(--lane-amber)', values: x.week.amber },
+          { name: 'Emergency', color: 'var(--lane-red)', values: x.week.red }] })}</div>
+        <div><h3>Urgency, all patients</h3>${donut({ title: 'Patients by urgency', center: String(x.mix.emergency + x.mix.urgent + x.mix.soon + x.mix.routine), sub: 'patients', segments: [
+          { label: 'Emergency', value: x.mix.emergency, color: 'var(--lane-red)' }, { label: 'Urgent', value: x.mix.urgent, color: 'var(--c4)' },
+          { label: 'Soon', value: x.mix.soon, color: 'var(--lane-amber)' }, { label: 'Routine', value: x.mix.routine, color: 'var(--c2)' }] })}</div>
+      </div>` : ''}
     </section>
-    <div class="homegrid">
+    ${next.length ? `<section class="next">${next.join('')}</section>` : ''}
+    <div class="homegrid one">
       <div class="col">
-        ${draft ? `<section class="card resume"><b>${t('resume')}</b>
-          <p class="muted small">${esc(draft.patient?.name || shortCode(draft.id))} · ${LANGS[draft.lang] || ''} · ${draft.session?.trace?.filter((x) => x.qid && !x.event).length || 0} answers</p>
-          <div class="row gap"><button class="btn primary" id="resumeBtn">↻ ${t('resume')}</button><button class="btn ghost" id="discardBtn" aria-label="discard">✕</button></div></section>` : ''}
-        <section class="card">
+        <section class="card start">
           <h2>${t('language')}</h2>
-          <div class="row wrap">${chips(settings.lang, 'plang')}</div>
-          <button class="btn primary big" id="newBtn">${t('newScreening')}</button>
-          <h3 class="sub">${t('uiLanguage')}</h3>
-          <div class="row wrap">${chips(settings.uiLang, 'ulang')}</div>
+          <div class="seg">${chips(settings.lang, 'plang', langOrder)}</div>
+          <button class="btn primary big" id="newBtn">${ic('plus')} ${t('newScreening')}</button>
         </section>
-        <section class="row wrap gap tools">
-          <button class="btn" id="inboxBtn">📥 ${t('results')}</button>
-          <button class="btn" id="rulesBtn">🚦 ${t('rules')}</button>
-          <button class="btn" id="calBtn">📏 ${t('calibrate')}</button>
-          <button class="btn" id="checkBtn">🩻 Phone check</button>
-          <a class="btn" href="portal.html" target="_blank" rel="noopener">🩺 Optometrist portal</a>
-        </section>
-        <details class="card small">
-          <summary>Store / camp settings</summary>
-          <label>${t('site')}<input id="siteIn" value="${esc(settings.site)}"></label>
-          <label>Type<select id="siteType"><option value="store" ${settings.siteType === 'store' ? 'selected' : ''}>Optical store</option><option value="camp" ${settings.siteType === 'camp' ? 'selected' : ''}>Eye camp</option></select></label>
-          <label>${t('operator')}<input id="opIn" value="${esc(settings.operator)}"></label>
-          <label>${t('listenPatience')}<select id="listenSel">${Object.entries(LISTEN).map(([k, v]) => `<option value="${k}" ${settings.listen === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></label>
-          <p class="muted small">App ${APP_VERSION} · rules ${RULES_VERSION} · data on this phone is encrypted (AES-256-GCM, PIN-protected)</p>
-        </details>
       </div>
-      <section class="card col">
-        <h2>${t('demo')}</h2>
-        <p class="muted small">Plays the interview with a scripted patient so you can see the adaptive questions, the tests and the profile without a microphone.</p>
-        <div class="demos">${demos}</div>
-      </section>
+      
     </div>`, 'home');
   if (draft) {
     $('#resumeBtn').onclick = () => resumeDraft(draft);
     $('#discardBtn').onclick = async () => { await store.clearDraft(); home(); };
   }
-  $('#checkBtn').onclick = phoneCheck;
+  const startDemo = (p) => { flags.demoTried = true; save('dd.flags', flags); startCase(p.lang, p); };
+  $$('[data-go]', main).forEach((b) => b.onclick = () => ({ inbox, cal: calibration, demo: () => startDemo(PERSONAS[0]) }[b.dataset.go])());
+  const sendNow = $('#sendNow');
+  if (sendNow) sendNow.onclick = async () => { sendNow.disabled = true; await store.syncPending().catch(() => {}); home(); };
   $$('[data-plang]', main).forEach((b) => b.onclick = () => { settings.lang = b.dataset.plang; save('dd.settings', settings); home(); });
-  $$('[data-ulang]', main).forEach((b) => b.onclick = () => { settings.uiLang = b.dataset.ulang; save('dd.settings', settings); document.documentElement.lang = settings.uiLang; home(); });
-  $('#newBtn').onclick = () => startCase(settings.lang);
-  $$('.demo', main).forEach((b) => b.onclick = () => startCase(PERSONA_BY_KEY[b.dataset.demo].lang, PERSONA_BY_KEY[b.dataset.demo]));
-  $('#inboxBtn').onclick = inbox;
-  $('#rulesBtn').onclick = () => rulesScreen(home);
-  $('#calBtn').onclick = calibration;
-  $('#siteIn').onchange = (e) => { settings.site = e.target.value; save('dd.settings', settings); };
-  $('#siteType').onchange = (e) => { settings.siteType = e.target.value; save('dd.settings', settings); };
-  $('#opIn').onchange = (e) => { settings.operator = e.target.value; save('dd.settings', settings); };
-  $('#listenSel').onchange = (e) => { settings.listen = e.target.value; save('dd.settings', settings); };
+  $('#newBtn').onclick = () => setupGate(() => startCase(settings.lang));
+  { const my = turn; syncNow().then((n) => { if (n && my === turn) home(); }); }
+  // Fetch optometrist replies in the background; redraw only if something new arrived.
+  if (store.isUnlocked() && x.online && x.waiting) {
+    const my = turn;
+    store.pullReviews().then(homeContext).then((y) => { if (my === turn && y.replies !== x.replies) home(); }).catch(() => {});
+  }
 }
 
 // What scores as a red flag and what does not: the same table the engine runs.
 function rulesScreen(back = home) {
-  setScreen(`<section class="card wide"><h2>🚦 ${t('rulesTitle')}</h2>${rulesTableHtml()}</section>
-    <button class="btn ghost" id="rulesBack">← ${t('back')}</button>`, 'rules');
+  setScreen(`<section class="card wide"><h2>${t('rulesTitle')}</h2>${rulesTableHtml()}</section>
+    <button class="btn ghost" id="rulesBack">${ic('left')} ${t('back')}</button>`, 'rules');
   $('#rulesBack').onclick = () => back();
 }
 
@@ -189,10 +274,10 @@ function register() {
       <h2>${t('consentTitle')}</h2>
       <p class="say" lang="${C.lang}">${tp('consentText')}</p>
       <div class="row gap wrap">
-        <button class="btn" id="playConsent">🔊 ${t('play')}</button>
+        <button class="btn" id="playConsent">${ic('volume')} ${t('play')}</button>
       </div>
       <div class="row gap">
-        <button class="btn primary big" id="agree">✓ ${t('agree')}</button>
+        <button class="btn primary big" id="agree">${ic('check')} ${t('agree')}</button>
         <button class="btn ghost" id="disagree">${t('disagree')}</button>
       </div>
       <p class="muted small">Recorded with time and language (Digital Personal Data Protection Act, 2023). Images from the camera checks never leave the phone; only measurements are sent.</p>
@@ -240,13 +325,13 @@ function answerControls(q) {
       return `<div class="opts">${q.options.map((o) => `<button class="btn answer" data-v="${o.v}">${esc(o.label[C.lang] || o.label.en)}${optSub(o)}</button>`).join('')}</div>`;
     case 'multi':
       return `<div class="opts">${q.options.map((o) => `<button class="btn toggle" data-v="${o.v}" ${o.exclusive ? 'data-exclusive="1"' : ''}>${esc(o.label[C.lang] || o.label.en)}${optSub(o)}</button>`).join('')}</div>
-        <button class="btn primary" id="multiNext" disabled>${t('next')} →</button>`;
+        <button class="btn primary" id="multiNext" disabled>${t('next')} ${ic('right')}</button>`;
     case 'number':
     case 'hours': {
       const quick = (q.quick || []).map((n) => `<button class="chip quick" data-v="${n}">${n}${q.type === 'hours' ? ' h' : ''}</button>`).join('');
       return `<div class="row wrap gap">${quick}</div>
         <div class="row gap numrow"><input id="numIn" type="number" inputmode="decimal" step="${q.type === 'hours' ? '0.5' : '1'}" min="${q.min ?? 0}" max="${q.max ?? 16}" placeholder="${q.type === 'hours' ? 'hours' : esc(q.unit?.en || '')}">
-        <button class="btn primary" id="numNext">${t('next')} →</button></div>`;
+        <button class="btn primary" id="numNext">${t('next')} ${ic('right')}</button></div>`;
     }
     case 'rx': {
       const sel = (id, from, to, step, def) => {
@@ -260,7 +345,7 @@ function answerControls(q) {
       const eyeRow = (e) => `<tr><th>${e}</th><td>${sel(`${e}sph`, -12, 8, 0.25, 0)}</td><td>${sel(`${e}cyl`, -6, 0, 0.25, 0)}</td><td>${sel(`${e}ax`, 0, 180, 5, 0)}</td></tr>`;
       return `<details class="rxgrid"><summary>${t('enterManually')}</summary>
         <table><tr><th></th><th>SPH</th><th>CYL</th><th>AXIS</th></tr>${eyeRow('R')}${eyeRow('L')}</table>
-        <button class="btn" id="rxSave">${t('next')} →</button></details>
+        <button class="btn" id="rxSave">${t('next')} ${ic('right')}</button></details>
         <div class="row gap"><button class="btn ghost" id="rxSkip">${t('skip')}</button></div>
         <p id="rxErr" class="err"></p>`;
     }
@@ -279,15 +364,15 @@ async function interview() {
   const recent = C.session.trace.filter((x) => x.qid && !x.event).slice(-8).reverse()
     .map((x) => { const qq = QUESTION_BY_ID[x.qid]; return `<li><span>${esc(questionText(qq, s, settings.uiLang).split(/[?:]/)[0])}</span><b>${esc(valueLabel(qq, x.value))}</b></li>`; }).join('');
   setScreen(`
-    ${s.d.urgent ? `<div class="banner red">⚠ ${t('urgentBanner')}</div>` : ''}
+    ${s.d.urgent ? `<div class="banner red">${ic('alert')} ${t('urgentBanner')}</div>` : ''}
     <div class="ivgrid">
     <section class="card qcard">
       <div class="row between"><span class="tag">${MODULE_LABEL[q.module] || q.module}</span><span class="muted small">Q${asked + 1}${s.d.age !== null ? ` · ${t('aboutMore', { n: more })}` : ''}</span></div>
       <p class="question" lang="${C.lang}">${esc(text)}</p>
       ${settings.uiLang !== C.lang ? `<p class="muted small en" lang="${settings.uiLang}">${esc(textOp)}</p>` : ''}
       <div class="voicebar"><span id="vstate" class="pill">…</span><span id="transcript" class="transcript"></span>
-        <button class="btn small primary" id="doneSpk" hidden>✓ ${t('doneSpeaking')}</button>
-        <button class="chip small ${settings.listen === 'long' ? 'on' : ''}" id="moreTime" aria-pressed="${settings.listen === 'long'}">⏳ ${t('moreTime')}</button>
+        <button class="btn small primary" id="doneSpk" hidden>${ic('check')} ${t('doneSpeaking')}</button>
+        <button class="chip small ${settings.listen === 'long' ? 'on' : ''}" id="moreTime" aria-pressed="${settings.listen === 'long'}">${ic('clock')} ${t('moreTime')}</button>
       </div>
       <div id="heard" class="heard" hidden></div>
       <div class="controls">${answerControls(q)}</div>
@@ -295,13 +380,13 @@ async function interview() {
     <aside class="card side">
       <p class="why"><b>${t('why')}:</b> ${esc(q.reason(s))}</p>
       ${recent ? `<h3>Answers so far</h3><ul class="sofar">${recent}</ul>` : ''}
-      <button class="btn ghost small" id="rulesLink">🚦 ${t('rules')}</button>
+      <button class="btn ghost small" id="rulesLink">${ic('rules')} ${t('rules')}</button>
     </aside>
     </div>
     <div class="row between navrow">
-      <button class="btn ghost" id="backBtn" ${asked ? '' : 'disabled'}>← ${t('back')}</button>
-      <button class="btn ghost" id="againBtn">↻ ${t('speakAgain')}</button>
-      <button class="btn ghost" id="skipBtn">${t('skip')} →</button>
+      <button class="btn ghost" id="backBtn" ${asked ? '' : 'disabled'}>${ic('left')} ${t('back')}</button>
+      <button class="btn ghost" id="againBtn">${ic('refresh')} ${t('speakAgain')}</button>
+      <button class="btn ghost" id="skipBtn">${t('skip')} ${ic('right')}</button>
     </div>`, 'interview');
 
   const my = turn;
@@ -370,7 +455,7 @@ function setVState(state) {
   const el = $('#vstate');
   if (!el) return;
   el.className = `pill ${state}`;
-  el.textContent = state === 'speaking' ? `🔊 ${t('speaking')}` : state === 'listening' || state === 'hearing' ? `🎙 ${t('listening')}${state === 'hearing' ? ' …' : ''}` : state === 'demo' ? '🎭 demo patient' : state === 'off' ? t('voiceOff') : '…';
+  el.textContent = state === 'speaking' ? t('speaking') : state === 'listening' || state === 'hearing' ? `${t('listening')}${state === 'hearing' ? ' …' : ''}` : state === 'demo' ? 'Demo patient' : state === 'off' ? t('voiceOff') : '…';
   const done = $('#doneSpk');
   if (done) done.hidden = !(state === 'listening' || state === 'hearing');
 }
@@ -452,7 +537,7 @@ async function confirmHeard(q, r, raw, my, commit, mode, extra = {}) {
   box.hidden = false;
   const delay = C.demo ? 650 : 2500; // time to tap Change before it is accepted
   box.innerHTML = `<span>${t('heard')}: <b>${esc(valueLabel(q, r.value))}</b></span>
-    ${needsTap ? `<button class="btn primary" id="okHeard">✓ ${t('next')}</button>` : `<span class="countdown" aria-hidden="true"><i style="animation-duration:${delay}ms"></i></span>`}<button class="btn ghost" id="chgHeard">${t('change')}</button>
+    ${needsTap ? `<button class="btn primary" id="okHeard">${ic('check')} ${t('next')}</button>` : `<span class="countdown" aria-hidden="true"><i style="animation-duration:${delay}ms"></i></span>`}<button class="btn ghost" id="chgHeard">${t('change')}</button>
     ${extra.lowConfidence ? `<p class="small warn-text">${t('confirmLow')}</p>` : ''}`;
   if (q.type === 'rx' && r.value.warnings?.length) box.insertAdjacentHTML('beforeend', `<p class="muted small">${esc(r.value.warnings.join('; '))}</p>`);
   let cancelled = false;
@@ -470,6 +555,89 @@ const MKEY = {
   reading_distance: 'readingDistanceCm', near_point: 'nearPointCm', acuity: 'acuity', amsler: 'amsler', pd: 'pd', contrast: 'contrast',
   colour: 'colour', astigmatism: 'astigmatism', duochrome: 'duochrome', near_acuity: 'nearAcuity', npc: 'npc', lensometry: 'lensometry',
 };
+// Where each test is reliable. 'screen': needs a laptop or TV screen; on a
+// phone it runs only as the remote of a paired chart screen. 'either': phone at
+// 2 m, or the chart screen at 3 or 6 m as in a store. 'phone': the phone itself
+// (held at reading distance, or its front camera). 'both': the phone's rear
+// camera reads a pattern shown on the screen (or printed).
+const DEVICE = {
+  acuity: 'screen', contrast: 'screen', colour: 'screen', astigmatism: 'screen', amsler: 'screen', duochrome: 'screen', near_acuity: 'screen',
+  reading_distance: 'phone', near_point: 'phone', npc: 'phone', pd: 'phone', lensometry: 'both',
+};
+const DEVICE_KEY = { either: 'devEither', screen: 'devScreen', phone: 'devPhone', both: 'devBoth' };
+const SCREEN_WHY = {
+  acuity: 'Letters show on the laptop or TV at 3 or 6 m, as in an optical store. The patient reads across the room; the phone only records which way they point.',
+  contrast: 'Faint rings need a large, bright, steady screen at 1 m. A hand-held phone changes angle, glare and brightness from ring to ring.',
+  colour: 'The plates show large on the screen; the phone records the number the patient reads.',
+  near_acuity: 'The N chart shows at true print size on the screen at 40 cm; the phone records the smallest line read.',
+  amsler: 'The Amsler grid has to cover the central 20 degrees: a 10 cm grid at 30 cm. A phone screen is about 7 cm wide, so it covers only about 12 degrees and can miss distortion just outside the centre.',
+  astigmatism: 'The dial is read from 3 m or more with focus relaxed for distance. On a phone the dial is small and close, so focusing effort and thin lines make the answer unreliable.',
+  duochrome: 'The red-green test checks focus for distance and is read at 3 to 6 m, as in a store. Closer than that, the eye’s own focusing shifts the answer by about half a dioptre.',
+};
+const onScreen = (k) => remote.paired() && DEVICE[k] !== 'phone';
+const screenNote = (extra = '') => `<div class="onscreen">${ic('monitor', { size: 22 })}<div><b>${t('onScreen')}</b>${extra ? `<small>${esc(extra)}</small>` : ''}</div></div>`;
+function runCheck(k) {
+  if (DEVICE[k] === 'screen' && isPhone() && !remote.paired()) { needsScreen(k); return; }
+  CHECK_RUN[k]();
+}
+function needsScreen(k) {
+  setScreen(`<section class="card">
+      <h2>${t(`chk_${k}`)}</h2>
+      <div class="banner amber">${ic('monitor')}<span>${t('needsScreen')}</span></div>
+      <p class="small">${esc(SCREEN_WHY[k] || '')}</p>
+      <p class="small muted">Open the chart screen on a laptop or TV and pair it: the chart shows there and this phone becomes the remote.</p>
+      <button class="btn primary big" id="pairNow">${ic('monitor')} ${t('pairScreen')}</button>
+      ${demoBtn(k)}
+      <button class="btn ghost" id="backChecks">${ic('left')} ${t('back')}</button></section>`, `check-${k}`);
+  $('#pairNow').onclick = () => pairScreen(() => CHECK_RUN[k]());
+  $('#backChecks').onclick = checks;
+  wireDemo();
+}
+function pairScreen(then = home, code = '') {
+  const url = new URL('display.html', location.href).href;
+  setScreen(`<section class="card">
+      <h2>${ic('monitor')} ${t('screenTitle')}</h2>
+      <p>On the laptop or TV, open <b class="mono">${esc(url)}</b>. It shows a 6-digit code.</p>
+      <label>Code<input id="pairCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7" value="${esc(code)}"></label>
+      <button class="btn primary big" id="pairGo">${t('pairGo')}</button>
+      <p class="err" id="pairErr"></p>
+      <button class="btn ghost" id="pairBack">${ic('left')} ${t('back')}</button></section>`, 'pair');
+  const go = async () => {
+    const v = $('#pairCode').value.replace(/\D/g, '');
+    if (v.length !== 6) { $('#pairErr').textContent = t('pairBad'); return; }
+    $('#pairGo').disabled = true;
+    const ok = await remote.pair(v).catch(() => false);
+    if (!ok) { $('#pairGo').disabled = false; $('#pairErr').textContent = t('pairBad'); return; }
+    then();
+  };
+  $('#pairGo').onclick = go;
+  $('#pairBack').onclick = () => then();
+  if (code.length === 6) go();
+}
+function screenCard() {
+  const o = remote.options();
+  if (!remote.paired()) {
+    return `<section class="card screencard"><div class="sc-head">${ic('monitor')}<div><b>${t('screenTitle')}</b><small>${t('screenNone')}</small></div></div>
+      <button class="btn small" id="pairBtn">${t('pairScreen')}</button></section>`;
+  }
+  return `<section class="card screencard on"><div class="sc-head">${ic('monitor')}<div><b>${t('screenTitle')}</b><small>${t('screenPaired')}</small></div></div>
+    <div class="row gap wrap"><select id="chartDist" aria-label="Chart distance">
+      <option value="3" ${o.distanceM === 3 && !o.mirror ? 'selected' : ''}>3 m</option>
+      <option value="6" ${o.distanceM === 6 && !o.mirror ? 'selected' : ''}>6 m</option>
+      <option value="6m" ${o.mirror ? 'selected' : ''}>6 m with a mirror (3 m room)</option></select>
+      <button class="btn small ghost" id="unpairBtn">${t('unpair')}</button></div></section>`;
+}
+function wireScreenCard(back = checks) {
+  const here = main.dataset.screen;
+  const pb = $('#pairBtn'); if (pb) pb.onclick = () => pairScreen(back);
+  const ub = $('#unpairBtn'); if (ub) ub.onclick = async () => { await remote.unpair(); back(); };
+  const cd = $('#chartDist'); if (cd) cd.onchange = () => remote.setOptions({ distanceM: cd.value === '3' ? 3 : 6, mirror: cd.value === '6m' });
+  if (remote.paired()) {
+    remote.send({ chart: 'idle' });
+    remote.check().then((ok) => { if (!ok && main.dataset.screen === here) back(); });
+  }
+}
+
 const CHECK_RUN = {
   reading_distance: checkReading, near_point: checkNear, acuity: () => checkAcuity('R'), amsler: () => checkAmsler('R'), pd: checkPd,
   contrast: () => T.contrast(api), colour: () => T.colour(api), astigmatism: () => T.astigmatism(api), duochrome: () => T.duochrome(api),
@@ -513,15 +681,15 @@ function checks() {
     const p = plan[k] || {};
     const done = checkDone(k);
     return `<li class="check ${done ? 'ok' : ''} ${p.recommended ? 'rec' : ''}">
-      <div><b>${t(`chk_${k}`)}</b> <span class="badge ${p.recommended ? 'rec' : 'opt'}">${p.recommended ? t('recommended') : t('optional')}</span>
+      <div><b>${t(`chk_${k}`)}</b> <span class="tags"><span class="badge ${p.recommended ? 'rec' : 'opt'}">${p.recommended ? t('recommended') : t('optional')}</span><span class="dev ${DEVICE[k]}">${t(DEVICE_KEY[DEVICE[k]])}</span></span>
         ${p.reason ? `<span class="muted small">${esc(p.reason)}</span>` : ''}
-        ${done ? `<span class="result small">✓ ${esc(checkSummary(k))}</span>` : ''}</div>
-      <button class="btn ${done ? 'ghost' : p.recommended ? 'primary' : ''}" data-chk="${k}">${done ? '↻' : t('run')}</button></li>`;
+        ${done ? `<span class="result small">${ic('check', { size: 14 })}${esc(checkSummary(k))}</span>` : ''}</div>
+      <button class="btn ${done ? 'ghost' : p.recommended ? 'primary' : ''}" data-chk="${k}">${done ? ic('refresh', { label: t('run') }) : t('run')}</button></li>`;
   };
   const groups = CHECK_GROUPS.map((g) => `<section class="card"><h3>${t(`grp_${g.key}`)}</h3><ul class="checks">${g.checks.map(row).join('')}</ul></section>`).join('');
   const tri = prof.triage;
   setScreen(`
-    ${prof.derived.urgent ? `<div class="banner red">⚠ ${t('urgentBanner')} ${t('emergencyNow')}</div>` : tri.urgency === 'urgent' ? `<div class="banner amber">⏱ ${t('urgentNote', { within: tri.within })}</div>` : ''}
+    ${prof.derived.urgent ? `<div class="banner red">${ic('alert')} ${t('urgentBanner')} ${t('emergencyNow')}</div>` : tri.urgency === 'urgent' ? `<div class="banner amber">${ic('clock')} ${t('urgentNote', { within: tri.within })}</div>` : ''}
     <section class="card">
       <h2>${t('checksTitle')}</h2>
       <p class="muted small">${t('checksHint')}</p>
@@ -529,9 +697,11 @@ function checks() {
         <button class="chip ${settings.optotype !== 'C' ? 'on' : ''}" data-opt="E">${t('optE')}</button>
         <button class="chip ${settings.optotype === 'C' ? 'on' : ''}" data-opt="C">${t('optC')}</button></div>
     </section>
+    ${screenCard()}
     <div class="checkgrid">${groups}</div>
-    <button class="btn primary big" id="toSummary">${t('finishChecks')} →</button>`, 'checks');
-  $$('[data-chk]', main).forEach((b) => b.onclick = () => CHECK_RUN[b.dataset.chk]());
+    <button class="btn primary big" id="toSummary">${t('finishChecks')} ${ic('right')}</button>`, 'checks');
+  $$('[data-chk]', main).forEach((b) => b.onclick = () => runCheck(b.dataset.chk));
+  wireScreenCard();
   $$('[data-opt]', main).forEach((b) => b.onclick = () => { settings.optotype = b.dataset.opt; save('dd.settings', settings); checks(); });
   $('#toSummary').onclick = summary;
 }
@@ -544,7 +714,7 @@ function demoFill(key) {
   C.measurements.simulated = [...new Set([...(C.measurements.simulated || []), key])];
   return true;
 }
-const demoBtn = (key) => (C.demo?.measure?.[MKEY[key]] !== undefined ? `<button class="btn ghost" id="demoFill" data-k="${key}">🎭 Use demo patient’s value</button>` : '');
+const demoBtn = (key) => (C.demo?.measure?.[MKEY[key]] !== undefined ? `<button class="btn ghost" id="demoFill" data-k="${key}">${ic('play', { size: 14 })} Use demo patient’s value</button>` : '');
 function wireDemo() { const b = $('#demoFill'); if (b) b.onclick = () => { demoFill(b.dataset.k); checks(); }; }
 
 // Screen helpers handed to the extra test screens (tests_ui.js).
@@ -553,6 +723,7 @@ const api = {
   say: (text) => sayP(text), get C() { return C; }, back: () => checks(), pxPerMm, calibrated: () => Boolean(calib.pxPerMm),
   demoBtn, wireDemo, setCleanup: (fn) => { cleanup = fn; }, median: G.median,
   cameraScreen: (o) => cameraScreen(o),
+  onScreen, screenNote, remote, isPhone,
 };
 
 // ---------------------------------------------------------------- camera checks
@@ -568,7 +739,7 @@ async function cameraScreen({ key, title, instruction, extraHtml = '', onFrame, 
       <details class="small"><summary>${t('enterManually')}</summary>
         <div class="row gap"><input id="manualIn" type="number" inputmode="decimal" placeholder="cm"><button class="btn" id="manualSave">${t('done')}</button></div></details>
       ${demoBtn(key)}
-      <button class="btn ghost" id="backChecks">← ${t('back')}</button>
+      <button class="btn ghost" id="backChecks">${ic('left')} ${t('back')}</button>
     </section>`, `check-${key}`);
   $('#backChecks').onclick = checks;
   wireDemo();
@@ -601,7 +772,7 @@ function checkReading() {
       samples.push(f.distanceMm / 10);
       if (samples.length > 60) samples.shift();
       const stable = G.isStable(samples, 25, 0.05);
-      ro.innerHTML = `<b>${Math.round(G.median(samples.slice(-10)))} cm</b>${stable ? ' ✓' : ''}`;
+      ro.innerHTML = `<b>${Math.round(G.median(samples.slice(-10)))} cm</b>${stable ? ` ${ic('check')}` : ''}`;
       $('#useBtn').disabled = !stable;
     },
   });
@@ -614,7 +785,8 @@ function checkReading() {
 
 function checkNear() {
   const samples = [];
-  const words = PACK_BY_CODE[C.lang]?.nearWords || 'the quick brown fox reads small print';
+  const words = PACK_BY_CODE[C.lang]?.nearWords || 'the quick brown fox reads small print';
+
   const size = Math.max(7, 1.0 * pxPerMm()); // ~N5-N6 print
   cameraScreen({
     key: 'near_point', title: t('chk_near_point'), instruction: tp('bringCloser'),
@@ -644,29 +816,40 @@ const ROT = { right: 0, down: 90, left: 180, up: 270 };
 const eSvg = (dir, sizePx) => `<svg class="optotype" width="${sizePx}" height="${sizePx}" viewBox="0 0 5 5" style="transform:rotate(${ROT[dir]}deg)" aria-label="E"><path d="M0 0H5V1H1V2H5V3H1V4H5V5H0Z" fill="currentColor"/></svg>`;
 
 function checkAcuity(eye = 'R', pinhole = false) {
-  const distanceMm = 2000;
+  const scr = onScreen('acuity');
+  const ro = remote.options();
+  const distanceMm = scr ? ro.distanceM * 1000 : 2000;
+  // on the chart screen the "stand 2 m away" sentence and the "(2 m)" in the title do not apply
+  const setup = tp('acuitySetup', { eye: eye === 'R' ? tp('leftEye') : tp('rightEye') });
+  const setupText = scr ? (setup.split(/(?<=[.।!?])\s+/).slice(1).join(' ') || setup) : setup;
+  const title = scr ? t('chk_acuity').replace(/\s*\([^)]*\)\s*$/, '') : t('chk_acuity');
   const st = A.createStaircase({ start: pinhole ? 0.5 : 0.6 });
   const cover = eye === 'R' ? tp('leftEye') : tp('rightEye');
   const optotype = settings.optotype === 'C' ? 'C' : 'E';
   setScreen(`
     <section class="card acuity">
-      <h2>${t('chk_acuity')} · ${eye === 'R' ? 'Right eye' : 'Left eye'}${pinhole ? ' · pinhole' : ''}</h2>
-      <p class="say" lang="${C.lang}">${tp('acuitySetup', { eye: cover })}</p>
-      <div class="estage" id="stage"></div>
+      <h2>${title} · ${eye === 'R' ? 'Right eye' : 'Left eye'}${pinhole ? ' · pinhole' : ''}</h2>
+      <p class="say" lang="${C.lang}">${setupText}</p>
+      ${scr ? screenNote(`Patient ${ro.mirror ? '3 m from the mirror (6 m optical path)' : `${ro.distanceM} m from the screen`}`) : '<div class="estage" id="stage"></div>'}
       <div class="arrows">
-        <button class="btn" data-d="up">↑</button>
-        <div class="row gap"><button class="btn" data-d="left">←</button><button class="btn" data-d="right">→</button></div>
-        <button class="btn" data-d="down">↓</button>
+        <button class="btn" data-d="up" aria-label="up">${ic('up', { size: 26 })}</button>
+        <div class="row gap"><button class="btn" data-d="left" aria-label="left">${ic('left', { size: 26 })}</button><button class="btn" data-d="right" aria-label="right">${ic('right', { size: 26 })}</button></div>
+        <button class="btn" data-d="down" aria-label="down">${ic('down', { size: 26 })}</button>
       </div>
       <p class="muted small" id="lvl"></p>
       ${demoBtn('acuity')}
-      <button class="btn ghost" id="backChecks">← ${t('back')}</button>
+      <button class="btn ghost" id="backChecks">${ic('left')} ${t('back')}</button>
     </section>`, 'check-acuity');
   $('#backChecks').onclick = checks;
   wireDemo();
-  sayP(tp('acuitySetup', { eye: cover }));
+  sayP(setupText);
   const show = () => {
     const o = A.nextOptotype(st);
+    if (scr) {
+      remote.send({ chart: 'acuity', optotype, level: o.level, dir: o.dir, distanceM: ro.distanceM, eye });
+      $('#lvl').textContent = `Line ${A.snellen(o.level)} · on the chart screen`;
+      return;
+    }
     const px = Math.max(6, G.optotypeMm(o.level, distanceMm) * pxPerMm());
     $('#stage').innerHTML = optotype === 'C' ? landoltSvg(o.dir, Math.round(px)) : eSvg(o.dir, Math.round(px));
     $('#lvl').textContent = `Line ${A.snellen(o.level)} · ${Math.round(px)} px`;
@@ -674,7 +857,7 @@ function checkAcuity(eye = 'R', pinhole = false) {
   const answer = (d) => {
     A.respond(st, d);
     if (!st.done) { show(); return; }
-    C.measurements.acuity = C.measurements.acuity || { distanceM: 2 };
+    C.measurements.acuity = C.measurements.acuity || { distanceM: distanceMm / 1000, ...(scr ? { method: 'chart screen' } : {}) };
     C.measurements.acuity.optotype = optotype;
     const rec = C.measurements.acuity[eye] || {};
     const lm = st.best === null ? 1.1 : st.best;
@@ -686,7 +869,7 @@ function checkAcuity(eye = 'R', pinhole = false) {
   };
   $$('[data-d]', main).forEach((b) => b.onclick = () => answer(b.dataset.d));
   let x0 = null; let y0 = null;
-  const stage = $('#stage');
+  const stage = $('#stage') || document.createElement('div'); // no phone chart when the chart screen shows it
   stage.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
   stage.addEventListener('touchend', (e) => {
     if (x0 === null) return;
@@ -711,19 +894,22 @@ function pinholeOffer(eye) {
 
 // ---------------------------------------------------------------- Amsler grid
 function checkAmsler(eye = 'R') {
+  const scr = onScreen('amsler');
   const cell = 5 * pxPerMm(); // 5 mm squares
-  const n = Math.max(8, Math.min(14, Math.floor((Math.min(window.innerWidth, 520) - 48) / cell)));
+  // the full chart is 20 squares (10 cm: the central 20 degrees at 30 cm); a phone fits fewer
+  const n = isPhone() ? Math.max(8, Math.min(14, Math.floor((Math.min(window.innerWidth, 520) - 48) / cell))) : 20;
   const cover = eye === 'R' ? tp('leftEye') : tp('rightEye');
   setScreen(`<section class="card">
       <h2>${t('chk_amsler')} · ${eye === 'R' ? 'Right eye' : 'Left eye'}</h2>
       <p class="say" lang="${C.lang}">${tp('amslerAsk', { eye: cover })}</p>
-      <div class="amsler" style="--cell:${cell}px;--n:${n}"><i></i></div>
+      ${scr ? screenNote('10 cm grid · patient 30 cm from the screen, reading glasses on') : `<div class="amsler" style="--cell:${cell}px;--n:${n}"><i></i></div>`}
       <div class="row gap"><button class="btn big" id="aNo">${tp('no')}${sub('no')}</button><button class="btn big warn" id="aYes">${tp('yes')}${sub('yes')}</button></div>
       ${demoBtn('amsler')}
-      <button class="btn ghost" id="backChecks">← ${t('back')}</button></section>`, 'check-amsler');
+      <button class="btn ghost" id="backChecks">${ic('left')} ${t('back')}</button></section>`, 'check-amsler');
   $('#backChecks').onclick = checks;
   wireDemo();
   sayP(tp('amslerAsk', { eye: cover }));
+  if (scr) remote.send({ chart: 'amsler', eye });
   const rec = (v) => {
     C.measurements.amsler = { ...(C.measurements.amsler || {}), [eye]: v };
     if (eye === 'R') { checkAmsler('L'); return; }
@@ -746,7 +932,7 @@ function checkPd() {
       last = f;
       if (!f) { ro.textContent = t('noFace'); return; }
       const q = G.faceQuality(f.eyes);
-      ro.innerHTML = `<b>${Math.round(f.distanceMm / 10)} cm</b> ${q.ok ? '✓' : `· ${t('holdStraight')}`}`;
+      ro.innerHTML = `<b>${Math.round(f.distanceMm / 10)} cm</b> ${q.ok ? ic('check') : `· ${t('holdStraight')}`}`;
     },
   });
   setTimeout(() => {
@@ -829,17 +1015,19 @@ function summary() {
   setScreen(`
     <section class="card wide">
       <p class="eyebrow">${esc(C.patient.name || 'Patient')} · ${esc(shortCode(C.id))}${C.demo ? ' · demo' : ''}</p>
-      ${profileHtml(prof, C.measurements, C.session.answers)}
+      ${profileHtml(prof, C.measurements, C.session.answers, { collapse: true })}
       <p class="muted small">Asked ${payload.interview.asked} of ${payload.interview.bank} questions (${payload.interview.bank - payload.interview.asked} not relevant for this patient) · about ${mins} min${C.measurements.simulated ? ` · simulated tests: ${C.measurements.simulated.join(', ')}` : ''}</p>
     </section>
-    <button class="btn primary big" id="sendBtn">📤 ${t('sendToOptom')}</button>
+    <button class="btn big" id="tryBtn">${ic('glasses')} ${t('tryOn')}</button>
+    <button class="btn primary big" id="sendBtn">${ic('send')} ${t('sendToOptom')}</button>
     <p id="sendState" class="muted small center"></p>
+    <button class="btn big" id="consultBtn" hidden>${ic('video')} Ask the optometrist for a video consult</button>
     <section class="card passport" id="passportCard" hidden>
       <h2>${t('passport')}</h2>
       <pre lang="${C.lang}">${esc(payload.passportLocal)}</pre>
       ${shareBoxHtml()}
     </section>
-    <button class="btn ghost big" id="nextPt">${t('newPatient')} →</button>`, 'summary');
+    <button class="btn ghost big" id="nextPt">${t('newPatient')} ${ic('right')}</button>`, 'summary');
   $('#sendBtn').onclick = async () => {
     $('#sendBtn').disabled = true;
     await store.putCase({ ...payload, sync: 'queued' });
@@ -847,13 +1035,23 @@ function summary() {
     $('#sendState').textContent = t('queued');
     const n = await store.syncPending();
     const hub = await store.getHubKey({ refresh: false });
-    $('#sendState').textContent = `${n ? `✓ ${t('sent')}` : t('queued')} · 🔐 ${hub ? 'name and phone sealed so only the optometrist can read them' : 'name and phone stay on this phone'}`;
+    $('#sendState').textContent = `${n ? t('sent') : t('queued')} · ${hub ? 'name and phone sealed so only the optometrist can read them' : 'name and phone stay on this phone'}`;
     $('#passportCard').hidden = false;
+    syncNow();
+    if (n) { $('#consultBtn').hidden = false; sentIds = [...new Set([...sentIds, C.id])]; sentNames[C.id] = C.patient.name || shortCode(C.id); }
     updateHeader();
+  };
+  $('#tryBtn').onclick = () => tryOn(api, { back: summary, recTitle: prof.recommendation?.title || '' });
+  $('#consultBtn').onclick = async () => {
+    try {
+      const id = await createCall(store.API, C.id, 'store');
+      openCall({ api: store.API, callId: id, role: 'store', initiator: true, title: `Video consult · ${C.patient.name || shortCode(C.id)}`, side: storeSide(C.patient.name || shortCode(C.id)) });
+    } catch { $('#sendState').textContent = 'Could not start the call. Check the internet and try again.'; }
   };
   wireShare($('#passportCard'), {
     doc: () => ({ text: payload.passportLocal, lang: C.lang }), // first line is the heading
     phone: C.patient.phone, caseRef: C.id, lang: C.lang, code: shortCode(C.id),
+    text: () => shortSms(prof.triage, C.lang, shortCode(C.id)),
   });
   $('#nextPt').onclick = home;
 }
@@ -865,54 +1063,84 @@ function summary() {
 // link may also go by SMS/WhatsApp because the message carries no health data.
 function shareBoxHtml() {
   return `<div class="sharebox">
-    <h3>🔐 ${t('shareSecure')}</h3>
-    <label class="check"><input type="checkbox" class="usePin" checked> ${t('sharePin')}</label>
-    <button class="btn primary mkShare">${t('shareMake')}</button>
+    <h3>Send to the patient by SMS</h3>
+    <label>Patient's mobile number<input class="shPhone" type="tel" inputmode="tel" maxlength="16" autocomplete="off" placeholder="10-digit mobile number"></label>
+    <div class="seg shKind" role="group" aria-label="Kind of message">
+      <button type="button" class="chip on" data-k="link">Secure link (smartphone)</button>
+      <button type="button" class="chip" data-k="text">Short text (any phone)</button></div>
+    <label class="check usePinRow"><input type="checkbox" class="usePin" checked> ${t('sharePin')}</label>
+    <p class="muted small shHint">An encrypted link to the full passport. The PIN is said aloud, never sent.</p>
+    <button class="btn primary mkShare">${ic('send')} Send SMS</button>
     <div class="shareOut" hidden>
-      <div class="qr"></div>
-      <p class="small">${t('shareScan')}</p>
       <p class="pinshow" hidden></p>
-      <p class="muted small">${t('shareSend')}</p>
-      <div class="row gap wrap">
-        <a class="btn smsLink">SMS</a><a class="btn waLink" target="_blank" rel="noopener">WhatsApp</a>
-        <button class="btn copyLink">${t('shareCopy')}</button><button class="btn ghost revokeLink">${t('shareRevoke')}</button>
-      </div>
+      <p class="small shSent"></p>
+      <div class="row gap wrap"><a class="btn primary smsLink">${ic('send')} Open SMS to send</a><a class="btn waLink" target="_blank" rel="noopener">WhatsApp</a>
+        <button class="btn copyLink">${t('shareCopy')}</button><button class="btn ghost revokeLink">${t('shareRevoke')}</button></div>
       <p class="muted small shareNote"></p>
     </div>
     <p class="err shareErr"></p>
   </div>`;
 }
 
-function wireShare(root, { doc, phone, caseRef, lang, code }) {
+// A short SMS any phone can read: no link, only the next step in the
+// patient's language (or the optometrist's own message to them).
+function shortSms(tri, lang, code, msg = '') {
+  const key = ({ emergency: 'red', urgent: 'amber', soon: 'soon' })[tri?.urgency] || (tri?.urgency ? 'green' : (tri?.lane || 'green'));
+  return `${pt(P.title, lang)} ${code}: ${msg || pt(P.lane[key], lang)}${settings.site ? ` (${settings.site})` : ''}`;
+}
+
+function wireShare(root, { doc, phone, caseRef, lang, code, text }) {
   const q = (c) => root.querySelector(c);
   let made = null;
+  let kind = 'link';
+  q('.shPhone').value = phone || '';
+  root.querySelectorAll('[data-k]').forEach((b) => b.onclick = () => {
+    kind = b.dataset.k;
+    root.querySelectorAll('[data-k]').forEach((x) => x.classList.toggle('on', x === b));
+    q('.usePinRow').hidden = kind !== 'link';
+    q('.shHint').textContent = kind === 'link' ? 'An encrypted link to the full passport. The PIN is said aloud, never sent.'
+      : 'Only the next step, in the patient’s language. No link and no test results, so it works on any phone.';
+  });
+  const number = () => q('.shPhone').value.replace(/\D/g, '').slice(-10);
   q('.mkShare').onclick = async () => {
-    q('.mkShare').disabled = true; q('.shareErr').textContent = '';
+    const num = number();
+    if (num.length !== 10) { q('.shareErr').textContent = 'Enter the patient’s 10-digit mobile number.'; return; }
+    q('.shareErr').textContent = '';
+    if (kind === 'text') {
+      const msg = text();
+      q('.smsLink').href = smsLink(num, msg);
+      q('.waLink').href = whatsappLink(num, msg);
+      q('.shSent').textContent = `Message: “${msg}”`;
+      q('.copyLink').hidden = true; q('.revokeLink').hidden = true; q('.pinshow').hidden = true; q('.shareNote').textContent = '';
+      q('.shareOut').hidden = false;
+      return;
+    }
+    q('.mkShare').disabled = true;
     try {
-      const [{ createShareLink }, { qrSvg }] = await Promise.all([import('./share.js'), import('./qr.js')]);
+      const { createShareLink } = await import('./share.js');
       const pin = q('.usePin').checked ? String(crypto.getRandomValues(new Uint32Array(1))[0] % 10000).padStart(4, '0') : undefined;
-      made = await createShareLink(doc(), { pin, kind: 'passport', expiresDays: 7, maxViews: 20, caseRef, actor: settings.operator || 'field', api: store.API });
+      made = made || await createShareLink(doc(), { pin, kind: 'passport', expiresDays: 7, maxViews: 20, caseRef, actor: settings.operator || 'field', api: store.API });
       const msg = `${pt(P.title, lang)} · ${code}: ${made.url}`;
-      q('.qr').innerHTML = qrSvg(made.url, { cellSize: 4, label: 'secure link' }) || `<code>${esc(made.url)}</code>`;
       q('.pinshow').hidden = !pin;
       q('.pinshow').textContent = pin ? `PIN ${pin}` : '';
-      q('.smsLink').href = smsLink(phone, msg);
-      q('.waLink').href = whatsappLink(phone, msg);
-      q('.copyLink').onclick = () => navigator.clipboard?.writeText(made.url);
+      q('.smsLink').href = smsLink(num, msg);
+      q('.waLink').href = whatsappLink(num, msg);
+      q('.copyLink').hidden = false; q('.revokeLink').hidden = false;
+      q('.copyLink').onclick = () => navigator.clipboard?.writeText(made.url).catch(() => {});
+      q('.shSent').textContent = `Secure link ready for ${num}. Tap Open SMS to send it${pin ? ', then say the PIN to the patient' : ''}.`;
       q('.shareNote').textContent = t('shareNote', { days: 7, views: made.maxViews || 20 });
       q('.shareOut').hidden = false;
-      q('.mkShare').hidden = true;
     } catch (e) {
       q('.shareErr').textContent = `${t('shareFailed')} (${e.code || e.message || e})`;
-      q('.mkShare').disabled = false;
     }
+    q('.mkShare').disabled = false;
   };
   q('.revokeLink').onclick = async () => {
     if (!made) return;
     try {
       const { revokeShare } = await import('./share.js');
       await revokeShare(made.id, made.deleteToken, { api: store.API });
-      q('.shareOut').innerHTML = `<p class="small">✓ ${t('shareRevoked')}</p>`;
+      q('.shareOut').innerHTML = `<p class="small">${t('shareRevoked')}</p>`;
     } catch (e) { q('.shareErr').textContent = String(e.code || e.message || e); }
   };
 }
@@ -921,30 +1149,231 @@ function wireShare(root, { doc, phone, caseRef, lang, code }) {
 async function inbox() {
   await store.syncPending();
   await store.pullReviews();
+  await syncNow();
   const list = await store.allCases();
+  const seenBefore = load('dd.seenReplies', {});
+  save('dd.seenReplies', Object.fromEntries(list.filter((c) => c.review).map((c) => [c.id, 1])));
+  const initials = (n) => n.replace(/[^\p{L}\s]/gu, '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(-2).join('').toUpperCase() || '#';
   const rows = list.map((c) => {
-    if (c.unreadable) return `<li class="inrow muted">${esc(shortCode(c.id))}: encrypted with an older PIN</li>`;
-    const lane = c.profile?.triage?.lane || 'green';
+    if (c.unreadable) return `<li class="muted small">${esc(shortCode(c.id))}: encrypted with an older PIN</li>`;
+    const tri = c.profile?.triage || {};
     const rv = c.review;
-    return `<li class="inrow"><span class="dot ${lane}"></span><div><b>${esc(c.patient?.name || shortCode(c.id))}</b>
-      <span class="muted small">${esc(c.profile?.summary || '')}</span>
-      <span class="small">${c.sync === 'sent' ? (rv ? `🩺 ${esc(rv.decisionLabel || rv.decision)}: ${esc(rv.nextStep || '')}` : 'Waiting for optometrist') : t('queued')}</span></div>
-      ${rv ? `<button class="btn" data-share="${esc(c.id)}">🔐 ${t('shareSecure')}</button>` : ''}</li>`;
-  }).join('') || '<li class="muted">No cases on this phone yet.</li>';
-  setScreen(`<section class="card wide"><h2>${t('results')}</h2><ul class="inbox">${rows}</ul></section>
+    const name = c.patient?.name || shortCode(c.id);
+    const age = c.patient?.age ?? c.interview?.answers?.age;
+    const st = rv ? ['reviewed', rv.decisionLabel || 'Reviewed'] : c.sync === 'sent' ? ['sent', 'With the optometrist'] : ['queued', 'Not sent yet'];
+    const tier = tri.urgency && tri.urgency !== 'none' ? `<span class="tier ${esc(tri.urgency)}">${esc(TIERS[tri.urgency]?.label || tri.urgency)}</span>` : '';
+    const when = c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
+    return `<li><details class="prow ${esc(tri.lane || 'green')}" ${rv && !seenBefore[c.id] ? 'open' : ''}>
+      <summary><em class="av" aria-hidden="true">${esc(initials(name))}</em><span class="pname">${esc(name)}</span>
+        <span class="pmeta">${[age != null ? `${age} y` : '', LANGS[c.lang], when].filter(Boolean).join(' · ')}</span>
+        <span class="pstat">${tier}<span class="status ${st[0]}">${esc(st[1])}</span></span></summary>
+      <div class="pbody"><p class="small muted">${esc(c.profile?.summary || '')}</p>
+        ${rv ? `<p class="small"><b>${esc(rv.decisionLabel || rv.decision)}</b>: ${esc(rv.nextStep || '')}</p>` : ''}
+        ${rv?.comments ? `<p class="small comment">${esc(rv.comments)}</p>` : ''}
+        ${rv ? `<button class="btn small" data-share="${esc(c.id)}">${ic('shield')} ${t('shareSecure')}</button>` : ''}</div></details></li>`;
+  }).join('') || '<li class="muted">No patients yet.</li>';
+  const demos = PERSONAS.map((p) => `<button class="demo" data-demo="${p.key}"><em class="av" aria-hidden="true">${esc(p.name.replace(/[^\p{L}\s]/gu, '').split(/\s+/).filter(Boolean).map((w) => w[0]).slice(-2).join('').toUpperCase())}</em><b>${esc(p.name)}</b><span>${esc(p.blurb)}</span><i>${LANGS[p.lang]}</i></button>`).join('');
+  setScreen(`<section class="card wide"><div class="row between wrap"><h2>${t('tabPatients')}</h2><button class="btn small" id="refresh">${ic('refresh')} Refresh</button></div>
+      <ul class="inbox plist">${rows}</ul></section>
     <section class="card passport" id="inboxShare" hidden></section>
-    <div class="row gap"><button class="btn" id="refresh">↻ Refresh</button><button class="btn ghost" id="home">← Home</button></div>`, 'inbox');
+    <section class="card"><h2>${t('demo')}</h2>
+      <p class="muted small">Plays the interview with a scripted patient so you can see the adaptive questions, the tests and the profile without a microphone.</p>
+      <div class="demos">${demos}</div></section>`, 'patients');
+  $$('.demo', main).forEach((b) => b.onclick = () => {
+    const f = load('dd.flags', { demoTried: false }); f.demoTried = true; save('dd.flags', f);
+    const p = PERSONA_BY_KEY[b.dataset.demo]; startCase(p.lang, p);
+  });
   $$('[data-share]', main).forEach((b) => b.onclick = () => {
     const c = list.find((x) => x.id === b.dataset.share);
     const text = passportText({ id: c.id, patient: c.patient, profile: c.profile, answers: c.interview?.answers, review: c.review }, c.lang);
     const box = $('#inboxShare');
     box.hidden = false;
     box.innerHTML = `<h2>${esc(c.patient?.name || shortCode(c.id))}</h2><pre lang="${c.lang}">${esc(text)}</pre>${shareBoxHtml()}`;
-    wireShare(box, { doc: () => ({ text, lang: c.lang }), phone: c.patient?.phone, caseRef: c.id, lang: c.lang, code: shortCode(c.id) });
+    wireShare(box, { doc: () => ({ text, lang: c.lang }), phone: c.patient?.phone, caseRef: c.id, lang: c.lang, code: shortCode(c.id),
+      text: () => shortSms(c.profile?.triage, c.lang, shortCode(c.id), c.review?.messageToPatient) });
     box.scrollIntoView({ behavior: 'smooth' });
   });
   $('#refresh').onclick = inbox;
-  $('#home').onclick = home;
+}
+
+// ---------------------------------------------------------------- tools tab
+function tools() {
+  setScreen(`<section class="card wide"><h2>${t('tabTools')}</h2>
+      ${setupCardHtml()}
+      ${screenCard()}
+      <section class="tools">
+        <button class="tool" id="rulesBtn">${ic('rules')}<span>${t('rules')}</span></button>
+        <button class="tool" id="calBtn">${ic('ruler')}<span>${t('calibrate')}</span></button>
+        <button class="tool" id="checkBtn">${ic('phone')}<span>Phone check</span></button>
+        <a class="tool" href="display.html" target="_blank" rel="noopener">${ic('monitor')}<span>${t('screenTitle')} (open on the laptop)</span></a>
+        <a class="tool" href="portal.html" target="_blank" rel="noopener">${ic('external')}<span>Optometrist portal</span></a>
+      </section></section>`, 'tools');
+  $('#calBtn').onclick = calibration;
+  $('#checkBtn').onclick = phoneCheck;
+  $('#rulesBtn').onclick = () => rulesScreen(tools);
+  wireSetup(tools);
+  wireScreenCard(tools);
+}
+
+// Set-up depends on the device: a phone needs its camera distance and a chart
+// screen; a computer that shows the charts itself needs its screen size.
+function setupSteps() {
+  const flags = load('dd.flags', { demoTried: false });
+  return isPhone()
+    ? [{ done: Boolean(calib.focalNorm), label: t('hSetupCamera'), go: 'cal' }, { done: remote.paired(), label: t('pairScreen'), go: 'pair' }, { done: Boolean(flags.demoTried), label: t('hSetupDemo'), go: 'demo' }]
+    : [{ done: Boolean(calib.pxPerMm), label: t('hSetupScreen'), go: 'cal' }, { done: Boolean(flags.demoTried), label: t('hSetupDemo'), go: 'demo' }];
+}
+function setupCardHtml() {
+  const st = setupSteps();
+  const done = st.filter((x) => x.done).length;
+  return `<section class="card setup"><div class="row between"><h2>${isPhone() ? t('hSetup') : 'Get this computer ready'}</h2><span class="muted small mono">${done}/${st.length}</span></div>
+    <div class="progress"><i style="width:${Math.round((done / st.length) * 100)}%"></i></div>
+    <ul class="steps">${st.map((x) => `<li class="${x.done ? 'done' : ''}"><button data-go="${x.go}">${ic(x.done ? 'check' : 'plus', { size: 16 })}<span>${x.label}</span></button></li>`).join('')}</ul></section>`;
+}
+function wireSetup(back) {
+  $$('[data-go]', main).forEach((b) => b.onclick = () => ({ cal: calibration, pair: () => pairScreen(back), demo: () => inbox() }[b.dataset.go])());
+}
+// Before the first patient on a phone that is not set up yet: offer set-up, allow skipping.
+function setupGate(go) {
+  let skipped = false;
+  try { skipped = Boolean(sessionStorage.getItem('dd.setupSkip')); } catch { /* ignore */ }
+  if (!isPhone() || skipped || setupSteps().every((x) => x.done)) { go(); return; }
+  setScreen(`${setupCardHtml()}
+    <p class="small muted">Charts show on the chart screen and the camera measures distances, so both work better set up first. You can still start now.</p>
+    <div class="row gap wrap"><button class="btn primary" id="gateTools">${ic('sliders')} Set up in Tools</button><button class="btn" id="gateGo">Start the patient anyway</button></div>`, 'setup-gate');
+  wireSetup(home);
+  $('#gateTools').onclick = tools;
+  $('#gateGo').onclick = () => { try { sessionStorage.setItem('dd.setupSkip', '1'); } catch { /* ignore */ } go(); };
+}
+
+// ---------------------------------------------------------------- shop dashboard
+// Stock, sales and patients for the shop. Kept encrypted on the device and in
+// the shop account's sync (between devices the latest change wins).
+const rupee = (n) => `₹${Math.round(n || 0).toLocaleString('en-IN')}`;
+async function loadShop() { return (await store.getSecret('shopdata')) || { stock: [], sales: [], updatedAt: '' }; }
+async function saveShop(d) { d.updatedAt = new Date().toISOString(); await store.putSecret('shopdata', d); account.push('shop', 'data', d); }
+const SAMPLE_STOCK = [
+  ['Rectangle acetate frame, black', 'frame', 14, 1200, 4], ['Round metal frame, gold', 'frame', 3, 1800, 4], ['Cat-eye acetate frame, tortoise', 'frame', 6, 1500, 3],
+  ['Kids flexible frame, blue', 'frame', 0, 900, 3], ['Single-vision lens pair, 1.56', 'lens', 40, 600, 10], ['Single-vision lens pair, anti-reflective', 'lens', 22, 1100, 8],
+  ['Progressive lens pair', 'lens', 5, 4200, 4], ['Office lens pair', 'lens', 2, 3200, 3], ['Photochromic lens pair', 'lens', 9, 2400, 4],
+  ['Reading glasses +2.00', 'ready', 12, 350, 5], ['Lens cleaning kit', 'accessory', 30, 120, 10],
+].map(([name, type, qty, price, reorder], i) => ({ id: `s${i + 1}`, name, type, qty, price, reorder }));
+const TYPE_LABEL = { frame: 'Frame', lens: 'Lens', ready: 'Ready readers', accessory: 'Accessory' };
+const stockStatus = (it) => (it.qty <= 0 ? ['out', 'Out of stock'] : it.qty <= Math.max(1, Math.floor(it.reorder / 2)) ? ['reorder', 'Reorder'] : it.qty <= it.reorder ? ['low', `${it.qty} left`] : ['ok', 'In stock']);
+
+async function shopScreen(filter = 'all') {
+  const [d, cases] = await Promise.all([loadShop(), store.allCases().catch(() => [])]);
+  const real = cases.filter((c) => !c.unreadable);
+  const now = new Date();
+  const inMonth = (iso) => { const x = new Date(iso); return x.getMonth() === now.getMonth() && x.getFullYear() === now.getFullYear(); };
+  const monthSales = d.sales.filter((x) => inMonth(x.at));
+  const low = d.stock.filter((it) => stockStatus(it)[0] !== 'ok');
+  const days = lastDays(14);
+  const perDay = days.map((dd) => d.sales.filter((x) => new Date(x.at).toDateString() === dd.key).reduce((a, x) => a + x.amount, 0));
+  const byState = {}; const byPin = {};
+  for (const c of real) {
+    const pin = c.patient?.pin; const st = pinToState(pin);
+    if (st) byState[st] = (byState[st] || 0) + 1;
+    if (pin) byPin[pin] = (byPin[pin] || 0) + 1;
+  }
+  const shown = d.stock.filter((it) => filter === 'all' || (filter === 'low' ? stockStatus(it)[0] !== 'ok' : it.type === filter));
+  setScreen(`
+    <section class="band">
+      <p class="eyebrow">${esc(settings.site)} · ${esc(now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }))}</p>
+      <h1>Shop</h1>
+      <section class="stats">
+        <div class="stat"><span>Patients this month</span><b>${real.filter((c) => c.createdAt && inMonth(c.createdAt)).length}</b></div>
+        <div class="stat"><span>Glasses sold</span><b>${monthSales.length}</b></div>
+        <div class="stat"><span>Sales this month</span><b>${rupee(monthSales.reduce((a, x) => a + x.amount, 0))}</b></div>
+        <div class="stat"><span>Items to reorder</span><b>${low.length}</b></div>
+      </section>
+    </section>
+    <div class="dash">
+      <section class="card"><div class="row between wrap gap"><h2>Sales, last 14 days</h2><button class="btn small primary" id="saleBtn">${ic('plus')} Record a sale</button></div>
+        ${barChart({ labels: days.map((x, i) => (i % 2 ? '' : x.label)), title: 'Sales per day in rupees', stacked: false, series: [{ name: 'Sales', color: 'var(--accent)', values: perDay }] })}</section>
+      <section class="card"><h2>Patients by area</h2>${indiaMap(byState)}
+        ${Object.keys(byPin).length ? `<h3>Top PIN codes</h3>${hbars(Object.entries(byPin).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v]) => ({ label: k, value: v })))}` : '<p class="muted small">PIN codes appear here as patients are registered with one.</p>'}</section>
+    </div>
+    <div id="shopForm"></div>
+    <section class="card"><div class="row between wrap gap"><h2>Stock</h2><div class="row gap wrap">
+        <button class="btn small" id="addItem">${ic('plus')} Add item</button>${d.stock.length ? '' : '<button class="btn small ghost" id="sampleStock">Load sample stock</button>'}</div></div>
+      <div class="seg" id="stockFilter">${[['all', 'All', d.stock.length], ['frame', 'Frames'], ['lens', 'Lenses'], ['low', 'To reorder', low.length]].map(([k, l, n]) => `<button class="chip ${filter === k ? 'on' : ''}" data-sf="${k}">${l}${n !== undefined ? ` · ${n}` : ''}</button>`).join('')}</div>
+      ${shown.length ? `<div class="dtable-wrap"><table class="dtable stock"><thead><tr><th>Item</th><th>Type</th><th>In stock</th><th>Price</th><th>Status</th></tr></thead><tbody>
+        ${shown.map((it) => { const [cls, lbl] = stockStatus(it); return `<tr><td><b>${esc(it.name)}</b></td><td>${esc(TYPE_LABEL[it.type] || it.type)}</td>
+          <td><span class="qty"><button data-dq="-1" data-id="${esc(it.id)}" aria-label="One less">−</button><b class="num">${it.qty}</b><button data-dq="1" data-id="${esc(it.id)}" aria-label="One more">+</button></span></td>
+          <td class="num">${rupee(it.price)}</td><td><span class="status ${cls}">${esc(lbl)}</span></td></tr>`; }).join('')}</tbody></table></div>`
+    : '<p class="muted small">No stock yet. Add items, or load the sample list to try it.</p>'}
+    </section>
+    <section class="card sales"><h2>Recent sales</h2>
+      ${d.sales.length ? `<div class="dtable-wrap"><table class="dtable"><thead><tr><th>Date</th><th>Patient</th><th>Items</th><th>Amount</th></tr></thead><tbody>
+        ${d.sales.slice(-8).reverse().map((x) => `<tr><td class="num">${esc(new Date(x.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }))}</td><td>${esc(x.patient || 'Walk-in')}</td><td>${esc(x.items.map((i) => i.name).join(', '))}</td><td class="num"><b>${rupee(x.amount)}</b></td></tr>`).join('')}</tbody></table></div>`
+    : '<p class="muted small">No sales recorded yet.</p>'}</section>`, 'shop');
+  $$('[data-sf]', main).forEach((b) => b.onclick = () => shopScreen(b.dataset.sf));
+  $$('[data-dq]', main).forEach((b) => b.onclick = async () => {
+    const it = d.stock.find((x) => x.id === b.dataset.id); if (!it) return;
+    it.qty = Math.max(0, it.qty + Number(b.dataset.dq)); await saveShop(d); shopScreen(filter);
+  });
+  const ss = $('#sampleStock'); if (ss) ss.onclick = async () => { d.stock = SAMPLE_STOCK.map((x) => ({ ...x })); await saveShop(d); shopScreen(); };
+  const closeForm = () => { $('#shopForm').innerHTML = ''; };
+  $('#addItem').onclick = () => {
+    $('#shopForm').innerHTML = `<form class="card shopform" id="itemForm"><h2>Add a stock item</h2>
+      <div class="row gap wrap"><label>Name<input id="iName" maxlength="80"></label><label>Type<select id="iType">${Object.entries(TYPE_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label></div>
+      <div class="row gap wrap"><label>Quantity<input id="iQty" type="number" min="0" value="1"></label><label>Price (₹)<input id="iPrice" type="number" min="0" value="0"></label><label>Reorder when at<input id="iRe" type="number" min="0" value="3"></label></div>
+      <div class="row gap"><button class="btn primary" type="submit">Save item</button><button class="btn ghost" type="button" id="formX">Cancel</button></div></form>`;
+    $('#itemForm').onsubmit = async (e) => {
+      e.preventDefault();
+      if (!$('#iName').value.trim()) return;
+      d.stock.push({ id: `s${Date.now()}`, name: $('#iName').value.trim(), type: $('#iType').value, qty: Number($('#iQty').value) || 0, price: Number($('#iPrice').value) || 0, reorder: Number($('#iRe').value) || 0 });
+      await saveShop(d); shopScreen(filter);
+    };
+    $('#formX').onclick = closeForm;
+    $('#itemForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+  $('#saleBtn').onclick = () => {
+    const frames = d.stock.filter((x) => x.type === 'frame' && x.qty > 0);
+    const lenses = d.stock.filter((x) => (x.type === 'lens' || x.type === 'ready') && x.qty > 0);
+    const pats = real.slice(0, 30);
+    const opt = (list, none) => `<option value="">${none}</option>${list.map((x) => `<option value="${esc(x.id)}">${esc(x.name)} · ${rupee(x.price)} (${x.qty} left)</option>`).join('')}`;
+    $('#shopForm').innerHTML = `<form class="card shopform" id="saleForm"><h2>Record a sale</h2>
+      <label>Patient<select id="saleCase"><option value="">Walk-in customer</option>${pats.map((c) => `<option value="${esc(c.id)}">${esc(c.patient?.name || shortCode(c.id))} · ${esc(shortCode(c.id))}</option>`).join('')}</select></label>
+      <div class="row gap wrap"><label>Frame<select id="saleFrame">${opt(frames, 'No frame')}</select></label><label>Lenses<select id="saleLens">${opt(lenses, 'No lenses')}</select></label></div>
+      <label>Amount (₹)<input id="salePrice" type="number" min="0"></label>
+      <div class="row gap"><button class="btn primary" type="submit" id="saleSave">Save sale</button><button class="btn ghost" type="button" id="formX">Cancel</button></div><p class="err" id="saleErr"></p></form>`;
+    if (pats.length) $('#saleCase').value = pats[0].id;
+    if (frames.length) $('#saleFrame').value = frames[0].id;
+    if (lenses.length) $('#saleLens').value = lenses[0].id;
+    const sum = () => { const f = d.stock.find((x) => x.id === $('#saleFrame').value); const l = d.stock.find((x) => x.id === $('#saleLens').value); $('#salePrice').value = (f?.price || 0) + (l?.price || 0); };
+    $('#saleFrame').onchange = sum; $('#saleLens').onchange = sum; sum();
+    $('#saleForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const items = [$('#saleFrame').value, $('#saleLens').value].map((id) => d.stock.find((x) => x.id === id)).filter(Boolean);
+      if (!items.length) { $('#saleErr').textContent = 'Choose a frame or lenses.'; return; }
+      items.forEach((x) => { x.qty = Math.max(0, x.qty - 1); });
+      const c = real.find((x) => x.id === $('#saleCase').value);
+      d.sales.push({ id: `v${Date.now()}`, at: new Date().toISOString(), caseId: c?.id || null, patient: c ? (c.patient?.name || shortCode(c.id)) : '',
+        items: items.map((x) => ({ id: x.id, name: x.name, price: x.price })), amount: Number($('#salePrice').value) || 0 });
+      await saveShop(d); shopScreen(filter);
+    };
+    $('#formX').onclick = closeForm;
+    $('#saleForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+}
+
+// ---------------------------------------------------------------- navigation
+// Top-level sections: tabs in the header on a laptop, a bottom bar on a phone.
+// Hidden while a patient is being seen, so that screen stays focused.
+const TAB_OF = { home: 'home', patients: 'patients', shop: 'shop', tools: 'tools', calibration: 'tools', phonecheck: 'tools', pair: 'tools', rules: 'tools', 'account-panel': 'account' };
+const TABS = [['home', 'home', 'tabHome'], ['patients', 'users', 'tabPatients'], ['shop', 'chart', 'tabShop'], ['tools', 'sliders', 'tabTools'], ['account', 'user', 'tabAccount']];
+const OPEN_TAB = { home: () => home(), patients: () => inbox(), shop: () => shopScreen(), tools: () => tools(), account: () => accountPanel() };
+function updateTabs(name) {
+  const bar = document.getElementById('tabbar');
+  if (!bar) return;
+  const tab = TAB_OF[name];
+  bar.hidden = !tab || !store.isUnlocked();
+  document.body.classList.toggle('has-tabs', !bar.hidden);
+  if (bar.hidden) return;
+  bar.innerHTML = TABS.map(([k, icon, label]) => `<button type="button" id="tab${k[0].toUpperCase()}${k.slice(1)}" data-tab="${k}" class="${k === tab ? 'on' : ''}" aria-current="${k === tab ? 'page' : 'false'}">${ic(icon, { size: 20 })}<span>${t(label)}</span></button>`).join('');
+  bar.querySelectorAll('[data-tab]').forEach((b) => b.onclick = () => OPEN_TAB[b.dataset.tab]());
 }
 
 // ====================================================================== calibration
@@ -965,7 +1394,7 @@ function calibration() {
       <button class="btn" id="saveCam" disabled>Save camera at 40 cm</button>
       <p class="muted small" id="camOut">${calib.focalNorm ? 'Camera calibrated' : 'Camera not calibrated (assumes a 63° lens)'}</p>
     </section>
-    <button class="btn ghost" id="home">← Home</button>`, 'calibration');
+    <button class="btn ghost" id="home">${ic('left')} Home</button>`, 'calibration');
   $('#cardRange').oninput = (e) => { $('#cardbox').style.width = `${e.target.value}px`; };
   $('#saveScreen').onclick = () => { calib.pxPerMm = Number($('#cardRange').value) / G.ID_CARD_MM; save('dd.calibration', calib); $('#scrOut').textContent = `Saved: ${calib.pxPerMm.toFixed(2)} px/mm`; };
   $('#home').onclick = home;
@@ -1008,11 +1437,11 @@ function recordFailure() {
 
 function pinScreen(mode, next) {
   setScreen(`<section class="card pin">
-    <h2>🔐 ${mode === 'set' ? t('pinSetTitle') : t('pinEnterTitle')}</h2>
+    <h2>${mode === 'set' ? t('pinSetTitle') : t('pinEnterTitle')}</h2>
     ${mode === 'set' ? `<p class="muted small">${t('pinSetHint')}</p>` : ''}
     <input id="pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••••" aria-label="PIN">
     ${mode === 'set' ? `<input id="pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="${esc(t('pinConfirm'))}" aria-label="${esc(t('pinConfirm'))}">` : ''}
-    <button class="btn primary big" id="pinGo">${mode === 'set' ? '✓' : '🔓'} ${t('next')}</button>
+    <button class="btn primary big" id="pinGo">${ic(mode === 'set' ? 'check' : 'unlock')} ${t('next')}</button>
     <p id="pinErr" class="err" role="alert"></p>
     ${mode === 'enter' ? `<button class="btn ghost small" id="pinReset">${t('forgotPin')}</button>` : ''}
   </section>`, `pin-${mode}`);
@@ -1047,6 +1476,7 @@ function pinScreen(mode, next) {
 }
 
 async function lockNow() {
+  if (store.isEphemeral()) { await signOutHere(); return; }
   if (C && store.isUnlocked()) { const { still, ...s } = C; await store.saveDraft(s).catch(() => {}); }
   store.lock();
   C = null;
@@ -1057,7 +1487,7 @@ async function lockNow() {
 // Pre-flight for a field session or a demo: everything that can silently fail.
 async function phoneCheck() {
   const rows = [];
-  const add = (label, ok, detail = '') => rows.push(`<li class="pc ${ok === null ? 'na' : ok ? 'ok' : 'bad'}"><b>${ok === null ? '–' : ok ? '✓' : '✗'} ${esc(label)}</b><span class="muted small">${esc(detail)}</span></li>`);
+  const add = (label, ok, detail = '') => rows.push(`<li class="pc ${ok === null ? 'na' : ok ? 'ok' : 'bad'}"><b>${ok === null ? '–' : ic(ok ? 'check' : 'x', { size: 16 })} ${esc(label)}</b><span class="muted small">${esc(detail)}</span></li>`);
   add('Secure connection (HTTPS)', window.isSecureContext, window.isSecureContext ? location.origin : 'Microphone and camera need HTTPS (or localhost).');
   add('Speech recognition', V.sttSupported(), V.sttSupported() ? 'Chrome speech recognition' : 'Not in this browser: tap mode only');
   for (const [k, v] of Object.entries(LANGS)) {
@@ -1081,11 +1511,11 @@ async function phoneCheck() {
   add('Cases waiting to send', true, String(await store.pendingCount()));
   setScreen(`<section class="card"><h2>Phone check</h2><ul class="pcheck">${rows.join('')}</ul>
       <h3>Try it</h3>
-      <div class="row gap wrap">${Object.entries(LANGS).map(([k, v]) => `<button class="chip" data-say="${k}">🔊 ${v}</button>`).join('')}</div>
-      <div class="row gap wrap"><button class="btn" id="micTest">🎙 Test microphone (${LANGS[settings.lang]})</button><button class="btn" id="camTest">📷 Test camera + face model</button></div>
+      <div class="row gap wrap">${Object.entries(LANGS).map(([k, v]) => `<button class="chip" data-say="${k}">${ic('volume', { size: 16 })} ${v}</button>`).join('')}</div>
+      <div class="row gap wrap"><button class="btn" id="micTest">${ic('mic')} Test microphone (${LANGS[settings.lang]})</button><button class="btn" id="camTest">${ic('camera')} Test camera + face model</button></div>
       <div id="tryOut" class="muted"></div>
       <p class="muted small">App ${APP_VERSION} · rules ${RULES_VERSION}</p></section>
-    <button class="btn ghost" id="home">← Home</button>`, 'phonecheck');
+    <button class="btn ghost" id="home">${ic('left')} Home</button>`, 'phonecheck');
   const ageQ = QUESTION_BY_ID.age;
   $$('[data-say]', main).forEach((b) => { b.onclick = () => V.speak(questionText(ageQ, E.stateOf(E.createSession()), b.dataset.say), b.dataset.say); });
   $('#micTest').onclick = async () => {
@@ -1109,7 +1539,7 @@ async function phoneCheck() {
       const ms = Math.round(performance.now() - t0);
       stop = face.track(vid, lm, (f) => {
         const ro = $('#readout'); if (!ro) return;
-        ro.innerHTML = f ? `face ✓ <b>${Math.round(f.distanceMm / 10)} cm</b> · ready in ${ms} ms` : `looking for a face · ready in ${ms} ms`;
+        ro.innerHTML = f ? `face found · <b>${Math.round(f.distanceMm / 10)} cm</b> · ready in ${ms} ms` : `looking for a face · ready in ${ms} ms`;
       }, focalPxFor);
     } catch (e) { if (!cancelled) out.textContent = `Camera or face model failed: ${e.message || e}`; }
   };
@@ -1125,9 +1555,163 @@ setInterval(() => { if (store.idleTooLong()) lockNow(); }, 30000);
 
 async function boot() {
   document.documentElement.lang = settings.uiLang;
-  if (!store.hasVault()) pinScreen('set', route);
-  else if (!store.isUnlocked()) pinScreen('enter', route);
-  else route();
+  await Promise.race([pullRules(), new Promise((r) => setTimeout(r, 1500))]);
+  // shared or camp computer: the account key lived only in the closed tab
+  if (account.signedIn() && account.info().shared) { await signOutHere(); return; }
+  if (!store.hasVault()) {
+    if (account.signedIn()) await account.signout(); // its key was in the wiped vault: sign in again
+    if (!localStorage.getItem('dd.localOnly')) { accountScreen(); return; }
+    pinScreen('set', afterUnlock);
+  } else if (!store.isUnlocked()) pinScreen('enter', afterUnlock);
+  else afterUnlock();
+}
+async function afterUnlock() {
+  if (account.signedIn() && !account.hasKey()) {
+    const k = await store.getSecret('dataKey');
+    if (k) await account.useKey(k);
+  }
+  route();
+  syncNow().then((n) => { if (n && main.dataset.screen === 'home') home(); });
+}
+
+// ---------------------------------------------------------------- shop account
+// Sign in on the shop's own phone (then a PIN for quick unlock) or on a shared
+// or camp computer (nothing kept after sign-out). See account.js.
+function accountScreen(after = null) {
+  const canShare = !store.hasVault();
+  let mode = 'in';
+  setScreen(`<section class="card acct">
+      <h2>${ic('user')} ${t('accTitle')}</h2>
+      <div class="seg" id="accMode"><button class="chip on" data-mode="in" type="button">${t('accSignIn')}</button><button class="chip" data-mode="up" type="button">${t('accCreate')}</button></div>
+      <form id="accForm" novalidate>
+        <label id="shopWrap" hidden>${t('accShopName')}<input id="accShop" autocomplete="organization" maxlength="80"></label>
+        <label>${t('accLogin')}<input id="accLogin" autocomplete="username" maxlength="254"></label>
+        <label>${t('accPassword')}<input id="accPass" type="password" autocomplete="current-password" maxlength="200"></label>
+        ${canShare ? `<label class="check"><input type="checkbox" id="accShared"> ${t('accShared')}</label>` : ''}
+        <button class="btn primary big" type="submit" id="accGo">${t('accSignIn')}</button>
+        <p class="err" id="accErr" role="alert"></p>
+      </form>
+      <p class="muted small">Your password never leaves this device. It unlocks your shop's encryption key, so the hub cannot read your shop's records. On a shared computer nothing stays after you sign out.</p>
+      ${after ? `<button class="btn ghost" id="accBack">${ic('left')} ${t('back')}</button>` : `<button class="btn ghost" id="accLocalBtn">${t('accLocal')}</button>`}
+    </section>`, 'account');
+  const setMode = (m) => {
+    mode = m;
+    $$('[data-mode]', main).forEach((b) => b.classList.toggle('on', b.dataset.mode === m));
+    $('#shopWrap').hidden = m !== 'up';
+    $('#accGo').textContent = m === 'up' ? t('accCreate') : t('accSignIn');
+    $('#accPass').autocomplete = m === 'up' ? 'new-password' : 'current-password';
+  };
+  $$('[data-mode]', main).forEach((b) => b.onclick = () => setMode(b.dataset.mode));
+  $('#accForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const login = $('#accLogin').value.trim();
+    const password = $('#accPass').value;
+    const shared = Boolean($('#accShared')?.checked);
+    if (password.length < 8) { $('#accErr').textContent = t('accWeak'); return; }
+    if (mode === 'up' && $('#accShop').value.trim().length < 2) { $('#accErr').textContent = t('accShopName'); return; }
+    $('#accGo').disabled = true;
+    $('#accErr').textContent = t('accSigningIn');
+    try {
+      if (mode === 'up') await account.signup({ login, password, shopName: $('#accShop').value.trim(), shared });
+      else await account.signin({ login, password, shared });
+    } catch (err) {
+      $('#accGo').disabled = false;
+      const m = err.message;
+      $('#accErr').textContent = m === 'exists' ? t('accExists') : m === 'bad' ? t('accBad') : m === 'locked' ? 'Too many wrong tries: wait 15 minutes.'
+        : m === 'invalid' ? 'Enter a 10-digit phone number or an email.' : 'Could not reach the hub. Check the internet and try again.';
+      return;
+    }
+    if (mode === 'up') { settings.site = account.info().shop.name; save('dd.settings', settings); }
+    if (after) { await store.putSecret('dataKey', await account.exportKey()); await syncNow(); after(); return; }
+    if (shared) { await store.ephemeral(); afterUnlock(); return; }
+    pinScreen('set', async () => { await store.putSecret('dataKey', await account.exportKey()); afterUnlock(); });
+  };
+  const lb = $('#accLocalBtn'); if (lb) lb.onclick = () => { localStorage.setItem('dd.localOnly', '1'); pinScreen('set', afterUnlock); };
+  const bb = $('#accBack'); if (bb) bb.onclick = () => after();
+}
+
+async function accountPanel() {
+  const a = account.info();
+  const langChips = Object.keys(LANGS).map((k) => `<button class="chip lang ${settings.uiLang === k ? 'on' : ''}" data-ulang="${k}" lang="${k}" aria-pressed="${settings.uiLang === k}">${LANGS[k]}</button>`).join('');
+  setScreen(`${a ? `<section class="card">
+      <h2>${ic('user')} ${esc(a.shop.name)}</h2>
+      <p class="muted small">${esc(a.shop.login)} · ${a.shared ? 'shared computer: signed out when this tab closes' : 'this device stays signed in for 30 days'}</p>
+      <h3>${t('accDevices')}</h3><ul class="pcheck" id="devList"><li class="muted small">…</li></ul>
+      <div class="row gap wrap"><button class="btn" id="syncBtn">${ic('refresh')} Sync now</button><button class="btn warn" id="outBtn">${t('accSignOut')}</button></div>
+      <p class="muted small" id="syncOut"></p></section>`
+    : `<section class="card"><h2>${ic('user')} ${t('accTitle')}</h2>
+      <p class="small">Sign in to keep this phone in step with the shop's other devices, or to work from a camp computer.</p>
+      <button class="btn primary" id="signInBtn">${t('accSignIn')}</button></section>`}
+    <details class="card"><summary>Settings: app language, shop, listening</summary>
+      <h3 class="sub">${t('uiLanguage')}</h3><div class="seg">${langChips}</div>
+      <label>${t('site')}<input id="siteIn" value="${esc(settings.site)}"></label>
+      <label>Type<select id="siteType"><option value="store" ${settings.siteType === 'store' ? 'selected' : ''}>Optical store</option><option value="camp" ${settings.siteType === 'camp' ? 'selected' : ''}>Eye camp</option></select></label>
+      <label>${t('operator')}<input id="opIn" value="${esc(settings.operator)}"></label>
+      <label>${t('listenPatience')}<select id="listenSel">${Object.entries(LISTEN).map(([k, v]) => `<option value="${k}" ${settings.listen === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></label>
+      <p class="muted small">App ${APP_VERSION} · rules ${RULES_VERSION} · data on this device is encrypted (AES-256-GCM)</p></details>`, 'account-panel');
+  const pushSettings = () => account.push('settings', 'shop', { site: settings.site, siteType: settings.siteType });
+  $$('[data-ulang]', main).forEach((b) => b.onclick = () => { settings.uiLang = b.dataset.ulang; save('dd.settings', settings); document.documentElement.lang = settings.uiLang; accountPanel(); });
+  $('#siteIn').onchange = (e) => { settings.site = e.target.value; save('dd.settings', settings); pushSettings(); };
+  $('#siteType').onchange = (e) => { settings.siteType = e.target.value; save('dd.settings', settings); pushSettings(); };
+  $('#opIn').onchange = (e) => { settings.operator = e.target.value; save('dd.settings', settings); };
+  $('#listenSel').onchange = (e) => { settings.listen = e.target.value; save('dd.settings', settings); };
+  if (!a) { $('#signInBtn').onclick = () => accountScreen(accountPanel); return; }
+  $('#syncBtn').onclick = async () => { const n = await syncNow(); $('#syncOut').textContent = `${t('accSynced')} · ${n} new from other devices`; };
+  $('#outBtn').onclick = signOutHere;
+  const list = await account.devices().catch(() => []);
+  const dl = $('#devList'); if (!dl) return;
+  dl.innerHTML = list.map((d) => `<li class="pc"><b>${ic(/phone|iPhone/.test(d.device || '') ? 'phone' : 'monitor', { size: 16 })} ${esc(d.device || 'Device')}${d.current ? ' (this device)' : ''}${d.shared ? ' · shared computer' : ''}</b>
+      <span class="muted small">last active ${esc((d.lastSeen || '').slice(0, 16).replace('T', ' '))} UTC ${d.current ? '' : `<button class="btn small ghost" data-revoke="${esc(d.id)}">Sign out that device</button>`}</span></li>`).join('') || '<li class="muted small">No devices</li>';
+  $$('[data-revoke]', main).forEach((b) => b.onclick = async () => { await account.revoke(b.dataset.revoke); accountPanel(); });
+}
+
+async function signOutHere() {
+  const shared = Boolean(account.info()?.shared) || store.isEphemeral();
+  await account.signout();
+  if (shared) {
+    // shared or camp computer: erase everything this app stored here
+    await store.resetVault();
+    for (const k of Object.keys(localStorage)) if (k.startsWith('dd.') && !['dd.api', 'dd.stun'].includes(k)) localStorage.removeItem(k);
+    try { sessionStorage.clear(); } catch { /* ignore */ }
+    C = null;
+    accountScreen();
+    return;
+  }
+  store.dropSecret('dataKey');
+  home();
+}
+
+// Encrypted sync with the shop account: take what the shop's other devices
+// changed, send what changed here. Returns how many records came in.
+let syncing = null;
+const stampOf = (c) => `${c.sync === 'sent' ? 1 : 0}${c.review ? 1 : 0}|${c.review?.reviewedAt || ''}|${c.createdAt || ''}`;
+function syncNow() {
+  if (!account.signedIn() || !account.hasKey() || !store.isUnlocked()) return Promise.resolve(0);
+  if (syncing) return syncing;
+  syncing = (async () => {
+    let got = 0;
+    const pushed = load('dd.syncPushed', {});
+    for (const r of await account.pull()) {
+      if (r.kind === 'case') {
+        const mine = await store.getCase(r.rid).catch(() => null);
+        if (!mine || stampOf(r.obj) > stampOf(mine)) { await store.putCase(r.obj); got++; }
+        pushed[r.rid] = stampOf(r.obj);
+      } else if (r.kind === 'shop' && r.rid === 'data') {
+        const mine = await store.getSecret('shopdata');
+        if (!mine || (r.obj.updatedAt || '') > (mine.updatedAt || '')) { await store.putSecret('shopdata', r.obj); got++; }
+      } else if (r.kind === 'settings' && r.rid === 'shop') {
+        for (const k of ['site', 'siteType']) if (r.obj[k]) settings[k] = r.obj[k];
+        save('dd.settings', settings);
+      }
+    }
+    for (const c of await store.allCases()) {
+      if (c.unreadable || pushed[c.id] === stampOf(c)) continue;
+      if (await account.push('case', c.id, c)) pushed[c.id] = stampOf(c);
+    }
+    save('dd.syncPushed', pushed);
+    return got;
+  })().catch(() => 0).finally(() => { syncing = null; });
+  return syncing;
 }
 
 // Deep links for demos and screenshots: ?demo=kumar[&screen=summary|checks]
@@ -1163,8 +1747,45 @@ async function route() {
     return;
   }
   if (q.get('screen') === 'rules') { rulesScreen(home); return; }
+  if (/^\d{6}$/.test(q.get('pair') || '')) { history.replaceState(null, '', location.pathname); pairScreen(home, q.get('pair')); return; }
   home();
   store.syncPending().then(updateHeader).catch(() => {});
 }
+// ---------------------------------------------------------------- video consult (phone side)
+// The optometrist can call about any case this phone sent in the last 14 days.
+let sentIds = [];
+let sentNames = {};
+let callBanner = null;
+const declined = new Set();
+const storeSide = (name) => `<h3>Shared with the optometrist</h3>
+  <p class="small">The interview, the test results and the vision profile for <b>${esc(name)}</b> were sent with the case.</p>
+  <p class="small muted">Switch to the rear camera to show the eye up close. Audio and video go directly between the two devices; nothing is recorded.</p>`;
+function showCallBanner(c) {
+  if (!c) { callBanner?.remove(); callBanner = null; return; }
+  if (callBanner?.dataset.id === c.id) return;
+  callBanner?.remove();
+  const name = sentNames[c.caseId] || shortCode(c.caseId);
+  callBanner = document.createElement('div');
+  callBanner.className = 'callbanner';
+  callBanner.dataset.id = c.id;
+  callBanner.innerHTML = `${ic('video')}<span><b>Optometrist video call</b><small>${esc(name)}</small></span>
+    <button class="btn small primary" id="cbJoin">Join</button><button class="btn small ghost" id="cbNo" aria-label="Decline">${ic('x')}</button>`;
+  document.body.appendChild(callBanner);
+  callBanner.querySelector('#cbJoin').onclick = () => {
+    showCallBanner(null);
+    openCall({ api: store.API, callId: c.id, role: 'store', initiator: false, title: `Video consult · ${name}`, side: storeSide(name) });
+  };
+  callBanner.querySelector('#cbNo').onclick = () => { declined.add(c.id); showCallBanner(null); };
+}
+async function pollCalls() {
+  if (!store.isUnlocked() || !sentIds.length || document.querySelector('.call')) return;
+  try {
+    const r = await fetch(`${store.API}/calls?cases=${encodeURIComponent(sentIds.join(','))}`);
+    const list = r.ok ? await r.json() : [];
+    showCallBanner(list.find((x) => !declined.has(x.id)) || null);
+  } catch { /* offline */ }
+}
+setInterval(pollCalls, 4000);
+
 boot();
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});

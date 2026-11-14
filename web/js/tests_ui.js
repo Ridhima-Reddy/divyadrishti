@@ -6,6 +6,7 @@
 import { createContrastTest, nextRing, respondRing, landoltSvg } from './measure/contrast.js';
 import { SERIES, generatePlate, plateSvg, scorePlates } from './measure/plates.js';
 import { N_SIZES, nSizePx, dialSvg, axisFromClock, duochromeSvg, duochromeMeaning } from './measure/charts.js';
+import { ic } from './icons.js';
 import { PACK_BY_CODE } from './lang/index.js';
 
 const EYES = ['R', 'L'];
@@ -15,9 +16,9 @@ const fitPx = (want, pad = 48, max = 420) => Math.round(Math.min(want, max, (win
 
 function arrowsHtml(extra = '') {
   return `<div class="arrows">
-      <button class="btn" data-d="up" aria-label="up">↑</button>
-      <div class="row gap"><button class="btn" data-d="left" aria-label="left">←</button><button class="btn" data-d="right" aria-label="right">→</button></div>
-      <button class="btn" data-d="down" aria-label="down">↓</button>
+      <button class="btn" data-d="up" aria-label="up">${ic('up', { size: 26 })}</button>
+      <div class="row gap"><button class="btn" data-d="left" aria-label="left">${ic('left', { size: 26 })}</button><button class="btn" data-d="right" aria-label="right">${ic('right', { size: 26 })}</button></div>
+      <button class="btn" data-d="down" aria-label="down">${ic('down', { size: 26 })}</button>
       ${extra}</div>`;
 }
 function wireArrows(api, stage, answer) {
@@ -34,18 +35,19 @@ function wireArrows(api, stage, answer) {
   document.addEventListener('keydown', key);
   api.setCleanup(() => document.removeEventListener('keydown', key));
 }
-const footer = (api, key) => `${api.demoBtn(key)}<button class="btn ghost" id="backChecks">← ${api.t('back')}</button>`;
+const footer = (api, key) => `${api.demoBtn(key)}<button class="btn ghost" id="backChecks">${ic('left')} ${api.t('back')}</button>`;
 function wireFooter(api) { api.$('#backChecks').onclick = api.back; api.wireDemo(); }
 
 // ---------------------------------------------------------------- contrast
 export function contrast(api, eye = 'R') {
   const st = createContrastTest();
+  const scr = api.onScreen('contrast');
   const say = api.tp('contrastSetup', { eye: coverOf(api, eye) });
   const size = fitPx(25 * api.pxPerMm(), 48, 260); // ~25 mm ring: about 3 degrees at arm's length
   api.setScreen(`<section class="card test">
       <h2>${api.t('chk_contrast')} · ${eyeName(eye)}</h2>
       <p class="say">${api.esc(say)}</p>
-      <div class="estage white" id="stage"></div>
+      ${scr ? api.screenNote('Patient 1 m from the screen. Tap the way the gap points.') : '<div class="estage white" id="stage"></div>'}
       ${arrowsHtml(`<button class="btn ghost" id="cant">${api.t('cantSee')}</button>`)}
       <p class="muted small" id="lvl"></p>
       ${footer(api, 'contrast')}</section>`, 'check-contrast');
@@ -53,17 +55,18 @@ export function contrast(api, eye = 'R') {
   api.say(say);
   const show = () => {
     const r = nextRing(st);
-    api.$('#stage').innerHTML = landoltSvg(r.dir, size, r.grey);
+    if (scr) api.remote.send({ chart: 'contrast', dir: r.dir, grey: r.grey, eye, distanceM: 1 });
+    else api.$('#stage').innerHTML = landoltSvg(r.dir, size, r.grey);
     api.$('#lvl').textContent = `log CS ${r.logCS.toFixed(2)} · contrast ${(r.contrast * 100).toFixed(r.contrast < 0.1 ? 1 : 0)}% · ring ${st.trials.length + 1}`;
   };
   const answer = (d) => {
     respondRing(st, d);
     if (!st.done) { show(); return; }
     const m = api.C.measurements;
-    m.contrast = { ...(m.contrast || {}), [eye]: { logCS: st.result.logCS, actualLogCS: st.result.actualLogCS, rings: st.trials.length } };
+    m.contrast = { ...(m.contrast || {}), [eye]: { logCS: st.result.logCS, actualLogCS: st.result.actualLogCS, rings: st.trials.length }, ...(scr ? { method: 'chart screen, 1 m' } : {}) };
     if (eye === 'R') contrast(api, 'L'); else api.back();
   };
-  wireArrows(api, api.$('#stage'), answer);
+  wireArrows(api, api.$('#stage') || document.createElement('div'), answer);
   api.$('#cant').onclick = () => answer('none');
   show();
 }
@@ -72,22 +75,24 @@ export function contrast(api, eye = 'R') {
 export function colour(api, i = 0, answers = []) {
   const p = SERIES[i];
   const plate = generatePlate(p);
+  const scr = api.onScreen('colour');
   const size = fitPx(320, 40, 360);
   const say = api.tp('colourAsk');
   api.setScreen(`<section class="card test">
       <h2>${api.t('chk_colour')} · ${i === 0 ? 'demonstration plate' : `plate ${i} of ${SERIES.length - 1}`}</h2>
       <p class="say">${api.esc(say)}</p>
-      <div class="pstage">${plateSvg(plate, size)}</div>
+      ${scr ? api.screenNote(i === 0 ? 'Plates show on the screen. Patient at reading distance from it. Type the number the patient says.' : `Plate ${i} is on the screen`) : `<div class="pstage">${plateSvg(plate, size)}</div>`}
       <div class="numpad">
         <output id="numOut" aria-live="polite">–</output>
         ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((n) => `<button class="btn" data-n="${n}">${n}</button>`).join('')}
-        <button class="btn ghost" data-n="del" aria-label="delete">⌫</button>
+        <button class="btn ghost" data-n="del" aria-label="delete">${ic('backspace', { size: 22 })}</button>
       </div>
-      <div class="row gap wrap"><button class="btn" id="noNum">${api.t('noNumber')}</button><button class="btn primary" id="plateNext" disabled>${api.t('next')} →</button></div>
+      <div class="row gap wrap"><button class="btn" id="noNum">${api.t('noNumber')}</button><button class="btn primary" id="plateNext" disabled>${api.t('next')} ${ic('right')}</button></div>
       <p class="muted small">Screen colours are not calibrated: a screening, not a diagnosis. Use good daylight or room light.</p>
       ${footer(api, 'colour')}</section>`, 'check-colour');
   wireFooter(api);
   if (i <= 1) api.say(say);
+  if (scr) api.remote.send({ chart: 'plate', index: i });
   let typed = '';
   const out = api.$('#numOut');
   const go = (val) => {
@@ -110,19 +115,22 @@ export function colour(api, i = 0, answers = []) {
 // ---------------------------------------------------------------- astigmatism dial
 export function astigmatism(api, eye = 'R') {
   const say = api.tp('astigAsk', { eye: coverOf(api, eye) });
-  const size = fitPx(300, 40, 380);
+  const scr = api.onScreen('astigmatism');
+  const ro = api.remote.options();
+  const size = scr ? fitPx(220, 40, 260) : fitPx(300, 40, 380);
   api.setScreen(`<section class="card test">
       <h2>${api.t('chk_astigmatism')} · ${eyeName(eye)}</h2>
       <p class="say">${api.esc(say)}</p>
-      <p class="muted small">Glasses off (or with current glasses, and note it). Patient at about 1 m.</p>
+      ${scr ? api.screenNote(`Patient ${ro.distanceM} m from the screen. Tap the line the patient names as darkest.`) : '<p class="muted small">Glasses off (or with current glasses, and note it). Patient at about 1 m.</p>'}
       <div class="pstage" id="dial">${dialSvg(size)}</div>
       <button class="btn big" id="even">${api.t('allSame')}</button>
       ${footer(api, 'astigmatism')}</section>`, 'check-astigmatism');
   wireFooter(api);
   api.say(say);
+  if (scr) api.remote.send({ chart: 'astigmatism', eye, distanceM: ro.distanceM });
   const rec = (v) => {
     const m = api.C.measurements;
-    m.astigmatism = { ...(m.astigmatism || {}), [eye]: v };
+    m.astigmatism = { ...(m.astigmatism || {}), [eye]: v, distanceM: scr ? ro.distanceM : 1 };
     if (eye === 'R') astigmatism(api, 'L'); else api.back();
   };
   api.$$('#dial [data-line]').forEach((g) => {
@@ -141,12 +149,14 @@ export function duochrome(api, eye = 'R') {
   const m = api.C.measurements;
   const withGl = m.duochrome?.withGlasses ?? (api.C.session.answers.glasses_now === true);
   const say = api.tp('duoAsk', { eye: coverOf(api, eye) });
+  const scr = api.onScreen('duochrome');
+  const ro = api.remote.options();
   const size = fitPx(300, 40, 420);
   api.setScreen(`<section class="card test">
       <h2>${api.t('chk_duochrome')} · ${eyeName(eye)}</h2>
       <p class="say">${api.esc(say)}</p>
       <label class="check"><input type="checkbox" id="withGl" ${withGl ? 'checked' : ''}> ${api.t('withGlasses')}</label>
-      <div class="pstage">${duochromeSvg(size)}</div>
+      ${scr ? api.screenNote(`Patient ${ro.mirror ? '3 m from the mirror (6 m optical path)' : `${ro.distanceM} m from the screen`}`) : `<div class="pstage">${duochromeSvg(size)}</div>`}
       <div class="row gap wrap center">
         <button class="btn big duo-red" data-side="red">${api.t('redSide')}</button>
         <button class="btn big" data-side="equal">${api.t('sameBoth')}</button>
@@ -156,9 +166,10 @@ export function duochrome(api, eye = 'R') {
       ${footer(api, 'duochrome')}</section>`, 'check-duochrome');
   wireFooter(api);
   api.say(say);
+  if (scr) api.remote.send({ chart: 'duochrome', eye, distanceM: ro.distanceM });
   api.$$('[data-side]').forEach((b) => {
     b.onclick = () => {
-      m.duochrome = { ...(m.duochrome || {}), [eye]: b.dataset.side, withGlasses: api.$('#withGl').checked, distanceM: 2 };
+      m.duochrome = { ...(m.duochrome || {}), [eye]: b.dataset.side, withGlasses: api.$('#withGl').checked, distanceM: scr ? ro.distanceM : 2 };
       if (eye === 'R') duochrome(api, 'L'); else api.back();
     };
   });
@@ -172,7 +183,8 @@ export function nearAcuity(api) {
   const lines = pack?.nearText?.length ? pack.nearText
     : lang === 'en' ? ['the farmer sold rice at the market', 'my son reads the paper each morning', 'take two tablets after food', 'the bus leaves at nine', 'please sign here', 'rain is good for crops', 'thread the needle', 'call me tomorrow']
       : [pack?.nearWords || 'read the small words'];
-  const cm = Math.round(C.measurements.readingDistanceCm || 40);
+  const scr = api.onScreen('near_acuity');
+  const cm = scr ? 40 : Math.round(C.measurements.readingDistanceCm || 40);
   const say = api.tp('nearAsk');
   const withGl = C.measurements.nearAcuity?.withGlasses ?? ['reading', 'bifocal', 'progressive'].includes(C.session.answers.glasses_type);
   api.setScreen(`<section class="card test">
@@ -180,13 +192,15 @@ export function nearAcuity(api) {
       <p class="say">${api.esc(say)}</p>
       <label class="check"><input type="checkbox" id="withGl" ${withGl ? 'checked' : ''}> ${api.t('withGlasses')}</label>
       <p class="muted small">${api.t('smallestRead')}. Sizes assume ${api.calibrated() ? 'the calibrated screen' : 'an uncalibrated screen (calibrate for true sizes)'}.</p>
-      <ol class="nchart" lang="${lang}">${N_SIZES.map((n, i) => `<li><button class="nline" data-n="${n}" style="font-size:${nSizePx(n, api.pxPerMm()).toFixed(1)}px"><span class="nlabel">N${n}</span>${api.esc(lines[i % lines.length])}</button></li>`).join('')}</ol>
+      ${scr ? `${api.screenNote('N chart on the screen at true print size. Patient 40 cm from it. Tap the smallest line read.')}<div class="nbtns">${N_SIZES.map((n) => `<button class="btn" data-n="${n}">N${n}</button>`).join('')}</div>`
+    : `<ol class="nchart" lang="${lang}">${N_SIZES.map((n, i) => `<li><button class="nline" data-n="${n}" style="font-size:${nSizePx(n, api.pxPerMm()).toFixed(1)}px"><span class="nlabel">N${n}</span>${api.esc(lines[i % lines.length])}</button></li>`).join('')}</ol>`}
       <button class="btn ghost" id="cantRead">${api.t('cantRead')}</button>
       ${footer(api, 'near_acuity')}</section>`, 'check-near');
   wireFooter(api);
   api.say(say);
-  const rec = (n) => { C.measurements.nearAcuity = { N: n, distanceCm: cm, withGlasses: api.$('#withGl').checked }; api.back(); };
-  api.$$('.nline').forEach((b) => { b.onclick = () => rec(Number(b.dataset.n)); });
+  if (scr) api.remote.send({ chart: 'near', lang });
+  const rec = (n) => { C.measurements.nearAcuity = { N: n, distanceCm: cm, withGlasses: api.$('#withGl').checked, ...(scr ? { method: 'chart screen' } : {}) }; api.back(); };
+  api.$$('[data-n]').forEach((b) => { b.onclick = () => rec(Number(b.dataset.n)); });
   api.$('#cantRead').onclick = () => rec(36);
 }
 
@@ -231,7 +245,8 @@ export async function lensometry(api, eye = 'R') {
   api.setScreen(`<section class="card test">
       <h2>${api.t('chk_lensometry')} · ${eye === 'R' ? 'right lens' : 'left lens'}</h2>
       <p class="say">${api.esc(say)}</p>
-      <div class="lenso-setup">
+      ${api.remote.paired() ? api.screenNote('Lens pattern is on the chart screen. Phone 40 cm from the screen, glasses halfway between.') : ''}
+      <div class="lenso-setup" ${api.remote.paired() ? 'hidden' : ''}>
         <div class="qr">${qr}</div>
         <p class="small">Open on a laptop or a second phone: <a href="${api.esc(target)}" target="_blank" rel="noopener">${api.t('lensoShow')}</a>. Or print it.</p>
       </div>
@@ -244,6 +259,7 @@ export async function lensometry(api, eye = 'R') {
       ${footer(api, 'lensometry')}</section>`, 'check-lensometry');
   wireFooter(api);
   api.say(say);
+  if (api.remote.paired()) api.remote.send({ chart: 'lenso' });
   const m = api.C.measurements;
   const save = (r, quality) => {
     m.lensometry = { ...(m.lensometry || {}), [eye]: r, method: 'camera magnification (L 40 cm, a 20 cm)' };

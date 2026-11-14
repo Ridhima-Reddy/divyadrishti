@@ -13,10 +13,11 @@ import { runPersona, askedIds } from './helpers.mjs';
 
 const NEW = ['te', 'mr', 'kn'];
 // every Indian language lives in a pack and must be complete
-const PACKED = ['hi', 'ta', 'te', 'mr', 'kn'];
+const PACKED = ['hi', 'ta', 'te', 'mr', 'kn', 'bn'];
 
-test('six languages registered with speech locales', () => {
-  assert.deepEqual(Object.keys(LANGS).sort(), ['en', 'hi', 'kn', 'mr', 'ta', 'te']);
+test('seven languages registered with speech locales', () => {
+  assert.deepEqual(Object.keys(LANGS).sort(), ['bn', 'en', 'hi', 'kn', 'mr', 'ta', 'te']);
+  assert.equal(LOCALE.bn, 'bn-IN');
   assert.equal(LOCALE.te, 'te-IN'); assert.equal(LOCALE.mr, 'mr-IN'); assert.equal(LOCALE.kn, 'kn-IN');
 });
 
@@ -163,4 +164,38 @@ test('Vision Passport renders in each new language', () => {
     assert.ok(txt.includes(pt(P.title, p.lang)), key);
     assert.ok(/[ऀ-ॿఀ-೿]/.test(txt), key);
   }
+});
+
+test('Bengali numbers, hours, digits, yes / no and options', () => {
+  assert.equal(parseNumber('বাহান্ন', 'bn'), 52);
+  assert.equal(parseNumber('আমার বয়স পঞ্চাশ বছর', 'bn'), 50);
+  assert.equal(parseNumber('পঁয়ষট্টি', 'bn'), 65);
+  assert.equal(parseNumber('একশো পঞ্চাশ', 'bn'), 150);
+  assert.equal(parseNumber('দুই হাজার', 'bn'), 2000);
+  assert.equal(parseNumber('৫২', 'bn'), 52); // Bengali digits
+  assert.equal(parseNumber('দুই থেকে তিন', 'bn'), 2.5);
+  assert.equal(parseHours('সাড়ে তিন ঘণ্টা', 'bn'), 3.5);
+  assert.equal(parseHours('দেড় ঘন্টা', 'bn'), 1.5);
+  assert.equal(parseHours('আধ ঘণ্টা', 'bn'), 0.5);
+  assert.equal(parseHours('সারাদিন', 'bn'), 8);
+  for (const w of ['হ্যাঁ', 'জি', 'আছে', 'হঠাৎ কমে গেছে', 'চশমা পরি']) assert.equal(parseYesNo(w, 'bn'), true, w);
+  for (const w of ['না', 'নেই', 'জি না', 'কখনো না', 'ঠিক আছে', 'চশমা পরি না', 'হয়নি']) assert.equal(parseYesNo(w, 'bn'), false, w);
+  // "I can't see" could be the vision loss itself: stays unclear instead of "no"
+  for (const w of ['দেখি না', 'দেখতে পাই না', 'দেখা যায় না']) assert.equal(parseYesNo(w, 'bn'), null, w);
+  const occ = QUESTION_BY_ID.occupation.options;
+  assert.equal(parseOptions('টোটো চালাই', occ), 'driver');
+  assert.equal(parseOptions('স্কুলে পড়াই', occ), 'teacher');
+  assert.equal(parseOptions('স্কুলে পড়ি', occ), 'student');
+  const gt = QUESTION_BY_ID.glasses_type.options;
+  assert.equal(parseOptions('দাগ ছাড়া', gt), 'progressive');
+  assert.equal(parseOptions('মাঝখানে দাগ আছে', gt), 'bifocal');
+  const ok = QUESTION_BY_ID.glasses_ok.options;
+  assert.equal(parseOptions('ভালো দেখি', ok), 'fine');
+  assert.equal(parseOptions('ভালো দেখি না', ok), 'discomfort');
+  const cover = QUESTION_BY_ID.rf_double_cover.options;
+  assert.equal(parseOptions('হ্যাঁ, বন্ধ হয়ে যায়', cover), 'goes');
+  assert.equal(parseOptions('না, যায় না', cover), 'stays');
+  assert.equal(parseDirection('বাঁ দিকে'), 'left');
+  assert.equal(parseDirection('ডানে'), 'right');
+  assert.equal(parseDirection('উপরে'), 'up');
 });

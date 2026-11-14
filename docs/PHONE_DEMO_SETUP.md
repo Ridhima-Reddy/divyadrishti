@@ -42,6 +42,8 @@ The microphone and camera only work on `https://` (or `localhost`). Pick one.
 - Good, even light on the face. No window behind the person.
 - For **lensometry**: open `…/lensometer-target.html` on the laptop (full screen; the test screen shows a QR to it), or print it. Hold the phone 40 cm from the screen (the 40 cm string) and the glasses halfway, temples towards the phone, with clear pattern visible on both sides of the lens. Keep the laptop screen square to the phone.
 - A pair of real glasses with a known prescription to show lensometry live.
+- **Chart screen** (needed for the Amsler grid, astigmatism dial and duochrome; optional for distance vision): open `…/display.html` on the laptop, click *Screen size* once and match an ID card, then *Full screen*. Put it 3 m from the patient (or 6 m, or 3 m with a mirror for a 6 m path). On the phone: Tests › *Pair a screen* › type the 6-digit code (or scan the QR with the phone camera). The phone is now the remote.
+- **Video consult**: the optometrist clicks *Video consult* on a case in the portal; the store phone shows *Optometrist video call* and taps *Join*. Both must allow camera and microphone. On different networks it relies on a public STUN server; on the same Wi-Fi it connects directly.
 
 ## 5. Running the demo
 

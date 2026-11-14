@@ -7,53 +7,55 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Shared document · DivyaDrishti</title>
   <meta name="description" content="An encrypted eye-care document shared with you. It expires after a few days.">
-  <meta name="theme-color" content="#14212e">
+  <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <style>
+    @font-face { font-family: "DM Serif Display"; src: url("fonts/DMSerifDisplay-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+    @font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/PlusJakartaSans-Variable.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+    @font-face { font-family: "Geist"; src: url("fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
     :root {
-      --ink: #14212e; --ink-2: #3a4a5a; --muted: #5f6b78; --bg: #f5f0e6; --card: #fffdf8; --line: #e3dacb;
-      --accent: #d96d24; --accent-ink: #ffffff; --teal: #1d7f91; --teal-soft: #dcf0f3;
-      --red: #b3261e; --red-soft: #fbe3e1; --green: #1f6f43; --green-soft: #dcefe3;
-      --radius: 14px; --shadow: 0 1px 2px rgba(20, 33, 46, .06), 0 4px 14px rgba(20, 33, 46, .06);
+      --ink: #0f1419; --ink-2: #3b434e; --muted: #6c7480; --bg: #f6f1ec; --card: #ffffff; --surface-2: #f5f6f8; --line: #e7e9ed;
+      --accent: #e8622f; --accent-ink: #ffffff; --teal: #e8622f; --teal-soft: #e3f3f3; --primary: #1d1a17; --primary-ink: #fff;
+      --red: #c4281f; --red-soft: #fff1f0; --green: #0a7a4b; --green-soft: #ecfaf3;
+      --radius: 20px; --shadow: 0 1px 2px rgba(15, 20, 25, .04), 0 6px 20px -10px rgba(15, 20, 25, .10);
       color-scheme: light dark;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --ink: #eef2f5; --ink-2: #c4ccd4; --muted: #9eabb8; --bg: #0f1921; --card: #17232e; --line: #26343f;
-        --accent: #f08a43; --accent-ink: #14212e; --teal: #5cc3d2; --teal-soft: #173941;
-        --red: #ff8a80; --red-soft: #3d1f1d; --green: #7fd3a1; --green-soft: #1b3426; --shadow: none;
+        --ink: #edf0f3; --ink-2: #c3c9d1; --muted: #8b939e; --bg: #0b0e11; --card: #14181d; --surface-2: #1b2026; --line: #252b33;
+        --accent: #ff8a5c; --accent-ink: #0b0e11; --teal: #ff8a5c; --teal-soft: #11292b; --primary: #edf0f3; --primary-ink: #0b0e11;
+        --red: #ff8077; --red-soft: #2a1412; --green: #5fd49b; --green-soft: #0d2219; --shadow: none;
       }
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
     html { -webkit-text-size-adjust: 100%; }
     body {
-      margin: 0; background: var(--bg); color: var(--ink);
-      font: 19px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Tamil", "Noto Sans Devanagari",
+      margin: 0; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased;
+      font: 18px/1.55 "Plus Jakarta Sans", "Geist", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Tamil", "Noto Sans Devanagari",
         "Noto Sans Telugu", "Noto Sans Kannada", sans-serif;
     }
-    .top { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #14212e; color: #fff; font-weight: 700; font-size: 1.1rem; }
-    .top svg { color: #f08a43; flex: none; }
-    main { max-width: 640px; margin: 0 auto; padding: 12px 16px 48px; }
-    h1 { font-size: 1.6rem; line-height: 1.25; margin: .2rem 0 .6rem; overflow-wrap: anywhere; }
-    h2 { font-size: 1.15rem; margin: 1.4rem 0 .4rem; padding-top: .8rem; border-top: 1px solid var(--line); }
+    .top { display: flex; align-items: center; gap: 10px; padding: 12px 16px; min-height: 60px; background: var(--card); border-bottom: 1px solid var(--line); color: var(--ink); font-weight: 600; font-size: 1.05rem; letter-spacing: -.02em; }
+    .top svg { color: var(--accent); flex: none; }
+    main { max-width: 640px; margin: 0 auto; padding: 16px 16px 48px; }
+    h1 { font-size: 1.7rem; line-height: 1.15; font-weight: 700; letter-spacing: -.03em; margin: .2rem 0 .6rem; overflow-wrap: anywhere; }
+    h2 { font-size: 1.08rem; font-weight: 600; margin: 1.4rem 0 .4rem; padding-top: .9rem; border-top: 1px solid var(--line); }
     p { margin: .45rem 0; }
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 16px; margin: 12px 0; box-shadow: var(--shadow); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 18px; margin: 12px 0; box-shadow: var(--shadow); }
     .muted { color: var(--muted); }
-    .small { font-size: .9rem; }
-    .eyebrow { font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); font-weight: 700; margin: 0; }
-    .status { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; padding: 10px 14px; border-radius: 12px;
-      background: var(--green-soft); color: var(--green); font-weight: 600; font-size: .95rem; margin: 12px 0; }
+    .small { font-size: .88rem; }
+    .eyebrow { font-size: .82rem; font-weight: 500; color: var(--muted); margin: 0; }
+    .status { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; padding: 10px 14px; border-radius: 14px;
+      background: var(--green-soft); color: var(--green); font-weight: 500; font-size: .9rem; margin: 12px 0; }
     .status.last { background: var(--red-soft); color: var(--red); }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; padding: .6rem 1.2rem;
-      font: inherit; font-weight: 700; color: var(--ink); background: var(--card); border: 1.5px solid var(--line);
-      border-radius: 12px; cursor: pointer; }
-    .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); width: 100%; margin-top: 12px; }
-    .btn:disabled { opacity: .55; cursor: default; }
-    .btn:focus-visible, input:focus, h1:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 54px; padding: .6rem 1.2rem;
+      font: inherit; font-weight: 500; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
+    .btn.primary { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); width: 100%; margin-top: 12px; }
+    .btn:disabled { opacity: .45; cursor: default; }
+    .btn:focus-visible, input:focus, h1:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
     label { display: block; font-weight: 600; margin-top: .6rem; }
     #pin { display: block; width: 100%; margin-top: .4rem; padding: .6rem; font: inherit; font-size: 1.8rem; letter-spacing: .4em;
-      text-align: center; color: var(--ink); background: var(--bg); border: 2px solid var(--line); border-radius: 12px; }
+      text-align: center; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; font-family: ui-monospace, Menlo, Consolas, monospace; }
     .err { color: var(--red); font-weight: 600; min-height: 1.5em; }
     .error h1 { color: var(--red); }
     .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0 6px; }
@@ -90,7 +92,7 @@
 </head>
 <body>
   <header class="top">
-    <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M26.4 11.2A11.5 11.5 0 1 0 26.4 20.8" fill="none" stroke="currentColor" stroke-width="5.5"/></svg>
+    <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="10" fill="currentColor"/><path d="M5.5 16c2.9-4.7 6.4-7 10.5-7s7.6 2.3 10.5 7c-2.9 4.7-6.4 7-10.5 7s-7.6-2.3-10.5-7z" fill="none" stroke="#fff" stroke-width="1.9"/><circle cx="16" cy="16" r="3.4" fill="#fff"/></svg>
     <span>DivyaDrishti</span>
   </header>
   <main>
@@ -118,7 +120,7 @@
     <p id="status" class="status" hidden></p>
     <article id="doc" class="card doc" hidden></article>
     <div id="actions" class="actions" hidden>
-      <button id="printBtn" class="btn" type="button">🖨️ Print</button>
+      <button id="printBtn" class="btn" type="button">Print</button>
     </div>
     <p id="keepNote" class="muted small noprint" hidden>Nothing is saved on this phone. To see this again, open the link again (it uses one view) or print it now.</p>
     <p class="printnote muted">Printed from an encrypted DivyaDrishti link.</p>

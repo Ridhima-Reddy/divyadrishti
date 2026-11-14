@@ -5,8 +5,8 @@
 //               the reviewing optometrist
 //   urgentOk  - still asked once a red flag has switched the session to urgent
 // s = { a: answers, d: derived state from adaptive.derive() }
-// English, Hindi and Tamil text live here; Telugu, Marathi and Kannada are
-// merged in from js/lang/ packs at the bottom of this file. All drafted by the
+// English, Hindi and Tamil text live here; Telugu, Marathi, Kannada and Bengali
+// are merged in from js/lang/ packs at the bottom of this file. All drafted by the
 // team, to be reviewed by native speakers at the pilot sites before use.
 import { PACKS } from '../lang/index.js';
 

@@ -35,10 +35,10 @@ uvicorn server.app:app --reload --port 8000
 ## Tests
 
 ```bash
-npm test                                      # 114 engine tests: graded red-flag scenarios, 6-language parsing, Rx,
+npm test                                      # 122 engine tests: graded red-flag scenarios, hub rule edits, 6-language parsing, Rx,
                                               #   adaptive paths, profile, optics, contrast/colour/charts, lensometry,
                                               #   crypto (PIN vault, hub sealing, share links), decision path
-.venv/Scripts/python -m pytest tests/server   # 21 API tests: idempotency, consent, queue, review, FHIR, erasure,
+.venv/Scripts/python -m pytest tests/server   # 30 API tests: shop accounts and sync, rule edits, chart-screen pairing, video-consult signalling, idempotency, consent, queue, review, FHIR, erasure,
                                               #   identity stripping, hub key, audit log, headers, retention, share links
 BASE=http://127.0.0.1:8000 python tests/e2e/smoke.py   # real browser: hub key -> PIN -> interview -> reload/resume
                                                       #   -> checks -> sealed send -> review -> access log -> reply

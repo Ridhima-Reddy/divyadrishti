@@ -1,5 +1,5 @@
 // Thin wrapper over the browser's speech APIs (Web Speech API).
-// Chrome on Android: Google speech recognition for en-IN, hi-IN, ta-IN and
+// Chrome on Android: Google speech recognition for en-IN, hi-IN, ta-IN, bn-IN and
 // Google TTS voices if installed. Edge on desktop has natural Hindi/Tamil voices.
 // Production plan: Bhashini / AI4Bharat IndicConformer + IndicTTS, which run
 // for 22 Indian languages and can be hosted in India.

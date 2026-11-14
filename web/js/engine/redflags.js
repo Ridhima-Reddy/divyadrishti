@@ -530,10 +530,39 @@ export const NOT_FLAGGED = [
 // Returns { lane, urgency, within, reviewWithinHours, flags }.
 // `final` = the interview is over, so missing answers are treated safely
 // (e.g. an unrecorded onset of sudden vision loss counts as recent).
+// ---------------------------------------------------------------- hub edits
+// The reviewing optometrists can change a rule's tier, time to care and action,
+// or switch it off, from the portal, with a reason (every edit is logged on the
+// hub). Phones pull the edits and the engine applies them here. The clinical
+// test itself is never editable, and an emergency rule cannot be switched off.
+let HUB = { version: 0, rules: {} };
+export function setRuleOverrides(o) {
+  HUB = o && typeof o === 'object' && o.rules && typeof o.rules === 'object'
+    ? { version: Number(o.version) || 0, rules: o.rules, updatedAt: o.updatedAt || null }
+    : { version: 0, rules: {} };
+}
+export const ruleOverrides = () => HUB;
+export function effectiveRule(r) {
+  const o = HUB.rules[r.code];
+  if (!o) return r;
+  const tier = TIERS[o.tier] ? o.tier : r.tier;
+  return {
+    ...r,
+    tier,
+    within: o.within || (tier !== r.tier ? TIERS[tier].within : r.within),
+    action: o.action || r.action,
+    off: Boolean(o.off) && r.tier !== 'emergency',
+    edited: { reason: o.reason || '', by: o.by || '', at: o.at || '', baseTier: r.tier, baseWithin: r.within, baseAction: r.action },
+  };
+}
+export const effectiveRules = () => RULES.map(effectiveRule);
+
 export function evaluate(a = {}, m = {}, extras = {}, { final = true, answersOnly = false } = {}) {
   const x = context(a, m, extras);
   const matched = new Map();
-  for (const r of RULES) {
+  for (const base of RULES) {
+    const r = effectiveRule(base);
+    if (r.off) continue;
     if (answersOnly && !r.answersOnly) continue;
     let res;
     try { res = r.test(x, final); } catch { res = false; }
@@ -554,6 +583,7 @@ export function evaluate(a = {}, m = {}, extras = {}, { final = true, answersOnl
     need: rule.need,
     ref: rule.ref,
     refs: [rule.ref, rule.also].filter(Boolean),
+    ...(rule.edited ? { edited: true } : {}),
   }));
   flags.sort((p, q) => TIERS[q.tier].rank - TIERS[p.tier].rank);
   const top = flags[0];

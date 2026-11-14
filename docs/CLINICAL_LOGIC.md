@@ -100,6 +100,22 @@ ZEISS's Online Vision Screening Check covers visual acuity and contrast (Landolt
 | PD and fitting height | camera with head-pose gate, optional ID-card scale | mm | centration | |
 | Lensometry | rear camera through the current glasses at a checkerboard 40 cm away, lens halfway; magnification matrix from the pattern's lattice (autocorrelation) through the lens vs. two clear patches either side; F = (L/ab)(I − M⁻¹) | sph / cyl × axis per lens | current Rx when there is no prescription slip; anisometropia / high-error rules | estimate (±0.50 D expected); keep the target square to the phone; progressives give only the zone looked through; strong plus (> +10 D at these distances) cannot be read |
 
+### Where each test is reliable: phone, big screen, or both
+
+No test chart is shown on the phone. A phone screen is about 7 × 15 cm and held close, so every chart test runs on a laptop or TV (the chart screen) and the phone only guides the set-up and records the patient's answers (left, right, the number seen, the smallest line read). On a phone, a chart test cannot start until a chart screen is paired. The phone is used as an instrument only where its camera measures something.
+
+| Test | Tag | Why |
+|---|---|---|
+| Distance vision | Big screen | At 3 or 6 m (or 6 m with a mirror in a 3 m room), as in an optical store; the phone is the remote. |
+| Contrast, colour plates, near vision | Big screen | Contrast rings at 1 m on a steady bright screen; plates large at reading distance; the N chart at true print size at 40 cm. Screen colour and brightness keep these screening only. |
+| Amsler grid | Big screen | The grid must cover the central 20 degrees: 10 cm at 30 cm. A phone covers only about 12 degrees and can miss distortion just outside the centre. On a laptop the full 20 × 20 grid is drawn at true size. |
+| Astigmatism dial | Big screen | Read from 3 m or more with focus relaxed for distance. On a phone the dial is small and close, so focusing effort and thin lines make the answer unreliable. |
+| Duochrome | Big screen | Checks focus for distance and is read at 3 to 6 m. Closer, the eye's own focusing shifts the answer by about 0.5 D. |
+| Reading distance, focusing range, convergence, PD | Phone camera | The phone is the measuring instrument, held the way the patient naturally reads; nothing is shown on it as a chart. |
+| Lensometry | Phone + big screen | The rear camera reads a pattern shown on the screen (or printed). |
+
+**Chart screen.** A laptop or TV opens `display.html` and shows a 6-digit code; the phone pairs with it once, then drives the charts like the remote of a store's chart projector while it records the answers. Only chart instructions (which chart, letter size, direction, distance) pass through the hub, never patient data. The laptop is calibrated once with an ID card so letters are their true size.
+
 ## References
 
 - Hofstetter HW. A useful age-amplitude formula. *Optom World* 1950;38:42–45.

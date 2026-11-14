@@ -35,7 +35,7 @@ export function dialSvg(sizePx) {
     const rad = ((h * 30 - 90) * Math.PI) / 180;
     return `<text x="${50 + Math.cos(rad) * 48.5}" y="${50 + Math.sin(rad) * 48.5 + 1.4}" font-size="4" text-anchor="middle" fill="#555">${h}</text>`;
   }).join('');
-  return `<svg class="dial" width="${sizePx}" height="${sizePx}" viewBox="0 0 100 100" role="img" aria-label="astigmatism dial">${lines}${labels}<circle cx="50" cy="50" r="1.6" fill="#d96d24"/></svg>`;
+  return `<svg class="dial" width="${sizePx}" height="${sizePx}" viewBox="0 0 100 100" role="img" aria-label="astigmatism dial">${lines}${labels}<circle cx="50" cy="50" r="1.6" fill="#e8622f"/></svg>`;
 }
 
 // ---------------------------------------------------------------- duochrome

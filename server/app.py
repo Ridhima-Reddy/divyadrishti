@@ -52,12 +52,13 @@ SEED = os.environ.get("DD_SEED", "1") == "1"
 PORTAL_TOKEN = os.environ.get("DD_PORTAL_TOKEN")  # set in production: required for review / delete / hub key
 RETENTION_DAYS = int(os.environ.get("DD_RETENTION_DAYS", "180"))
 MAX_CASE_BYTES = 512_000
-LANGS = ("en", "hi", "ta", "te", "mr", "kn")
+LANGS = ("en", "hi", "ta", "te", "mr", "kn", "bn")
 
 SLA_HOURS = {"red": 2, "amber": 24, "green": 72}
 LANE_ORDER = {"red": 0, "amber": 1, "green": 2}
 DECISIONS = {
     "approve": "Approved",
+    "other": "Other (see comments)",
     "modify": "Approved with changes",
     "in_person": "In-person examination",
     "urgent": "Urgent referral",
@@ -296,7 +297,7 @@ class CaseIn(BaseModel):
     model_config = {"extra": "allow"}
     id: str = Field(min_length=8, max_length=64)
     createdAt: str
-    lang: Literal["en", "hi", "ta", "te", "mr", "kn"]
+    lang: Literal["en", "hi", "ta", "te", "mr", "kn", "bn"]
     site: dict
     patient: dict
     consent: dict
@@ -316,13 +317,29 @@ class Reviewer(BaseModel):
 
 class ReviewIn(BaseModel):
     reviewer: Reviewer
-    decision: Literal["approve", "modify", "in_person", "urgent"]
+    decision: Literal["approve", "modify", "in_person", "urgent", "other"]
+    decisionText: str = Field(default="", max_length=120)  # the reviewer's own wording for "other"
     lensCategory: Optional[str] = None
     designEmphasis: Optional[Literal["Balanced", "Intermediate", "Near"]] = None
     addD: Optional[float] = Field(default=None, ge=0, le=4)
     nextStep: str = Field(default="", max_length=300)
-    notes: str = Field(default="", max_length=2000)
+    notes: str = Field(default="", max_length=2000)  # private: stays on the hub
+    comments: str = Field(default="", max_length=2000)  # shown to the store / camp and in the referral letter
+    findingNotes: dict[str, str] = Field(default_factory=dict)  # rule code -> the reviewer's comment on that finding
     messageToPatient: str = Field(default="", max_length=600)
+
+    @field_validator("findingNotes")
+    @classmethod
+    def _finding_notes(cls, v: dict[str, str]) -> dict[str, str]:
+        if len(v) > 60:
+            raise ValueError("too many finding notes")
+        out = {}
+        for k, t in v.items():
+            if not re.fullmatch(r"[A-Za-z0-9_]{2,40}", k) or len(t) > 500:
+                raise ValueError("bad finding note")
+            if t.strip():
+                out[k] = t.strip()
+        return out
 
 
 class HubKeyIn(BaseModel):
@@ -568,6 +585,10 @@ def list_cases(
         rows = [r for r in rows if ql in json.dumps(r, ensure_ascii=False).lower()]
     # open cases first, by lane then by deadline; reviewed cases last
     rows.sort(key=lambda r: (r["status"] == "reviewed", LANE_ORDER.get(r["lane"], 9), r["slaDueAt"]))
+    live = live_calls()
+    for r in rows:
+        if r["id"] in live:
+            r["call"] = live[r["id"]]
     return rows
 
 
@@ -587,7 +608,8 @@ def review_case(case_id: str, review: ReviewIn, request: Request, x_portal_token
     if not r:
         raise HTTPException(404, "case not found")
     rv = review.model_dump()
-    rv["decisionLabel"] = DECISIONS[review.decision]
+    own = review.decisionText.strip()
+    rv["decisionLabel"] = own if review.decision == "other" and own else DECISIONS[review.decision]
     rv["reviewedAt"] = iso(now())
     store.set_review(case_id, rv)
     store.audit(f"{review.reviewer.name} ({review.reviewer.regNo or 'no reg. no.'})", "case_reviewed", case_id, rv["decisionLabel"])
@@ -689,6 +711,516 @@ def _share_ref(share_id: str) -> str:
 def _validation_brief(e: ValidationError) -> str:
     """Field and message only: never echo the submitted values."""
     return "; ".join(f"{'.'.join(str(p) for p in err['loc']) or 'body'}: {err['msg']}" for err in e.errors()[:5])
+
+
+# ---------------------------------------------------------------- referral rules: hub edits
+# The reviewing optometrists can change a rule's tier, time to care and action,
+# or switch a rule off, with a reason. The clinical test itself is not editable.
+# Phones pull these edits (GET is public: it holds no patient data) and the
+# engine applies them; the engine also refuses to switch off an emergency rule.
+RULE_CODE = re.compile(r"^[A-Za-z0-9_]{2,40}$")
+
+
+class RuleEditIn(BaseModel):
+    tier: Optional[Literal["emergency", "urgent", "soon", "routine", "info"]] = None
+    within: Optional[str] = Field(default=None, max_length=120)
+    action: Optional[str] = Field(default=None, max_length=400)
+    off: bool = False
+    reason: str = Field(min_length=5, max_length=500)
+    by: Reviewer
+
+
+class RuleResetIn(BaseModel):
+    reason: str = Field(min_length=5, max_length=500)
+    by: Reviewer
+
+
+def rule_overrides() -> dict:
+    raw = store.get_meta("rule_overrides")
+    return json.loads(raw) if raw else {"version": 0, "rules": {}, "updatedAt": None}
+
+
+def save_rule_overrides(o: dict, actor: Reviewer, action: str, detail: dict) -> dict:
+    o["version"] = int(o.get("version", 0)) + 1
+    o["updatedAt"] = iso(now())
+    store.set_meta("rule_overrides", json.dumps(o, ensure_ascii=False))
+    store.audit(f"{actor.name} ({actor.regNo or 'no reg. no.'})", action, None, json.dumps(detail, ensure_ascii=False))
+    return o
+
+
+@app.get("/api/rules")
+def get_rules() -> dict:
+    return rule_overrides()
+
+
+@app.get("/api/rules/history")
+def rules_history(x_portal_token: Optional[str] = Header(None)) -> list[dict]:
+    require_token(x_portal_token)
+    with store.lock:
+        rows = store.db.execute(
+            "SELECT at, actor, action, detail FROM audit WHERE action IN ('rule_edited', 'rule_reset') ORDER BY id DESC LIMIT 200").fetchall()
+    return [{"at": r["at"], "actor": r["actor"], "action": r["action"], **json.loads(r["detail"] or "{}")} for r in rows]
+
+
+@app.put("/api/rules/{code}")
+def edit_rule(code: str, body: RuleEditIn, x_portal_token: Optional[str] = Header(None)) -> dict:
+    require_token(x_portal_token)
+    if not RULE_CODE.match(code):
+        raise HTTPException(400, "bad rule code")
+    o = rule_overrides()
+    before = o["rules"].get(code)
+    edit: dict[str, Any] = {k: v for k, v in {"tier": body.tier, "within": (body.within or "").strip(), "action": (body.action or "").strip()}.items() if v}
+    if body.off:
+        edit["off"] = True
+    if not edit:
+        raise HTTPException(400, "nothing changed")
+    edit.update({"reason": body.reason.strip(), "by": body.by.name, "regNo": body.by.regNo, "at": iso(now())})
+    o["rules"][code] = edit
+    return save_rule_overrides(o, body.by, "rule_edited", {"code": code, "before": before, "after": edit})
+
+
+@app.post("/api/rules/{code}/reset")
+def reset_rule(code: str, body: RuleResetIn, x_portal_token: Optional[str] = Header(None)) -> dict:
+    require_token(x_portal_token)
+    o = rule_overrides()
+    before = o["rules"].pop(code, None)
+    if before is None:
+        raise HTTPException(404, "rule has no edits")
+    return save_rule_overrides(o, body.by, "rule_reset", {"code": code, "before": before, "reason": body.reason.strip()})
+
+
+# ---------------------------------------------------------------- chart screen pairing
+# A laptop or TV shows the test charts full size at 3 or 6 m, like the chart
+# screen in an optical store; the shop phone drives it like the chart remote and
+# records the answers. Only chart instructions pass through here (which chart,
+# size, direction), never patient data. Held in memory: pairings end when the
+# server restarts, and the phone then asks to pair again.
+DISPLAY_TTL = timedelta(hours=12)
+PAIR_CODE_TTL = timedelta(minutes=10)
+displays: dict[str, dict] = {}
+display_lock = threading.Lock()
+
+
+class ClaimIn(BaseModel):
+    code: str = Field(pattern=r"^\d{6}$")
+
+
+class ChartCmd(BaseModel):
+    chart: Literal["idle", "acuity", "contrast", "plate", "near", "duochrome", "astigmatism", "amsler", "lenso"]
+    optotype: Optional[Literal["E", "C"]] = None
+    level: Optional[float] = Field(default=None, ge=-0.3, le=1.3)
+    dir: Optional[Literal["up", "down", "left", "right"]] = None
+    distanceM: Optional[float] = Field(default=None, ge=0.25, le=6.5)
+    mirror: bool = False
+    eye: Optional[Literal["R", "L"]] = None
+    grey: Optional[int] = Field(default=None, ge=0, le=255)  # contrast ring grey level (sRGB 0-255)
+    index: Optional[int] = Field(default=None, ge=0, le=30)  # colour plate number
+    lang: Optional[str] = Field(default=None, pattern=r"^[a-z]{2,3}$")  # near chart text
+    n: Optional[int] = Field(default=None, ge=0, le=10_000_000)  # instruction number from the phone
+
+
+def _purge_displays(t: datetime) -> None:
+    for k in [k for k, d in displays.items()
+              if (d["controller"] is None and t - d["created"] > PAIR_CODE_TTL) or t - d["seen"] > DISPLAY_TTL]:
+        displays.pop(k, None)
+
+
+def _controlled(ctl: Optional[str]) -> dict:
+    d = next((d for d in displays.values() if ctl and d["controller"] and hmac.compare_digest(d["controller"], ctl)), None)
+    if not d:
+        raise HTTPException(404, "screen not paired")
+    return d
+
+
+@app.post("/api/display", status_code=201)
+def display_create() -> dict:
+    with display_lock:
+        _purge_displays(now())
+        if len(displays) > 500:
+            raise HTTPException(503, "too many screens")
+        live = {d["code"] for d in displays.values() if d["code"]}
+        code = f"{secrets.randbelow(10 ** 6):06d}"
+        while code in live:
+            code = f"{secrets.randbelow(10 ** 6):06d}"
+        token = secrets.token_urlsafe(24)
+        displays[token] = {"code": code, "created": now(), "seen": now(), "controller": None, "seq": 0, "cmd": {"chart": "idle"}}
+    return {"code": code, "token": token, "expiresInSec": int(PAIR_CODE_TTL.total_seconds())}
+
+
+@app.post("/api/display/claim")
+def display_claim(body: ClaimIn) -> dict:
+    with display_lock:
+        _purge_displays(now())
+        d = next((d for d in displays.values() if d["code"] == body.code and d["controller"] is None), None)
+        if not d:
+            raise HTTPException(404, "code not found or expired")
+        d["controller"] = secrets.token_urlsafe(24)
+        d["code"] = None  # single use
+        d["seen"] = now()
+        return {"controller": d["controller"]}
+
+
+@app.get("/api/display/ping")
+def display_ping(x_display_controller: Optional[str] = Header(None)) -> dict:
+    with display_lock:
+        _controlled(x_display_controller)["seen"] = now()
+    return {"ok": True}
+
+
+@app.post("/api/display/cmd")
+def display_cmd(cmd: ChartCmd, x_display_controller: Optional[str] = Header(None)) -> dict:
+    with display_lock:
+        d = _controlled(x_display_controller)
+        d["seq"] += 1
+        d["cmd"] = cmd.model_dump(exclude_none=True)
+        d["seen"] = now()
+        return {"seq": d["seq"]}
+
+
+@app.get("/api/display/state")
+def display_state(since: int = Query(0, ge=0), x_display_token: Optional[str] = Header(None)) -> dict:
+    with display_lock:
+        d = displays.get(x_display_token or "")
+        if not d:
+            raise HTTPException(404, "screen not found")
+        d["seen"] = now()
+        out: dict[str, Any] = {"paired": d["controller"] is not None, "seq": d["seq"], "code": d["code"]}
+        if d["seq"] != since:
+            out["cmd"] = d["cmd"]
+        return out
+
+
+@app.delete("/api/display")
+def display_end(x_display_token: Optional[str] = Header(None), x_display_controller: Optional[str] = Header(None)) -> dict:
+    with display_lock:
+        for k, d in list(displays.items()):
+            if (x_display_token and k == x_display_token) or (x_display_controller and d["controller"] and hmac.compare_digest(d["controller"], x_display_controller)):
+                displays.pop(k, None)
+    return {"ok": True}
+
+
+# ---------------------------------------------------------------- video consult signalling
+# The optometrist (role 'hub') and the store or camp phone (role 'store') talk
+# by WebRTC: audio and video go directly between the two browsers, encrypted.
+# This only relays the set-up messages (offer, answer, network candidates).
+# A call is tied to a case; the hub needs the portal token to start one, the
+# store needs the case id, which only that phone and the hub hold. In memory.
+CALL_TTL = timedelta(hours=2)
+calls: dict[str, dict] = {}
+call_lock = threading.Lock()
+
+
+class CallIn(BaseModel):
+    caseId: str = Field(min_length=8, max_length=64)
+    by: Literal["hub", "store"]
+
+
+class SignalIn(BaseModel):
+    role: Literal["hub", "store"]
+    type: Literal["join", "offer", "answer", "ice", "end", "ctrl"]
+    data: Optional[dict] = None
+
+
+def _purge_calls(t: datetime) -> None:
+    for k in [k for k, c in calls.items() if t - c["created"] > CALL_TTL or (c["status"] == "ended" and t - c["seen"] > timedelta(minutes=2))]:
+        calls.pop(k, None)
+
+
+def live_calls() -> dict[str, dict]:
+    with call_lock:
+        _purge_calls(now())
+        return {c["caseId"]: {"id": k, "by": c["by"], "status": c["status"], "since": iso(c["created"])}
+                for k, c in calls.items() if c["status"] in ("ringing", "active")}
+
+
+@app.post("/api/calls", status_code=201)
+def call_create(body: CallIn, x_portal_token: Optional[str] = Header(None)) -> dict:
+    if body.by == "hub":
+        require_token(x_portal_token)
+    if not store.get(body.caseId):
+        raise HTTPException(404, "case not found")
+    with call_lock:
+        _purge_calls(now())
+        for c in calls.values():
+            if c["caseId"] == body.caseId and c["status"] in ("ringing", "active"):
+                c["status"] = "ended"
+        cid = secrets.token_urlsafe(16)
+        calls[cid] = {"caseId": body.caseId, "by": body.by, "status": "ringing", "created": now(), "seen": now(), "msgs": {"hub": [], "store": []}}
+    store.audit("optometrist" if body.by == "hub" else "store / camp", "call_started", body.caseId, body.by)
+    return {"id": cid}
+
+
+@app.get("/api/calls")
+def call_list(cases: str = Query("", max_length=8000)) -> list[dict]:
+    """The store phone asks: is the optometrist calling about any of my cases?"""
+    ids = {c for c in cases.split(",") if c}
+    live = live_calls()
+    return [{"caseId": cid, **c} for cid, c in live.items() if cid in ids and c["by"] == "hub" and c["status"] == "ringing"]
+
+
+@app.post("/api/calls/{call_id}/signal")
+def call_signal(call_id: str, body: SignalIn) -> dict:
+    if body.data is not None and len(json.dumps(body.data)) > 20000:
+        raise HTTPException(413, "message too large")
+    with call_lock:
+        c = calls.get(call_id)
+        if not c or c["status"] == "ended":
+            raise HTTPException(404, "call not found")
+        other = "store" if body.role == "hub" else "hub"
+        c["msgs"][other].append({"type": body.type, "data": body.data})
+        c["seen"] = now()
+        if body.type in ("join", "answer"):
+            c["status"] = "active"
+        if body.type == "end":
+            c["status"] = "ended"
+    if body.type == "end":
+        store.audit(body.role, "call_ended", c["caseId"], "")
+    return {"ok": True}
+
+
+@app.get("/api/calls/{call_id}/signal")
+def call_poll(call_id: str, role: Literal["hub", "store"], since: int = Query(0, ge=0)) -> dict:
+    with call_lock:
+        c = calls.get(call_id)
+        if not c:
+            raise HTTPException(404, "call not found")
+        c["seen"] = now()
+        msgs = c["msgs"][role]
+        return {"status": c["status"], "msgs": msgs[since:], "next": len(msgs)}
+
+
+# ---------------------------------------------------------------- shop accounts and encrypted sync
+# One account per shop or camp team, usable from any phone or computer. The
+# password never reaches the server: the browser stretches it (PBKDF2, 310k)
+# and splits it into an auth key, which the server hashes again, and a wrap key
+# that encrypts the shop's data key. Synced records are ciphertext under that
+# data key, so the hub cannot read the shop's patient names or records.
+# Sessions are random tokens stored only as hashes. A shared or camp computer
+# gets a 12-hour session; five wrong passwords lock a login for 15 minutes.
+SESSION_TTL = timedelta(days=30)
+SHARED_TTL = timedelta(hours=12)
+LOCKOUT_WINDOW = timedelta(minutes=15)
+SYNC_KINDS = {"case", "settings", "shop"}
+with store.lock:
+    store.db.executescript(
+        """CREATE TABLE IF NOT EXISTS accounts (
+            id TEXT PRIMARY KEY, login TEXT UNIQUE NOT NULL, shop_name TEXT NOT NULL, kdf_salt TEXT NOT NULL,
+            iterations INTEGER NOT NULL, auth_salt TEXT NOT NULL, auth_hash TEXT NOT NULL, wrapped_key TEXT NOT NULL, created_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS sessions (
+            id TEXT PRIMARY KEY, account_id TEXT NOT NULL, token_hash TEXT UNIQUE NOT NULL, device TEXT, shared INTEGER NOT NULL,
+            created_at TEXT NOT NULL, last_seen TEXT NOT NULL, expires_at TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS sync (
+            account_id TEXT NOT NULL, kind TEXT NOT NULL, rid TEXT NOT NULL, box TEXT NOT NULL, updated_at TEXT NOT NULL,
+            PRIMARY KEY (account_id, kind, rid));"""
+    )
+    store.db.commit()
+login_failures: dict[str, list[datetime]] = {}
+fail_lock = threading.Lock()
+
+
+def norm_login(v: str) -> str:
+    v = v.strip().lower()
+    digits = re.sub(r"[\s()-]", "", v)
+    if re.fullmatch(r"\+?\d{10,13}", digits):
+        return digits[-10:]  # Indian mobile numbers: the last 10 digits
+    if re.fullmatch(r"[^@\s]{1,64}@[^@\s]{1,190}\.[a-z]{2,}", v):
+        return v
+    raise HTTPException(422, "enter a 10-digit phone number or an email")
+
+
+def server_secret() -> bytes:
+    sec = store.get_meta("server_secret")
+    if not sec:
+        sec = secrets.token_hex(32)
+        store.set_meta("server_secret", sec)
+    return bytes.fromhex(sec)
+
+
+def auth_hash(auth_key_b64: str, salt_hex: str) -> str:
+    try:
+        raw = base64.b64decode(auth_key_b64, validate=True)
+    except Exception:
+        raise HTTPException(422, "bad auth key")
+    if len(raw) != 32:
+        raise HTTPException(422, "bad auth key")
+    return hashlib.pbkdf2_hmac("sha256", raw, bytes.fromhex(salt_hex), 100_000).hex()
+
+
+class BoxIn(BaseModel):
+    alg: str = Field(default="A256GCM", max_length=16)
+    iv: str = Field(min_length=8, max_length=32)
+    ct: str = Field(min_length=8, max_length=4_000_000)
+
+
+class SignupIn(BaseModel):
+    login: str = Field(min_length=5, max_length=254)
+    shopName: str = Field(min_length=2, max_length=80)
+    kdfSalt: str = Field(min_length=16, max_length=64)
+    iterations: int = Field(ge=100_000, le=5_000_000)
+    authKey: str = Field(min_length=40, max_length=64)
+    wrappedKey: BoxIn
+    device: str = Field(default="", max_length=80)
+    shared: bool = False
+
+
+class LoginIn(BaseModel):
+    login: str = Field(min_length=5, max_length=254)
+    authKey: str = Field(min_length=40, max_length=64)
+    device: str = Field(default="", max_length=80)
+    shared: bool = False
+
+
+class SyncIn(BaseModel):
+    box: BoxIn
+    updatedAt: str = Field(min_length=10, max_length=40)
+
+
+def new_session(account_id: str, device: str, shared: bool) -> tuple[str, str]:
+    token = secrets.token_urlsafe(32)
+    t = now()
+    exp = t + (SHARED_TTL if shared else SESSION_TTL)
+    with store.lock:
+        store.db.execute("INSERT INTO sessions VALUES (?,?,?,?,?,?,?,?)",
+                         (secrets.token_hex(8), account_id, hashlib.sha256(token.encode()).hexdigest(), device[:80], int(shared), iso(t), iso(t), iso(exp)))
+        store.db.commit()
+    return token, iso(exp)
+
+
+def shop_session(token: Optional[str]) -> sqlite3.Row:
+    if not token:
+        raise HTTPException(401, "sign in first")
+    th = hashlib.sha256(token.encode()).hexdigest()
+    with store.lock:
+        row = store.db.execute("SELECT s.*, a.shop_name, a.login FROM sessions s JOIN accounts a ON a.id = s.account_id WHERE s.token_hash = ?", (th,)).fetchone()
+        if not row or row["expires_at"] < iso(now()):
+            if row:
+                store.db.execute("DELETE FROM sessions WHERE id = ?", (row["id"],))
+                store.db.commit()
+            raise HTTPException(401, "session expired: sign in again")
+        if row["last_seen"] < iso(now() - timedelta(minutes=5)):
+            store.db.execute("UPDATE sessions SET last_seen = ? WHERE id = ?", (iso(now()), row["id"]))
+            store.db.commit()
+    return row
+
+
+def shop_out(acc: Any) -> dict:
+    return {"id": acc["id"] if "id" in acc.keys() and "account_id" not in acc.keys() else acc["account_id"], "name": acc["shop_name"], "login": acc["login"]}
+
+
+@app.get("/api/auth/prelogin")
+def prelogin(login: str = Query(min_length=5, max_length=254)) -> dict:
+    lg = norm_login(login)
+    with store.lock:
+        row = store.db.execute("SELECT kdf_salt, iterations FROM accounts WHERE login = ?", (lg,)).fetchone()
+    if row:
+        return {"kdfSalt": row["kdf_salt"], "iterations": row["iterations"]}
+    # unknown login: a stable fake salt, so the reply does not reveal who has an account
+    fake = hmac.new(server_secret(), lg.encode(), hashlib.sha256).digest()[:16]
+    return {"kdfSalt": base64.b64encode(fake).decode(), "iterations": 310000}
+
+
+@app.post("/api/auth/signup", status_code=201)
+def signup(body: SignupIn) -> dict:
+    lg = norm_login(body.login)
+    salt = secrets.token_hex(16)
+    acc_id = secrets.token_hex(10)
+    with store.lock:
+        if store.db.execute("SELECT 1 FROM accounts WHERE login = ?", (lg,)).fetchone():
+            raise HTTPException(409, "account exists")
+        store.db.execute("INSERT INTO accounts VALUES (?,?,?,?,?,?,?,?,?)",
+                         (acc_id, lg, body.shopName.strip(), body.kdfSalt, body.iterations, salt, auth_hash(body.authKey, salt),
+                          json.dumps(body.wrappedKey.model_dump()), iso(now())))
+        store.db.commit()
+    store.audit(f"shop {acc_id}", "account_created", None, body.shopName.strip())
+    token, exp = new_session(acc_id, body.device, body.shared)
+    return {"token": token, "expiresAt": exp, "shop": {"id": acc_id, "name": body.shopName.strip(), "login": lg}}
+
+
+@app.post("/api/auth/login")
+def login(body: LoginIn) -> dict:
+    lg = norm_login(body.login)
+    t = now()
+    with fail_lock:
+        recent = [x for x in login_failures.get(lg, []) if t - x < LOCKOUT_WINDOW]
+        login_failures[lg] = recent
+        if len(recent) >= 5:
+            raise HTTPException(429, "too many attempts: wait 15 minutes")
+    with store.lock:
+        acc = store.db.execute("SELECT * FROM accounts WHERE login = ?", (lg,)).fetchone()
+    if not acc or not hmac.compare_digest(acc["auth_hash"], auth_hash(body.authKey, acc["auth_salt"])):
+        with fail_lock:
+            login_failures.setdefault(lg, []).append(t)
+        raise HTTPException(401, "wrong login or password")
+    with fail_lock:
+        login_failures.pop(lg, None)
+    token, exp = new_session(acc["id"], body.device, body.shared)
+    store.audit(f"shop {acc['id']}", "signed_in", None, f"{body.device[:60]}{' (shared computer)' if body.shared else ''}")
+    return {"token": token, "expiresAt": exp, "wrappedKey": json.loads(acc["wrapped_key"]),
+            "shop": {"id": acc["id"], "name": acc["shop_name"], "login": acc["login"]}}
+
+
+@app.get("/api/auth/me")
+def me(x_shop_token: Optional[str] = Header(None)) -> dict:
+    s = shop_session(x_shop_token)
+    return {"shop": {"id": s["account_id"], "name": s["shop_name"], "login": s["login"]},
+            "session": {"id": s["id"], "device": s["device"], "shared": bool(s["shared"]), "expiresAt": s["expires_at"]}}
+
+
+@app.post("/api/auth/logout")
+def logout(x_shop_token: Optional[str] = Header(None)) -> dict:
+    s = shop_session(x_shop_token)
+    with store.lock:
+        store.db.execute("DELETE FROM sessions WHERE id = ?", (s["id"],))
+        store.db.commit()
+    return {"ok": True}
+
+
+@app.get("/api/auth/sessions")
+def sessions(x_shop_token: Optional[str] = Header(None)) -> list[dict]:
+    s = shop_session(x_shop_token)
+    with store.lock:
+        rows = store.db.execute("SELECT * FROM sessions WHERE account_id = ? AND expires_at > ? ORDER BY last_seen DESC",
+                                (s["account_id"], iso(now()))).fetchall()
+    return [{"id": r["id"], "device": r["device"], "shared": bool(r["shared"]), "createdAt": r["created_at"],
+             "lastSeen": r["last_seen"], "expiresAt": r["expires_at"], "current": r["id"] == s["id"]} for r in rows]
+
+
+@app.delete("/api/auth/sessions/{sid}")
+def revoke_session(sid: str, x_shop_token: Optional[str] = Header(None)) -> dict:
+    s = shop_session(x_shop_token)
+    with store.lock:
+        n = store.db.execute("DELETE FROM sessions WHERE id = ? AND account_id = ?", (sid, s["account_id"])).rowcount
+        store.db.commit()
+    if not n:
+        raise HTTPException(404, "device not found")
+    return {"ok": True}
+
+
+@app.put("/api/sync/{kind}/{rid}")
+def sync_put(kind: str, rid: str, body: SyncIn, x_shop_token: Optional[str] = Header(None)) -> dict:
+    s = shop_session(x_shop_token)
+    if kind not in SYNC_KINDS or not re.fullmatch(r"[A-Za-z0-9_.:-]{1,80}", rid):
+        raise HTTPException(400, "bad record")
+    with store.lock:
+        n = store.db.execute("SELECT COUNT(*) FROM sync WHERE account_id = ?", (s["account_id"],)).fetchone()[0]
+        exists = store.db.execute("SELECT 1 FROM sync WHERE account_id = ? AND kind = ? AND rid = ?", (s["account_id"], kind, rid)).fetchone()
+        if n >= 20000 and not exists:
+            raise HTTPException(507, "sync storage full")
+        stamp = iso(now())  # server time orders the sync feed
+        store.db.execute("INSERT OR REPLACE INTO sync VALUES (?,?,?,?,?)", (s["account_id"], kind, rid, json.dumps(body.box.model_dump()), stamp))
+        store.db.commit()
+    return {"ok": True, "serverTime": stamp}
+
+
+@app.get("/api/sync")
+def sync_get(since: str = Query("", max_length=40), x_shop_token: Optional[str] = Header(None)) -> dict:
+    s = shop_session(x_shop_token)
+    since = since.replace(" ", "+")  # an unencoded "+00:00" arrives as a space
+    with store.lock:
+        rows = store.db.execute("SELECT kind, rid, box, updated_at FROM sync WHERE account_id = ? AND updated_at > ? ORDER BY updated_at LIMIT 2000",
+                                (s["account_id"], since)).fetchall()
+    return {"records": [{"kind": r["kind"], "rid": r["rid"], "box": json.loads(r["box"]), "updatedAt": r["updated_at"]} for r in rows],
+            "serverTime": iso(now())}
 
 
 @app.post("/api/shares", status_code=201)

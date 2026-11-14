@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>DivyaDrishti</title>
   <meta name="description" content="Voice-first adaptive eye-care interview and functional vision profile, reviewed by a remote optometrist.">
-  <meta name="theme-color" content="#14212e">
+  <meta name="theme-color" content="#ffffff">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/app.css">
@@ -13,15 +13,16 @@
 <body>
   <header class="top">
     <a href="./" id="homeLink" class="brand" aria-label="DivyaDrishti home">
-      <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M26.4 11.2A11.5 11.5 0 1 0 26.4 20.8" fill="none" stroke="currentColor" stroke-width="5.5"/></svg>
+      <svg class="mark" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="10" fill="currentColor"/><path d="M5.5 16c2.9-4.7 6.4-7 10.5-7s7.6 2.3 10.5 7c-2.9 4.7-6.4 7-10.5 7s-7.6-2.3-10.5-7z" fill="none" stroke="#fff" stroke-width="1.9"/><circle cx="16" cy="16" r="3.4" fill="#fff"/></svg>
       <span>DivyaDrishti</span>
     </a>
     <div class="row gap">
-      <button id="lockBtn" class="chip" hidden>🔒</button>
-      <button id="voiceToggle" class="chip" aria-pressed="true">🔊</button>
-      <span id="syncBadge" class="chip" title="Sync status">✓</span>
+      <button id="lockBtn" class="chip" hidden></button>
+      <button id="voiceToggle" class="chip" aria-pressed="true"></button>
+      <span id="syncBadge" class="chip" title="Sync status"></span>
     </div>
   </header>
+  <nav class="tabbar" id="tabbar" aria-label="Sections" hidden></nav>
   <main id="main"><p class="muted center">Loading…</p></main>
   <noscript><p class="card">DivyaDrishti needs JavaScript.</p></noscript>
   <script type="module" src="js/app.js"></script>

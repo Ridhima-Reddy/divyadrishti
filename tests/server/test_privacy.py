@@ -101,7 +101,7 @@ def test_retention_purges_old_reviewed_cases():
 
 
 def test_new_languages_accepted():
-    for lang in ("te", "mr", "kn"):
+    for lang in ("te", "mr", "kn", "bn"):
         c = real_case("S. Kumar", f"privacy-lang-{lang}")
         c["lang"] = lang
         assert client.post("/api/cases", json=c).status_code == 201

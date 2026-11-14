@@ -4,7 +4,7 @@
 // with optometrists before clinical use. The optometrist confirms every power.
 
 import { rxFindings } from './rx.js';
-import { evaluate, emergencyFromAnswers } from './redflags.js';
+import { evaluate, emergencyFromAnswers, ruleOverrides } from './redflags.js';
 
 // Typical hours/day per zone and habitual near working distance by occupation.
 // inter = non-screen arm's-length work (counter, cooking, loom, dashboard);
@@ -445,7 +445,7 @@ export function buildProfile(answers, measurements = {}, meta = {}) {
   prof.findings = testFindings(a, m);
   prof.currentRx = cur ? { source: cur.source } : null;
   prof.quality = dataQuality(a, m, prof, meta.trace || []);
-  prof.rulesVersion = RULES_VERSION;
+  prof.rulesVersion = ruleOverrides().version ? `${RULES_VERSION}+hub.${ruleOverrides().version}` : RULES_VERSION;
   prof.summary = oneLine(prof);
   return prof;
 }

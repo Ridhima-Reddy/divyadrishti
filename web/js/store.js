@@ -66,12 +66,38 @@ export async function unlock(pin) {
 }
 
 // Forgotten PIN: the only way back is to wipe this phone's encrypted data.
+// (With a shop account the cases come back from sync after signing in again.)
 export async function resetVault() {
   sessionKey = null;
+  ephemeralMode = false;
   localStorage.removeItem(VAULT_KEY);
+  for (const k of Object.keys(localStorage)) if (k.startsWith('dd.secret.')) localStorage.removeItem(k);
   await tx('cases', 'readwrite', (s) => s.clear());
   await tx('drafts', 'readwrite', (s) => s.clear());
 }
+
+// Shared or camp computer: a random key that exists only in this tab's memory.
+// Nothing written under it can be read after the tab closes, and signing out
+// wipes it all (resetVault).
+let ephemeralMode = false;
+export async function ephemeral() {
+  sessionKey = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  ephemeralMode = true;
+  touch();
+}
+export const isEphemeral = () => ephemeralMode;
+
+// Small secrets kept under the vault key (the shop account's data key on the
+// operator's own phone, so a PIN unlock is enough to keep syncing).
+export async function putSecret(name, value) {
+  localStorage.setItem(`dd.secret.${name}`, JSON.stringify(await encryptJson(needKey(), value, `secret:${name}`)));
+}
+export async function getSecret(name) {
+  const raw = localStorage.getItem(`dd.secret.${name}`);
+  if (!raw || !sessionKey) return null;
+  try { return await decryptJson(sessionKey, JSON.parse(raw), `secret:${name}`); } catch { return null; }
+}
+export const dropSecret = (name) => localStorage.removeItem(`dd.secret.${name}`);
 
 function needKey() {
   if (!sessionKey) throw new Error('locked');

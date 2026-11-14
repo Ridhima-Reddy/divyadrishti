@@ -109,7 +109,7 @@ function status(r) {
   const n = Number(r.viewsLeft) || 0;
   const views = n === 0 ? 'this was the last view: print it now if you need it' : `${n} view${n === 1 ? '' : 's'} left`;
   const el = $('status');
-  el.textContent = `🔒 Encrypted end-to-end · expires ${date} · ${views}`;
+  el.textContent = `Encrypted end-to-end · expires ${date} · ${views}`;
   el.classList.toggle('last', n === 0);
 }
 

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DivyaDrishti Chart Screen</title>
+  <meta name="description" content="Shows the eye test charts full size on a laptop or TV; the shop phone drives it like a chart remote.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <style>
+    body.display main { max-width: 920px; }
+    .pairgrid { display: flex; flex-wrap: wrap; gap: 28px; align-items: center; margin: 22px 0 10px; }
+    .code { font: 600 clamp(3rem, 10vw, 6.2rem)/1 var(--mono); letter-spacing: .1em; font-variant-numeric: tabular-nums; }
+    .pairview .qr svg { width: 180px; height: 180px; }
+    .steps-list { margin: 8px 0 0; padding-left: 1.2rem; color: var(--ink-2); }
+    .steps-list li { margin: 4px 0; }
+    .cardbox { transition: width .05s; }
+    .stage { position: fixed; inset: 0; z-index: 20; background: #fff; color: #000; display: grid; place-items: center; overflow: hidden; }
+    .stage .chart { display: grid; place-items: center; gap: 18px; }
+    .stage.mirror .chart.mirrorable { transform: scaleX(-1); }
+    .stage .lbl { position: absolute; top: 14px; right: 18px; font: 500 13px var(--mono); color: #8a8f98; text-align: right; }
+    .stage .note { font: 500 15px var(--font); color: #5b6070; text-align: center; max-width: 60ch; }
+    .stage .menu { position: absolute; top: 10px; left: 12px; opacity: .35; }
+    .stage .menu:hover, .stage .menu:focus-visible { opacity: 1; }
+    .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .stage .amsler { --line: #000; }
+  </style>
+</head>
+<body class="display">
+  <header class="top">
+    <span class="brand">
+      <svg class="mark" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="10" fill="currentColor"/><path d="M5.5 16c2.9-4.7 6.4-7 10.5-7s7.6 2.3 10.5 7c-2.9 4.7-6.4 7-10.5 7s-7.6-2.3-10.5-7z" fill="none" stroke="#fff" stroke-width="1.9"/><circle cx="16" cy="16" r="3.4" fill="#fff"/></svg>
+      <span>DivyaDrishti <em>Chart screen</em></span>
+    </span>
+    <div class="row gap">
+      <span id="dstate" class="pill">Not paired</span>
+      <button class="chip" id="calBtn" type="button">Screen size</button>
+      <button class="chip" id="fsBtn" type="button">Full screen</button>
+      <button class="chip" id="endBtn" type="button" hidden>Unpair</button>
+    </div>
+  </header>
+  <main>
+    <section id="pairView" class="card pairview">
+      <p class="eyebrow">Chart screen</p>
+      <h1>Pair with the shop phone</h1>
+      <p class="lede">This laptop or TV shows the eye charts full size. The phone works as the remote and records the answers.</p>
+      <div class="pairgrid"><div class="code" id="pairCode" aria-live="polite">······</div><div class="qr" id="pairQr"></div></div>
+      <ol class="steps-list">
+        <li>On the phone: Tests, then <b>Pair a screen</b>, and type this code. Or scan the QR with the phone camera.</li>
+        <li>Set the screen size once (an ID card on the screen), so letters are the right size.</li>
+        <li>Put this screen 3 m from the patient (or 6 m), or 3 m with a mirror for a 6 m room.</li>
+      </ol>
+      <p class="muted small" id="pairExp"></p>
+    </section>
+    <section id="idleView" class="card" hidden>
+      <p class="eyebrow">Chart screen</p>
+      <h1>Paired with the shop phone</h1>
+      <p class="lede">Charts appear here when a test starts on the phone. Only chart instructions reach this screen, never patient details.</p>
+      <p class="small" id="calState"></p>
+    </section>
+    <section id="calView" class="card" hidden>
+      <h2>Set the screen size</h2>
+      <p>Hold an ID card or bank card flat against the screen and drag the slider until the box is exactly as wide as the card.</p>
+      <div class="cardbox" id="cardBox"></div>
+      <input type="range" id="cardRange" min="150" max="900" step="1" aria-label="Card width on screen">
+      <div class="row gap"><button class="btn primary" id="calSave" type="button">Save</button><button class="btn ghost" id="calCancel" type="button">Cancel</button></div>
+    </section>
+  </main>
+  <div id="stage" class="stage" hidden>
+    <button class="btn small menu" id="menuBtn" type="button">Menu</button>
+    <div class="lbl" id="stageLbl"></div>
+    <div class="chart" id="chart"></div>
+  </div>
+  <script type="module" src="js/display.js"></script>
+</body>
+</html>

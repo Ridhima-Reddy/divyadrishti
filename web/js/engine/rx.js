@@ -11,19 +11,19 @@ const TEENS = { ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fif
 const TENS = { twenty: 20, thirty: 30, forty: 40, fourty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90 };
 
 const MARKERS = {
-  EYE_R: ['right', 'r', 're', 'od', 'rt', 'दायाँ', 'दायां', 'दाईं', 'दाहिनी', 'दायीं', 'दाएं', 'வலது', 'उजवा', 'उजवी', 'కుడి', 'ಬಲ'],
-  EYE_L: ['left', 'l', 'le', 'os', 'lt', 'बायाँ', 'बायां', 'बाईं', 'बायीं', 'बाएं', 'இடது', 'डावा', 'डावी', 'ఎడమ', 'ಎಡ'],
-  BOTH: ['both', 'ou', 'दोनों', 'இரண்டு', 'दोन्ही', 'రెండు', 'ಎರಡೂ'],
-  SAME: ['same', 'similar', 'वही', 'அதே', 'तेच', 'అదే', 'ಅದೇ'],
+  EYE_R: ['right', 'r', 're', 'od', 'rt', 'दायाँ', 'दायां', 'दाईं', 'दाहिनी', 'दायीं', 'दाएं', 'வலது', 'उजवा', 'उजवी', 'కుడి', 'ಬಲ', 'ডান'],
+  EYE_L: ['left', 'l', 'le', 'os', 'lt', 'बायाँ', 'बायां', 'बाईं', 'बायीं', 'बाएं', 'இடது', 'डावा', 'डावी', 'ఎడమ', 'ಎಡ', 'বাঁ', 'বাম'],
+  BOTH: ['both', 'ou', 'दोनों', 'இரண்டு', 'दोन्ही', 'రెండు', 'ಎರಡೂ', 'দুটোই', 'উভয়'],
+  SAME: ['same', 'similar', 'वही', 'அதே', 'तेच', 'అదే', 'ಅದೇ', 'একই'],
   F_SPH: ['sph', 'sphere', 'spherical', 'sp', 'spherical power', 'power', 'number'],
-  F_CYL: ['cyl', 'cylinder', 'cylindrical', 'cy', 'सिलेंडर', 'சிலிண்டர்'],
-  F_AXIS: ['axis', 'ax', 'x', 'at', 'एक्सिस', 'ஆக்சிஸ்'],
-  F_ADD: ['add', 'addition', 'near', 'reading', 'ऐड', 'ஆட்'],
-  MINUS: ['minus', 'negative', 'माइनस', 'மைனஸ்'],
-  PLUS: ['plus', 'positive', 'प्लस', 'ப்ளஸ்'],
-  POINT: ['point', 'dot', 'पॉइंट', 'பாயிண்ட்'],
+  F_CYL: ['cyl', 'cylinder', 'cylindrical', 'cy', 'सिलेंडर', 'சிலிண்டர்', 'সিলিন্ডার'],
+  F_AXIS: ['axis', 'ax', 'x', 'at', 'एक्सिस', 'ஆக்சிஸ்', 'অ্যাক্সিস', 'এক্সিস'],
+  F_ADD: ['add', 'addition', 'near', 'reading', 'ऐड', 'ஆட்', 'অ্যাড'],
+  MINUS: ['minus', 'negative', 'माइनस', 'மைனஸ்', 'মাইনাস'],
+  PLUS: ['plus', 'positive', 'प्लस', 'ப்ளஸ்', 'প্লাস'],
+  POINT: ['point', 'dot', 'पॉइंट', 'பாயிண்ட்', 'পয়েন্ট'],
   PLANO: ['plano', 'plain', 'pl'],
-  SKIP: ['eye', 'eyes', 'आँख', 'आंख', 'கண்', 'डोळा', 'కన్ను', 'ಕಣ್ಣು', 'and', 'with', 'degree', 'degrees', 'd', 'dioptre', 'diopter', 'dioptres', 'diopters', 'the', 'is'],
+  SKIP: ['eye', 'eyes', 'आँख', 'आंख', 'கண்', 'डोळा', 'కన్ను', 'ಕಣ್ಣು', 'চোখ', 'and', 'with', 'degree', 'degrees', 'd', 'dioptre', 'diopter', 'dioptres', 'diopters', 'the', 'is'],
 };
 const MARKER_OF = new Map();
 for (const [m, words] of Object.entries(MARKERS)) for (const w of words) MARKER_OF.set(normalize(w), m);

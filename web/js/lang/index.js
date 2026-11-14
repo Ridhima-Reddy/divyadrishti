@@ -6,6 +6,7 @@ import ta from './ta.js';
 import te from './te.js';
 import mr from './mr.js';
 import kn from './kn.js';
+import bn from './bn.js';
 
-export const PACKS = [hi, ta, te, mr, kn];
+export const PACKS = [hi, ta, te, mr, kn, bn];
 export const PACK_BY_CODE = Object.fromEntries(PACKS.map((p) => [p.code, p]));
