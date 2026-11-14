@@ -1,0 +1,16 @@
+# Render blueprint: one free web service built from the Dockerfile.
+# Keep it to ONE instance: chart-screen pairing and video-call set-up live in
+# server memory. The free plan sleeps when idle (the first request takes about
+# a minute) and its disk is temporary, so demo data resets on each restart.
+services:
+  - type: web
+    name: divyadrishti
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /api/health
+    envVars:
+      - key: DD_PORTAL_TOKEN
+        generateValue: true
+      - key: DD_SEED
+        value: "1"

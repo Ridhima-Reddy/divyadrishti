@@ -17,6 +17,16 @@ Team: Ridhima · Kedar · Venkatesh · Rohit (IIT Madras)
 6. **Private by design.** Data on the phone is encrypted (AES-256-GCM, PIN-protected). The server never sees names or phone numbers: they are sealed to the optometrist hub's key (ECDH P-256), and only the hub's browser can open them. Patient files are shared as **end-to-end encrypted, expiring links** (key in the link's fragment, optional PIN, QR code), never as plaintext WhatsApp/SMS. Every access is logged, reviewed cases expire, and strict security headers apply. See `docs/PRIVACY_SECURITY.md`.
 7. **Works on a phone, a laptop or a desktop.** One column on phones; two or three columns on wider screens (interview with the answers so far beside it, the test battery in a grid, the profile next to the recommendation).
 
+## Try it (for judges)
+
+- **Live demo:** _link added after deployment_ (free host: the first request after idle takes about a minute to wake; demo data resets on restart).
+  - Field app: `/` (phone or laptop). Choose **Use this phone only, without an account**, set a PIN, then open **Patients** and start a demo patient. Demo patients play the whole interview with no microphone.
+  - Optometrist portal: `/portal.html` (open once as `/portal.html#token=<key given in the submission>`). Click *Set up identity encryption* first.
+  - Chart screen: `/display.html` on a laptop; pair the phone with its 6-digit code (Tools tab) and the phone becomes the remote for the charts.
+- **No account needed to look around, but shop accounts work:** create one on the first screen; sign in from a second browser and tick *shared computer* to see the camp-computer mode.
+- **Run it yourself:** see below (about two minutes). **Demo video:** _link added in the submission form_.
+- Microphone, camera and video calls need HTTPS (the live link has it; on localhost they work too).
+
 ## Run it
 
 ```bash
