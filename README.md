@@ -19,7 +19,7 @@ Team: Ridhima · Kedar · Venkatesh · Rohit (IIT Madras)
 
 ## Try it (for judges)
 
-- **Live demo:** _link added after deployment_ (free host: the first request after idle takes about a minute to wake; demo data resets on restart).
+- **Live demo:** <https://divyadrishti-3dn2.onrender.com> (free host: the first request after idle takes about a minute to wake; demo data resets on restart).
   - Field app: `/` (phone or laptop). Choose **Use this phone only, without an account**, set a PIN, then open **Patients** and start a demo patient. Demo patients play the whole interview with no microphone.
   - Optometrist portal: `/portal.html` (open once as `/portal.html#token=<key given in the submission>`). Click *Set up identity encryption* first.
   - Chart screen: `/display.html` on a laptop; pair the phone with its 6-digit code (Tools tab) and the phone becomes the remote for the charts.
