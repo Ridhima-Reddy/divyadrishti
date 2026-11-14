@@ -26,6 +26,7 @@ Team: Ridhima · Kedar · Venkatesh · Rohit (IIT Madras)
 - **No account needed to look around, but shop accounts work:** create one on the first screen; sign in from a second browser and tick *shared computer* to see the camp-computer mode.
 - **Run it yourself:** see below (about two minutes). **Demo video:** _link added in the submission form_.
 - Microphone, camera and video calls need HTTPS (the live link has it; on localhost they work too).
+- **Demo data resets.** The live demo runs on a free host that restarts from time to time. The demo patients (in the app and the 13 sample cases in the portal) always come back. Anything a visitor adds, such as shop accounts, cases sent to the portal, reviews, shared links and rule edits, is cleared on restart, and a phone that was signed in to a shop account will need that account created again. Data kept on a phone or browser (PIN, locally saved patients) is not affected.
 
 ## Run it
 
