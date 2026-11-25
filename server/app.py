@@ -499,6 +499,9 @@ async def security_headers(request: Request, call_next):
     h["Cross-Origin-Opener-Policy"] = "same-origin"
     if request.url.path.startswith("/api/"):
         h["Cache-Control"] = "no-store"
+    elif "cache-control" not in h:
+        # pages, scripts and styles: always revalidate (cheap 304), so a redeploy never mixes old and new files
+        h["Cache-Control"] = "no-cache"
     return response
 
 

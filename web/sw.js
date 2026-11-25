@@ -1,6 +1,6 @@
 // Offline shell: the optical store app must open in a village with no signal.
 // API calls are never cached (cases queue in IndexedDB instead).
-const CACHE = 'dd-shell-v15';
+const CACHE = 'dd-shell-v16';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest', 'icon.svg',
   'js/app.js', 'js/icons.js', 'js/remote.js', 'js/account.js', 'js/tryon.js', 'js/call.js', 'display.html', 'js/display.js', 'fonts/InstrumentSans-Variable.woff2', 'fonts/InstrumentSans-Variable-ext.woff2', 'fonts/Newsreader-Variable.woff2', 'js/charts_ui.js', 'fonts/GeistMono-Variable.woff2', 'js/i18n.js', 'js/voice.js', 'js/store.js', 'js/passport.js', 'js/profile_view.js', 'js/crypto.js', 'js/tests_ui.js',
