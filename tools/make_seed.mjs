@@ -29,7 +29,21 @@ const REVIEWS = {
   },
 };
 
-function runPersona(p) {
+// Deterministic 0..1 from a string, so the seed file is stable between runs.
+const unit = (str) => parseInt(createHash('sha1').update(str).digest('hex').slice(0, 8), 16) / 0xffffffff;
+
+// How each answer was given, as in real use: older patients at camps mostly
+// speak; younger, literate patients tap more; numbers and prescriptions are
+// often typed by the operator. Every answer records its own mode.
+const VOICE_SHARE = { camp: 0.75, store: 0.5 };
+function modeFor(p, q) {
+  const r = unit(`${p.key}:${q.id}:mode`);
+  if ((q.type === 'number' || q.type === 'rx' || q.type === 'hours') && r < 0.45) return 'typed';
+  const voice = (VOICE_SHARE[p.siteType] ?? 0.55) + ((p.say.age ?? 40) >= 55 ? 0.15 : 0) - ((p.say.age ?? 40) < 25 ? 0.2 : 0);
+  return r < voice ? 'voice' : r < voice + 0.08 ? 'typed' : 'tap';
+}
+
+function runPersona(p, created) {
   const s = createSession({ lang: p.lang, id: p.key });
   for (let i = 0; i < 60; i++) {
     const q = nextQuestion(s);
@@ -37,8 +51,16 @@ function runPersona(p) {
     const raw = p.say[q.id];
     const r = interpret(q, raw, q.asr || p.lang);
     if (!r.ok) throw new Error(`${p.key}: cannot parse ${q.id}`);
-    submitAnswer(s, q.id, r.value, { raw, mode: 'voice' });
+    submitAnswer(s, q.id, r.value, { raw, mode: modeFor(p, q) });
   }
+  // Real pacing: 12 to 40 seconds per answer (voice answers include the question being read out).
+  let t = new Date(created).getTime();
+  s.startedAt = new Date(t).toISOString();
+  for (const tr of s.trace) {
+    if (tr.qid && !tr.event) t += (12 + unit(`${p.key}:${tr.qid}:t`) * 22 + (tr.mode === 'voice' ? 6 : 0)) * 1000;
+    tr.at = new Date(t).toISOString();
+  }
+  s.finishedAt = new Date(t + 20000).toISOString();
   return s;
 }
 
@@ -46,7 +68,7 @@ const out = PERSONAS.map((p) => {
   const id = idFor(p.key);
   const minsAgo = RECEIVED_MIN_AGO[p.key] ?? 60;
   const created = new Date(Date.now() - (minsAgo + 8) * 60000).toISOString();
-  const session = runPersona(p);
+  const session = runPersona(p, created);
   const profile = buildProfile(session.answers, p.measure, { trace: session.trace });
   const asked = session.trace.filter((x) => x.qid && !x.event).length;
   const patient = { name: p.name, phone: p.phone, village: p.village, age: session.answers.age, sex: session.answers.sex };

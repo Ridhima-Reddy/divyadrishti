@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DivyaDrishti Network</title>
+  <meta name="description" content="The ZEISS partner view of the DivyaDrishti network, from de-identified aggregates only.">
+  <meta name="theme-color" content="#f5f4f0">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/portal.css">
+  <link rel="stylesheet" href="css/zeiss.css">
+</head>
+<body class="portal zeiss">
+  <!-- entry gate: demo or network admin sign-in -->
+  <main class="gate" id="gate" hidden>
+    <div class="welcome">
+      <section class="band">
+        <svg class="mark" viewBox="0 0 32 32" width="52" height="52" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
+        <h1>DivyaDrishti Network</h1>
+        <p class="meta">The ZEISS partner view</p>
+        <p class="lede">How the whole network performs: the shops and eye camps that screen with the optical store app, the optometrists and ophthalmologists who review in the portal, and the lenses and orders that follow.</p>
+        <button class="btn primary big" id="demoBtn" type="button" data-icon-end="right">Explore the demo dashboard</button>
+        <p class="privacy" data-icon="shield">Aggregates only: no patient names, phone numbers or case details reach this dashboard.</p>
+      </section>
+      <section class="card signin" aria-labelledby="signinTitle">
+        <h2 id="signinTitle">Network admin sign-in</h2>
+        <p class="muted small">For deployments that set an admin token on the server. The demo works without one.</p>
+        <form id="signinForm" autocomplete="off">
+          <label for="tokenIn">Admin token
+            <input type="password" id="tokenIn" name="token" autocomplete="off" spellcheck="false" required>
+          </label>
+          <button class="btn primary" type="submit" data-icon="lock">Sign in</button>
+        </form>
+        <p class="muted tiny-note zhint">The token stays in this browser tab only and is sent with each request as the X-Admin-Token header. Signing out clears it.</p>
+        <p class="err" id="gateErr" role="alert"></p>
+      </section>
+    </div>
+  </main>
+
+  <!-- the dashboard -->
+  <div class="shell" id="app" hidden>
+    <aside class="sidenav">
+      <a href="#overview" class="brand">
+        <svg class="mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
+        <span>DivyaDrishti Network <em>ZEISS partner view</em></span>
+      </a>
+      <nav class="navlist" aria-label="Dashboard sections">
+        <button class="navitem on" type="button" data-tab="overview" data-icon="chart"><span>Overview</span></button>
+        <button class="navitem" type="button" data-tab="field" data-icon="home"><span>Store network</span></button>
+        <button class="navitem" type="button" data-tab="clinical" data-icon="eye"><span>Clinical quality</span></button>
+        <button class="navitem" type="button" data-tab="lenses" data-icon="glasses"><span>Lenses and orders</span></button>
+        <button class="navitem" type="button" data-tab="patients" data-icon="phone"><span>Patient app</span></button>
+        <button class="navitem" type="button" data-tab="calendar" data-icon="clock"><span>Calendar</span></button>
+        <button class="navitem" type="button" data-tab="verify" data-icon="shield"><span>Verification</span><b class="count soft" id="navPending" hidden></b></button>
+        <button class="navitem" type="button" data-tab="versions" data-icon="rules"><span>Versions</span></button>
+      </nav>
+    </aside>
+    <div class="content">
+      <div class="zbar">
+        <span class="zmode" id="zMode"></span>
+        <span class="zdemo" id="zDemo" hidden>Demo data</span>
+        <span class="zgen" id="zGen" role="status"></span>
+        <span class="zspace"></span>
+        <button class="btn small" id="zRefresh" type="button" data-icon="refresh">Refresh</button>
+        <button class="btn small ghost" id="zOut" type="button">Sign out</button>
+      </div>
+      <section class="tabpage" id="tab-overview" data-page="overview"></section>
+      <section class="tabpage" id="tab-field" data-page="field" hidden></section>
+      <section class="tabpage" id="tab-clinical" data-page="clinical" hidden></section>
+      <section class="tabpage" id="tab-lenses" data-page="lenses" hidden></section>
+      <section class="tabpage" id="tab-patients" data-page="patients" hidden></section>
+      <section class="tabpage" id="tab-calendar" data-page="calendar" hidden></section>
+      <section class="tabpage" id="tab-verify" data-page="verify" hidden></section>
+      <section class="tabpage" id="tab-versions" data-page="versions" hidden></section>
+    </div>
+  </div>
+  <noscript><p class="gate">This dashboard needs JavaScript to load the network aggregates.</p></noscript>
+  <script type="module" src="js/zeiss.js"></script>
+</body>
+</html>

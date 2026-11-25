@@ -68,7 +68,8 @@ export function trend({ labels, values, color = 'var(--c1)', height = 120, title
 }
 
 // Coloured horizontal bars for ranked lists (referral reasons, lens mix, areas).
-export function hbars(items, { max, palette = ['var(--c1)', 'var(--c2)', 'var(--c3)', 'var(--c4)', 'var(--c5)', 'var(--c6)', 'var(--c7)'] } = {}) {
+// One hue for every bar: a ranked list is one series, so colour must not encode rank.
+export function hbars(items, { max, palette = ['var(--c1)'] } = {}) {
   const m = max || Math.max(1, ...items.map((i) => i.value));
   return `<ul class="hbars">${items.map((it, i) => `<li><span class="hl">${esc(it.label)}${it.note ? ` <small>${esc(it.note)}</small>` : ''}</span>
       <span class="ht"><i style="width:${Math.max(3, (it.value / m) * 100)}%;background:${it.color || palette[i % palette.length]}"></i></span><b>${it.value}</b></li>`).join('')}</ul>`;

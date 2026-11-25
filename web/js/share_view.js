@@ -1,5 +1,5 @@
 // Viewer for encrypted share links (share.html#<id>.<key>). Standalone: it
-// needs neither the PIN vault nor the rest of the field app. The key is read
+// needs neither the PIN vault nor the rest of the optical store app. The key is read
 // from the URL fragment, removed from the address bar at once, and kept only
 // in memory. The document is decrypted here and shown as text (never as HTML).
 import { parseShareFragment, fetchShare, decryptShare, ShareError } from './share.js';
@@ -16,7 +16,7 @@ let record = null;
 
 // ---------------------------------------------------------------- screens
 function show(which) {
-  for (const id of ['loading', 'pinCard', 'errorCard', 'status', 'doc', 'actions', 'keepNote']) $(id).hidden = !which.includes(id);
+  for (const id of ['loading', 'pinCard', 'errorCard', 'status', 'doc', 'actions', 'saveCard', 'keepNote']) $(id).hidden = !which.includes(id);
 }
 
 const ERRORS = {
@@ -69,8 +69,10 @@ async function open(pin) {
     const doc = await decryptShare(record, link.key, { id: link.id, pin });
     render(doc, record.kind);
     status(record);
+    const keep = passportToSave(doc, record.kind);
     record = null; // the ciphertext is no longer needed
-    show(['status', 'doc', 'actions', 'keepNote']);
+    show(['status', 'doc', 'actions', 'keepNote', ...(keep ? ['saveCard'] : [])]);
+    if (keep) offerSave(keep);
     $('doc').focus({ preventScroll: true });
   } catch (e) {
     if (e instanceof ShareError && (e.code === 'wrong_pin' || e.code === 'bad_pin')) throw e;
@@ -100,6 +102,46 @@ $('pinForm').addEventListener('submit', async (ev) => {
 
 $('retryBtn').addEventListener('click', load);
 $('printBtn').addEventListener('click', () => window.print());
+
+// ---------------------------------------------------------------- save to the patient's own eye record
+// A Vision Passport can be kept in the My eyes app (patient.html), which shares
+// this origin and its localStorage. Only on this phone, and only when asked.
+function passportToSave(doc, kind) {
+  if (layoutOf(doc, kind) !== 'passport') return null;
+  let text = linesOf(doc).join('\n').trim();
+  const title = typeof doc === 'object' && doc.title ? asText(doc.title).trim() : '';
+  if (title && !text.startsWith(title)) text = `${title}\n${text}`;
+  if (!text) return null;
+  const place = typeof doc === 'object' ? asText(doc.shop ?? doc.place ?? '').trim() : '';
+  return { text: text.slice(0, 4000), place };
+}
+
+function offerSave({ text, place }) {
+  const form = $('saveForm');
+  const done = (msg) => {
+    $('saveMsg').textContent = msg;
+    form.hidden = true;
+    $('saveDone').hidden = false;
+    $('keepNote').textContent = 'A copy is saved in My eye record on this phone. The link itself still expires.';
+  };
+  form.hidden = false;
+  $('saveDone').hidden = true;
+  $('savePlace').value = place;
+  form.onsubmit = async (ev) => {
+    ev.preventDefault();
+    $('saveBtn').disabled = true;
+    try {
+      const { savePassport } = await import('./patient/store.js');
+      const { entry, duplicate } = savePassport({ text, place: $('savePlace').value });
+      if (!entry) throw new Error('storage');
+      done(duplicate ? 'This passport is already in My eye record on this phone.' : 'Saved to My eye record on this phone.');
+    } catch {
+      $('saveMsg').textContent = '';
+      $('saveBtn').disabled = false;
+      $('saveBtn').textContent = 'Could not save here. Try again';
+    }
+  };
+}
 
 // ---------------------------------------------------------------- status line
 function status(r) {

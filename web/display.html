@@ -3,65 +3,108 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DivyaDrishti Chart Screen</title>
-  <meta name="description" content="Shows the eye test charts full size on a laptop or TV; the shop phone drives it like a chart remote.">
-  <meta name="theme-color" content="#ffffff">
+  <title>DivyaDrishti Test Screen</title>
+  <meta name="description" content="The shop&#39;s test screen: eye charts full size on a laptop or TV, linked to the shop account; patients answer from their own phone.">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a101c" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/app.css">
   <style>
     body.display main { max-width: 920px; }
-    .pairgrid { display: flex; flex-wrap: wrap; gap: 28px; align-items: center; margin: 22px 0 10px; }
-    .code { font: 600 clamp(3rem, 10vw, 6.2rem)/1 var(--mono); letter-spacing: .1em; font-variant-numeric: tabular-nums; }
-    .pairview .qr svg { width: 180px; height: 180px; }
     .steps-list { margin: 8px 0 0; padding-left: 1.2rem; color: var(--ink-2); }
-    .steps-list li { margin: 4px 0; }
+    .steps-list li { margin: 6px 0; }
+    .band.pairview { padding: clamp(24px, 4vw, 44px); margin-top: 20px; }
+    .band.pairview h1 { font-size: clamp(2.2rem, 1.6rem + 2vw, 3.2rem); }
+    .band.pairview .steps-list { color: rgba(238, 241, 250, .82); max-width: 62ch; }
+    .band.pairview .steps-list b { color: #fff; }
+    .band.pairview .muted { color: var(--on-night-2); }
     .cardbox { transition: width .05s; }
+    .signgrid { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 22px; }
+    .signcard { color: var(--ink); display: grid; gap: 10px; }
+    .band.pairview .signcard .muted { color: var(--muted); }
+    .band.pairview .signcard .err { color: var(--danger, #b42318); }
+    .band.pairview .signcard label { color: var(--ink-2); }
+    .signcard form { display: grid; gap: 10px; }
+    .demorun { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding: 18px 20px; border-radius: 16px; background: var(--surface-2, var(--bg)); box-shadow: inset 0 0 0 1px var(--line-2); }
+    .demorun > div { flex: 1; min-width: 260px; }
+    .demorun p { margin: 4px 0 0; }
+    @media (max-width: 760px) { .signgrid { grid-template-columns: 1fr; } }
     .stage { position: fixed; inset: 0; z-index: 20; background: #fff; color: #000; display: grid; place-items: center; overflow: hidden; }
     .stage .chart { display: grid; place-items: center; gap: 18px; }
     .stage.mirror .chart.mirrorable { transform: scaleX(-1); }
-    .stage .lbl { position: absolute; top: 14px; right: 18px; font: 500 13px var(--mono); color: #8a8f98; text-align: right; }
+    .stage .lbl { position: absolute; top: 14px; right: 18px; font: 500 13px var(--mono); color: #5b6070; text-align: right; }
     .stage .note { font: 500 15px var(--font); color: #5b6070; text-align: center; max-width: 60ch; }
     .stage .menu { position: absolute; top: 10px; left: 12px; opacity: .35; }
     .stage .menu:hover, .stage .menu:focus-visible { opacity: 1; }
     .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
     .stage .amsler { --line: #000; }
+    .answerbox { display: flex; flex-wrap: wrap; align-items: center; gap: 24px; margin-top: 22px; padding: 22px; border-radius: 20px; background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent-line); }
+    .answerbox > div:last-child { flex: 1; min-width: 240px; }
+    .answerbox h2 { font-family: var(--display); font-size: 1.7rem; font-weight: 450; margin-bottom: .4rem; }
+    .answerbox .qr svg { width: 200px; height: 200px; }
+    .stageqr { position: absolute; left: 16px; bottom: 16px; display: grid; justify-items: center; gap: 4px; padding: 10px; border-radius: 16px; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 12px 30px -16px rgba(0,0,0,.35); font: 500 12px var(--font); color: #5b6070; }
+    .stageqr .qr svg { width: 112px; height: 112px; box-shadow: none; padding: 4px; }
   </style>
 </head>
 <body class="display">
   <header class="top">
     <span class="brand">
-      <svg class="mark" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="10" fill="currentColor"/><path d="M5.5 16c2.9-4.7 6.4-7 10.5-7s7.6 2.3 10.5 7c-2.9 4.7-6.4 7-10.5 7s-7.6-2.3-10.5-7z" fill="none" stroke="#fff" stroke-width="1.9"/><circle cx="16" cy="16" r="3.4" fill="#fff"/></svg>
-      <span>DivyaDrishti <em>Chart screen</em></span>
+      <svg class="mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
+      <span>DivyaDrishti <em>Test screen</em></span>
     </span>
     <div class="row gap">
-      <span id="dstate" class="pill">Not paired</span>
+      <span id="dstate" class="pill">Not signed in</span>
       <button class="chip" id="calBtn" type="button">Screen size</button>
       <button class="chip" id="fsBtn" type="button">Full screen</button>
-      <button class="chip" id="endBtn" type="button" hidden>Unpair</button>
+      <button class="chip" id="endBtn" type="button" hidden>Sign out</button>
     </div>
   </header>
   <main>
-    <section id="pairView" class="card pairview">
-      <p class="eyebrow">Chart screen</p>
-      <h1>Pair with the shop phone</h1>
-      <p class="lede">This laptop or TV shows the eye charts full size. The phone works as the remote and records the answers.</p>
-      <div class="pairgrid"><div class="code" id="pairCode" aria-live="polite">······</div><div class="qr" id="pairQr"></div></div>
-      <ol class="steps-list">
-        <li>On the phone: Tests, then <b>Pair a screen</b>, and type this code. Or scan the QR with the phone camera.</li>
-        <li>Set the screen size once (an ID card on the screen), so letters are the right size.</li>
-        <li>Put this screen 3 m from the patient (or 6 m), or 3 m with a mirror for a 6 m room.</li>
-      </ol>
-      <p class="muted small" id="pairExp"></p>
+    <section id="pairView" class="band pairview">
+      <h1>The shop's test screen</h1>
+      <p class="lede">This laptop or TV shows the eye charts at full size. Sign it in as your shop. Your shop&rsquo;s computer or phone runs the tests, and each patient answers on their own phone by scanning a QR code here.</p>
+      <div class="signgrid">
+        <div class="card signcard">
+          <button class="btn primary big" type="button" id="demoShop">Open the demo shop's test screen</button>
+          <p class="muted small">Signs in as Chennai Optics, Velachery, a demo shop. Then open the optical store app&rsquo;s demo in another window or on a phone to run the tests.</p>
+          <div class="gatesep"><span>or sign in with your shop account</span></div>
+          <form id="shopForm" novalidate>
+            <label>Phone or email<input id="shopLogin" autocomplete="username" maxlength="254"></label>
+            <label>Password<input id="shopPass" type="password" autocomplete="current-password" maxlength="200"></label>
+            <button class="btn big" type="submit" id="shopGo">Sign in</button>
+            <p class="err" id="shopErr" role="alert"></p>
+          </form>
+          <p class="muted small">Only chart instructions reach this screen, never patient details. Nothing stays on it after you sign out.</p>
+        </div>
+        <ol class="steps-list">
+          <li>Sign this screen in as your shop. Using one computer for everything? In the optical store app, choose <b>Use this computer as the test screen</b>: it opens this page already signed in.</li>
+          <li>Set the screen size once by holding a bank card against the screen, so the letters show at their true size.</li>
+          <li>Place the screen 3&nbsp;m or 6&nbsp;m from the patient. In a 3&nbsp;m room, use a mirror for 6&nbsp;m.</li>
+          <li>When a patient&rsquo;s tests start, a QR code appears here. The patient scans it with their phone camera, with nothing to install, and answers on the phone. The code stops working when their tests end.</li>
+        </ol>
+      </div>
     </section>
     <section id="idleView" class="card" hidden>
-      <p class="eyebrow">Chart screen</p>
-      <h1>Paired with the shop phone</h1>
-      <p class="lede">Charts appear here when a test starts on the phone. Only chart instructions reach this screen, never patient details.</p>
+      <div class="row between wrap gap"><h1 id="shopTitle">Test screen</h1><span class="pill" id="phoneState">Waiting for the shop</span></div>
+      <p class="lede">The charts appear here when the shop starts a patient&rsquo;s tests. Only chart instructions reach this screen, never patient details.</p>
       <p class="small" id="calState"></p>
+      <div class="answerbox" id="answerBox" hidden>
+        <div class="qr" id="answerQr"></div>
+        <div><h2>Patient: scan to answer</h2>
+          <p>Point your phone camera at this code and open the link. Your phone becomes the answer pad for your eye test. There is nothing to install, and the code stops working when your tests are done.</p>
+          <span class="pill" id="answerState">Waiting for the patient’s phone</span></div>
+      </div>
+      <p class="muted small" id="noPatient">When a patient&rsquo;s tests start, their QR code appears here.</p>
+      <div class="demorun" id="demoBox" hidden>
+        <div><b>Try it with a demo patient</b>
+          <p class="small muted">A short sharpness test runs on this screen. Scan the QR code with your phone and answer which way the E points. No phone at hand? Use the arrow keys.</p></div>
+        <button class="btn primary" type="button" id="demoRun">Start the demo test</button>
+      </div>
+      <p class="small" id="demoOut" role="status" hidden></p>
     </section>
     <section id="calView" class="card" hidden>
       <h2>Set the screen size</h2>
-      <p>Hold an ID card or bank card flat against the screen and drag the slider until the box is exactly as wide as the card.</p>
+      <p>Hold a bank card or ID card flat against the screen. Drag the slider until the blue box is exactly as wide as the card.</p>
       <div class="cardbox" id="cardBox"></div>
       <input type="range" id="cardRange" min="150" max="900" step="1" aria-label="Card width on screen">
       <div class="row gap"><button class="btn primary" id="calSave" type="button">Save</button><button class="btn ghost" id="calCancel" type="button">Cancel</button></div>
@@ -71,6 +114,7 @@
     <button class="btn small menu" id="menuBtn" type="button">Menu</button>
     <div class="lbl" id="stageLbl"></div>
     <div class="chart" id="chart"></div>
+    <div class="stageqr" id="stageQr" hidden><div class="qr" id="stageQrCode"></div><span>Answer on your phone</span></div>
   </div>
   <script type="module" src="js/display.js"></script>
 </body>

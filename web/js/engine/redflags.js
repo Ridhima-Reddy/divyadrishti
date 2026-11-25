@@ -13,7 +13,7 @@
 // slowest safe time-to-care, so a patient with long-standing floaters or
 // itchy eyes is not sent to hospital today.
 //
-// Every rule is data: the field app and the portal render this table, the
+// Every rule is data: the optical store app and the portal render this table, the
 // tests exercise it, and docs/CLINICAL_LOGIC.md lists the same rules with
 // references. Proposed rules, to be agreed with the reviewing optometrists.
 

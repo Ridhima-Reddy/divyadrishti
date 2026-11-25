@@ -1,7 +1,7 @@
 """End-to-end smoke test in a real browser (Playwright + installed Chrome).
 
 Portal: the optometrist sets up identity encryption (hub key pair; recovery
-file downloaded). Field app: PIN set-up -> demo patient -> consent -> adaptive
+file downloaded). Optical store: PIN set-up -> demo patient -> consent -> adaptive
 interview -> tests (acuity, contrast and colour plates are actually taken) ->
 profile -> send (identity sealed to the hub) -> encrypted share link opened with
 its PIN in the patient's viewer. Portal: the sealed name is opened in the
@@ -125,6 +125,9 @@ def main():
         watch(portal, "portal")
         portal.on("dialog", lambda d: d.accept())
         portal.goto(f"{BASE}/portal.html")
+        portal.wait_for_selector("#demoBtn:visible, .overview")
+        if portal.locator("#demoBtn").is_visible():  # the sign-in gate: enter as the demo optometrist
+            portal.click("#demoBtn")
         portal.wait_for_selector(".overview")
         with portal.expect_download() as dl:
             portal.click("#hubSetup")
@@ -198,19 +201,21 @@ def main():
         disp = desk.new_page()
         watch(disp, "display")
         disp.goto(f"{BASE}/display.html")
-        disp.wait_for_function("/\\d{3} \\d{3}/.test(document.querySelector('#pairCode').textContent)")
-        code = disp.locator("#pairCode").inner_text().replace(" ", "")
-        shot(disp, "30_display_pair")
+        shot(disp, "30_display_signin")
+        # the test screen signs in with the shop's own account; the shop's phone finds it, no code
+        disp.fill("#shopLogin", SHOP_LOGIN)
+        disp.fill("#shopPass", SHOP_PASS)
+        disp.click("#shopGo")
+        expect(disp.locator("#dstate")).to_have_text("Chennai Optics, Velachery", timeout=10000)
         page.click("#pairBtn")
-        page.fill("#pairCode", code)
-        page.click("#pairGo")
+        page.click("#findGo")
         page.wait_for_selector("[data-screen=checks]")
         expect(page.locator(".screencard.on")).to_be_visible()
-        expect(disp.locator("#dstate")).to_have_text("Paired", timeout=10000)
+        expect(disp.locator("#phoneState")).to_have_text("Shop device connected", timeout=10000)
         shot(page, "05b_checks_paired", full=True)
         if "acuity" in checks:
             page.click("[data-chk=acuity]")
-            expect(page.locator("#lvl")).to_contain_text("chart screen")
+            expect(page.locator("#lvl")).to_contain_text("test screen")
             wait_chart(page, disp)
             shot(page, "04_acuity")
             shot(disp, "31_display_acuity")
@@ -449,7 +454,7 @@ def main():
         expect(page.locator(".edited").first).to_contain_text("Hub meeting")  # the phone picked up the hub's edit
         shot(page, "17_rules_phone", full=True)
 
-        # ---- the same field app on a laptop screen: wide, multi-column layouts
+        # ---- the same optical store app on a laptop screen: wide, multi-column layouts
         lap = browser.new_context(viewport={"width": 1440, "height": 900})
         lap.add_init_script("localStorage.setItem('dd.settings', JSON.stringify({voice: false}))")
         wide = lap.new_page()

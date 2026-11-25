@@ -2,7 +2,7 @@
  {
   "case": {
    "id": "936e2c79-aad1-4a29-aba2-23b5863aef78",
-   "createdAt": "2026-11-14T03:48:53.273Z",
+   "createdAt": "2026-11-25T09:53:12.181Z",
    "appVersion": "0.2.0",
    "lang": "en",
    "demo": true,
@@ -20,7 +20,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T03:48:53.273Z",
+    "at": "2026-11-25T09:53:12.181Z",
     "lang": "en",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -79,11 +79,11 @@
       "reason": "Age sets which eye changes to look for: myopia in children, presbyopia after 40, cataract after 50.",
       "raw": "fifty four",
       "value": 54,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.280Z"
+      "at": "2026-11-25T09:53:37.863Z"
      },
      {
       "qid": "sex",
@@ -97,7 +97,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.284Z"
+      "at": "2026-11-25T09:53:59.369Z"
      },
      {
       "qid": "complaint",
@@ -110,11 +110,11 @@
        "strain",
        "near_blur"
       ],
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.297Z"
+      "at": "2026-11-25T09:54:32.894Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -128,7 +128,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.303Z"
+      "at": "2026-11-25T09:55:02.872Z"
      },
      {
       "qid": "rf_flashes",
@@ -142,7 +142,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.304Z"
+      "at": "2026-11-25T09:55:23.880Z"
      },
      {
       "qid": "rf_double",
@@ -156,7 +156,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.305Z"
+      "at": "2026-11-25T09:55:42.913Z"
      },
      {
       "qid": "rf_red",
@@ -166,11 +166,11 @@
       "reason": "Most red eyes are mild. Pain, blur, coloured rings or contact lenses make one urgent; the next question sorts which.",
       "raw": "no",
       "value": false,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.305Z"
+      "at": "2026-11-25T09:56:04.125Z"
      },
      {
       "qid": "rf_injury",
@@ -180,11 +180,11 @@
       "reason": "Chemical and high-speed injuries are emergencies; a scratch from a leaf or crop needs antibiotic ointment within 18 hours to prevent a fungal ulcer.",
       "raw": "no",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.306Z"
+      "at": "2026-11-25T09:56:22.057Z"
      },
      {
       "qid": "conditions",
@@ -200,7 +200,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.311Z"
+      "at": "2026-11-25T09:56:53.622Z"
      },
      {
       "qid": "glaucoma_family",
@@ -214,7 +214,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.311Z"
+      "at": "2026-11-25T09:57:29.603Z"
      },
      {
       "qid": "eye_surgery",
@@ -224,11 +224,11 @@
       "reason": "After cataract surgery the eye cannot focus up close, so near glasses are needed whatever the age.",
       "raw": "no",
       "value": "none",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.315Z"
+      "at": "2026-11-25T09:57:55.308Z"
      },
      {
       "qid": "glasses_now",
@@ -238,11 +238,11 @@
       "reason": "Current glasses show the past prescription and what is or isn’t working.",
       "raw": "yes",
       "value": true,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.316Z"
+      "at": "2026-11-25T09:58:09.603Z"
      },
      {
       "qid": "glasses_type",
@@ -252,11 +252,11 @@
       "reason": "Tells us which zones the patient already relies on, and whether they have adapted to multifocals before.",
       "raw": "bifocal",
       "value": "bifocal",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.322Z"
+      "at": "2026-11-25T09:58:42.780Z"
      },
      {
       "qid": "glasses_years",
@@ -266,11 +266,11 @@
       "reason": "Prescriptions older than about two years are often out of date, especially after 40.",
       "raw": "three years",
       "value": 3,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.322Z"
+      "at": "2026-11-25T09:59:09.378Z"
      },
      {
       "qid": "glasses_ok",
@@ -284,7 +284,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.329Z"
+      "at": "2026-11-25T09:59:44.903Z"
      },
      {
       "qid": "rx_known",
@@ -307,11 +307,11 @@
        "text": "R −2.50 / −0.75 × 180   L −2.25 / −0.50 × 170",
        "warnings": []
       },
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.333Z"
+      "at": "2026-11-25T10:00:01.766Z"
      },
      {
       "qid": "frequent_change",
@@ -325,7 +325,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.334Z"
+      "at": "2026-11-25T10:00:37.241Z"
      },
      {
       "qid": "occupation",
@@ -339,7 +339,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.357Z"
+      "at": "2026-11-25T10:01:12.948Z"
      },
      {
       "qid": "near_hours",
@@ -349,11 +349,11 @@
       "reason": "From the late 30s, hours of close work decide the reading add and the lens type.",
       "raw": "two hours",
       "value": 2,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.358Z"
+      "at": "2026-11-25T10:01:30.048Z"
      },
      {
       "qid": "screen_hours",
@@ -363,11 +363,11 @@
       "reason": "Screens sit at arm’s length (\"intermediate\" vision), which standard bifocals do not cover and progressives cover narrowly.",
       "raw": "six hours",
       "value": 6,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.358Z"
+      "at": "2026-11-25T10:01:48.114Z"
      },
      {
       "qid": "outdoor_hours",
@@ -377,11 +377,11 @@
       "reason": "Long hours in sunlight call for UV protection and possibly photochromic lenses.",
       "raw": "about one hour",
       "value": 1,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.358Z"
+      "at": "2026-11-25T10:02:01.207Z"
      },
      {
       "qid": "drives",
@@ -395,7 +395,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.359Z"
+      "at": "2026-11-25T10:02:38.457Z"
      },
      {
       "qid": "night_glare",
@@ -409,7 +409,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.360Z"
+      "at": "2026-11-25T10:03:13.906Z"
      },
      {
       "qid": "budget",
@@ -423,12 +423,12 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.366Z"
+      "at": "2026-11-25T10:03:45.950Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.277Z",
-    "finishedAt": "2026-11-14T08:56:53.366Z",
+    "startedAt": "2026-11-25T09:53:12.181Z",
+    "finishedAt": "2026-11-25T10:04:05.950Z",
     "asked": 24,
     "bank": 38,
     "notAsked": [
@@ -748,7 +748,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "24 by voice, 0 by tap",
+       "value": "12 by voice, 12 by tap",
        "ok": true
       },
       {
@@ -766,7 +766,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "en",
-    "text": "DivyaDrishti Vision Passport · DD-936E2C\nS. Kumar · 14/11/2026\nYour eyes are mostly used for: arm’s-length work (computer, counter, cooking).\nSuggested: Work glasses for close and arm’s-length work (add +2.00).\nRx: R −2.50 / −0.75 × 180   L −2.25 / −0.50 × 170\nAn optometrist will check these results and confirm your glasses.\nTips: Every 20 minutes of close or screen work, look 6 metres away for 20 seconds.\nShow this message at any optical store or eye camp."
+    "text": "DivyaDrishti Vision Passport · DD-936E2C\nS. Kumar · 25/11/2026\nYour eyes are mostly used for: arm’s-length work (computer, counter, cooking).\nSuggested: Work glasses for close and arm’s-length work (add +2.00).\nRx: R −2.50 / −0.75 × 180   L −2.25 / −0.50 × 170\nAn optometrist will check these results and confirm your glasses.\nTips: Every 20 minutes of close or screen work, look 6 metres away for 20 seconds.\nShow this message at any optical store or eye camp."
    }
   },
   "receivedMinutesAgo": 300,
@@ -788,7 +788,7 @@
  {
   "case": {
    "id": "4ba09db4-5dd5-4b68-ad5a-f4fb0531af19",
-   "createdAt": "2026-11-14T07:33:53.419Z",
+   "createdAt": "2026-11-25T13:38:12.533Z",
    "appVersion": "0.2.0",
    "lang": "ta",
    "demo": true,
@@ -806,7 +806,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T07:33:53.419Z",
+    "at": "2026-11-25T13:38:12.533Z",
     "lang": "ta",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -850,7 +850,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.420Z"
+      "at": "2026-11-25T13:38:44.588Z"
      },
      {
       "qid": "sex",
@@ -864,7 +864,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.423Z"
+      "at": "2026-11-25T13:39:13.057Z"
      },
      {
       "qid": "complaint",
@@ -880,7 +880,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.434Z"
+      "at": "2026-11-25T13:39:38.349Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -894,7 +894,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.439Z"
+      "at": "2026-11-25T13:39:59.762Z"
      },
      {
       "qid": "rf_flashes",
@@ -904,11 +904,11 @@
       "reason": "New flashes or floaters can come with a retinal tear (10-15% of cases): dilated retina check within 24 hours. Old floaters that have not changed are not a concern.",
       "raw": "இல்ல",
       "value": false,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.441Z"
+      "at": "2026-11-25T13:40:28.587Z"
      },
      {
       "qid": "rf_double",
@@ -918,11 +918,11 @@
       "reason": "New double vision can come from a nerve palsy or a stroke; double vision in one eye only is usually cataract or astigmatism.",
       "raw": "இல்லைங்க",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.442Z"
+      "at": "2026-11-25T13:40:49.121Z"
      },
      {
       "qid": "rf_red",
@@ -936,7 +936,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.443Z"
+      "at": "2026-11-25T13:41:12.760Z"
      },
      {
       "qid": "rf_injury",
@@ -950,7 +950,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.443Z"
+      "at": "2026-11-25T13:41:36.696Z"
      },
      {
       "qid": "conditions",
@@ -966,7 +966,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.447Z"
+      "at": "2026-11-25T13:42:04.272Z"
      },
      {
       "qid": "diabetes_years",
@@ -976,11 +976,11 @@
       "reason": "Retinopathy risk rises with every year of diabetes; a new diagnosis also means the glasses power may still be shifting.",
       "raw": "எட்டு வருஷம்",
       "value": 8,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.448Z"
+      "at": "2026-11-25T13:42:29.688Z"
      },
      {
       "qid": "retina_exam",
@@ -994,7 +994,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.454Z"
+      "at": "2026-11-25T13:42:57.869Z"
      },
      {
       "qid": "glaucoma_family",
@@ -1008,7 +1008,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.455Z"
+      "at": "2026-11-25T13:43:26.764Z"
      },
      {
       "qid": "eye_surgery",
@@ -1022,7 +1022,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.459Z"
+      "at": "2026-11-25T13:43:58.477Z"
      },
      {
       "qid": "glasses_now",
@@ -1036,7 +1036,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.460Z"
+      "at": "2026-11-25T13:44:37.170Z"
      },
      {
       "qid": "occupation",
@@ -1046,11 +1046,11 @@
       "reason": "Work sets how many hours go to near, arm’s-length and far vision, the core of the vision profile.",
       "raw": "தையல் வேலை",
       "value": "tailor",
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.480Z"
+      "at": "2026-11-25T13:45:10.111Z"
      },
      {
       "qid": "near_hours",
@@ -1060,11 +1060,11 @@
       "reason": "From the late 30s, hours of close work decide the reading add and the lens type.",
       "raw": "ஏழு மணி நேரம்",
       "value": 7,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.480Z"
+      "at": "2026-11-25T13:45:43.380Z"
      },
      {
       "qid": "outdoor_hours",
@@ -1078,7 +1078,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.481Z"
+      "at": "2026-11-25T13:46:11.926Z"
      },
      {
       "qid": "drives",
@@ -1092,7 +1092,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.483Z"
+      "at": "2026-11-25T13:46:32.386Z"
      },
      {
       "qid": "budget",
@@ -1106,12 +1106,12 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.489Z"
+      "at": "2026-11-25T13:47:08.348Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.420Z",
-    "finishedAt": "2026-11-14T08:56:53.489Z",
+    "startedAt": "2026-11-25T13:38:12.533Z",
+    "finishedAt": "2026-11-25T13:47:28.348Z",
     "asked": 19,
     "bank": 38,
     "notAsked": [
@@ -1380,7 +1380,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "19 by voice, 0 by tap",
+       "value": "14 by voice, 5 by tap",
        "ok": true
       }
      ],
@@ -1392,7 +1392,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "ta",
-    "text": "திவ்யதிருஷ்டி விஷன் பாஸ்போர்ட் · DD-4BA09D\nR. Lakshmi · 14/11/2026\nஉங்க கண்ணுக்கு அதிகமா வேலை வர்றது: பக்கத்து வேலை (படிக்கிறது, போன், தையல்).\nஎங்க ஆலோசனை: படிக்கிறதுக்கு கண்ணாடி (add +1.75).\nதயவு செஞ்சு வர்ற சில வாரங்களுக்குள்ள முழு கண் செக்கப் பண்ணிக்கோங்க. எங்கன்னு ஆப்டோமெட்ரிஸ்ட் சொல்வாங்க.\nஇன்னும் வேணும்: சுகருக்கான கண் செக்கப் (ரெட்டினா, சொட்டு மருந்து போட்டு).\nசின்ன டிப்ஸ்: பக்கத்து வேலையோ, ஸ்கிரீன் வேலையோ பண்ணும்போது, ஒவ்வொரு 20 நிமிஷத்துக்கும், 20 நொடி 6 மீட்டர் தூரத்துல இருக்கிறதைப் பாருங்க. சுகர் இருந்தா, நல்லாத் தெரிஞ்சாலும், வருஷத்துக்கு ஒரு தடவை கண்ணுல சொட்டு மருந்து போட்டு உள்ள (ரெட்டினா) செக்கப் பண்ணிக்கோங்க.\nஇந்த மெசேஜை எந்த கண்ணாடிக் கடையிலயும், கண் கேம்ப்லயும் காட்டுங்க."
+    "text": "திவ்யதிருஷ்டி விஷன் பாஸ்போர்ட் · DD-4BA09D\nR. Lakshmi · 25/11/2026\nஉங்க கண்ணுக்கு அதிகமா வேலை வர்றது: பக்கத்து வேலை (படிக்கிறது, போன், தையல்).\nஎங்க ஆலோசனை: படிக்கிறதுக்கு கண்ணாடி (add +1.75).\nதயவு செஞ்சு வர்ற சில வாரங்களுக்குள்ள முழு கண் செக்கப் பண்ணிக்கோங்க. எங்கன்னு ஆப்டோமெட்ரிஸ்ட் சொல்வாங்க.\nஇன்னும் வேணும்: சுகருக்கான கண் செக்கப் (ரெட்டினா, சொட்டு மருந்து போட்டு).\nசின்ன டிப்ஸ்: பக்கத்து வேலையோ, ஸ்கிரீன் வேலையோ பண்ணும்போது, ஒவ்வொரு 20 நிமிஷத்துக்கும், 20 நொடி 6 மீட்டர் தூரத்துல இருக்கிறதைப் பாருங்க. சுகர் இருந்தா, நல்லாத் தெரிஞ்சாலும், வருஷத்துக்கு ஒரு தடவை கண்ணுல சொட்டு மருந்து போட்டு உள்ள (ரெட்டினா) செக்கப் பண்ணிக்கோங்க.\nஇந்த மெசேஜை எந்த கண்ணாடிக் கடையிலயும், கண் கேம்ப்லயும் காட்டுங்க."
    }
   },
   "receivedMinutesAgo": 75
@@ -1400,7 +1400,7 @@
  {
   "case": {
    "id": "ff6d1f8d-05d1-438d-a8e1-0bd21ca0a387",
-   "createdAt": "2026-11-14T05:38:53.490Z",
+   "createdAt": "2026-11-25T11:43:12.639Z",
    "appVersion": "0.2.0",
    "lang": "ta",
    "demo": true,
@@ -1418,7 +1418,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T05:38:53.490Z",
+    "at": "2026-11-25T11:43:12.639Z",
     "lang": "ta",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -1461,7 +1461,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.491Z"
+      "at": "2026-11-25T11:43:37.206Z"
      },
      {
       "qid": "sex",
@@ -1475,7 +1475,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.494Z"
+      "at": "2026-11-25T11:43:56.801Z"
      },
      {
       "qid": "complaint",
@@ -1492,7 +1492,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.504Z"
+      "at": "2026-11-25T11:44:33.117Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -1506,7 +1506,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.505Z"
+      "at": "2026-11-25T11:44:57.362Z"
      },
      {
       "qid": "rf_flashes",
@@ -1520,7 +1520,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.506Z"
+      "at": "2026-11-25T11:45:35.782Z"
      },
      {
       "qid": "rf_double",
@@ -1534,7 +1534,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.506Z"
+      "at": "2026-11-25T11:46:06.177Z"
      },
      {
       "qid": "rf_red",
@@ -1548,7 +1548,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.507Z"
+      "at": "2026-11-25T11:46:40.262Z"
      },
      {
       "qid": "rf_injury",
@@ -1562,7 +1562,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.508Z"
+      "at": "2026-11-25T11:47:17.286Z"
      },
      {
       "qid": "conditions",
@@ -1578,7 +1578,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.512Z"
+      "at": "2026-11-25T11:47:44.068Z"
      },
      {
       "qid": "glaucoma_family",
@@ -1592,7 +1592,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.513Z"
+      "at": "2026-11-25T11:48:18.087Z"
      },
      {
       "qid": "eye_surgery",
@@ -1606,7 +1606,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.517Z"
+      "at": "2026-11-25T11:48:54.517Z"
      },
      {
       "qid": "glasses_now",
@@ -1620,7 +1620,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.518Z"
+      "at": "2026-11-25T11:49:31.730Z"
      },
      {
       "qid": "occupation",
@@ -1634,7 +1634,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.540Z"
+      "at": "2026-11-25T11:50:08.826Z"
      },
      {
       "qid": "near_hours",
@@ -1648,7 +1648,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.540Z"
+      "at": "2026-11-25T11:50:45.526Z"
      },
      {
       "qid": "drives",
@@ -1662,7 +1662,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.541Z"
+      "at": "2026-11-25T11:51:09.262Z"
      },
      {
       "qid": "night_glare",
@@ -1676,7 +1676,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.542Z"
+      "at": "2026-11-25T11:51:46.331Z"
      },
      {
       "qid": "budget",
@@ -1690,12 +1690,12 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.550Z"
+      "at": "2026-11-25T11:52:06.942Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.491Z",
-    "finishedAt": "2026-11-14T08:56:53.550Z",
+    "startedAt": "2026-11-25T11:43:12.639Z",
+    "finishedAt": "2026-11-25T11:52:26.942Z",
     "asked": 17,
     "bank": 38,
     "notAsked": [
@@ -2014,7 +2014,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "ta",
-    "text": "திவ்யதிருஷ்டி விஷன் பாஸ்போர்ட் · DD-FF6D1F\nK. Murugan · 14/11/2026\nஉங்க கண்ணுக்கு அதிகமா வேலை வர்றது: தூரம் பாக்குறது (வெளிய, வண்டி ஓட்டுறது, ஆளுங்க முகம்).\nஎங்க ஆலோசனை: பைஃபோகல் கண்ணாடி (தூரம் + படிக்க) (add +2.50).\nதயவு செஞ்சு வர்ற சில வாரங்களுக்குள்ள முழு கண் செக்கப் பண்ணிக்கோங்க. எங்கன்னு ஆப்டோமெட்ரிஸ்ட் சொல்வாங்க.\nஇன்னும் வேணும்: கேட்டராக்ட் (கண்புரை) செக்கப்.\nசின்ன டிப்ஸ்: வெயில் அதிகமா இருக்கும்போது UV பாதுகாப்பு இருக்கிற கூலிங் கிளாஸ் இல்லனா அகலமான தொப்பி போட்டுக்கோங்க.\nஇந்த மெசேஜை எந்த கண்ணாடிக் கடையிலயும், கண் கேம்ப்லயும் காட்டுங்க."
+    "text": "திவ்யதிருஷ்டி விஷன் பாஸ்போர்ட் · DD-FF6D1F\nK. Murugan · 25/11/2026\nஉங்க கண்ணுக்கு அதிகமா வேலை வர்றது: தூரம் பாக்குறது (வெளிய, வண்டி ஓட்டுறது, ஆளுங்க முகம்).\nஎங்க ஆலோசனை: பைஃபோகல் கண்ணாடி (தூரம் + படிக்க) (add +2.50).\nதயவு செஞ்சு வர்ற சில வாரங்களுக்குள்ள முழு கண் செக்கப் பண்ணிக்கோங்க. எங்கன்னு ஆப்டோமெட்ரிஸ்ட் சொல்வாங்க.\nஇன்னும் வேணும்: கேட்டராக்ட் (கண்புரை) செக்கப்.\nசின்ன டிப்ஸ்: வெயில் அதிகமா இருக்கும்போது UV பாதுகாப்பு இருக்கிற கூலிங் கிளாஸ் இல்லனா அகலமான தொப்பி போட்டுக்கோங்க.\nஇந்த மெசேஜை எந்த கண்ணாடிக் கடையிலயும், கண் கேம்ப்லயும் காட்டுங்க."
    }
   },
   "receivedMinutesAgo": 190
@@ -2022,7 +2022,7 @@
  {
   "case": {
    "id": "e5e39d7c-2c6b-4316-a484-c489409bcae3",
-   "createdAt": "2026-11-14T07:58:53.552Z",
+   "createdAt": "2026-11-25T14:03:12.720Z",
    "appVersion": "0.2.0",
    "lang": "hi",
    "demo": true,
@@ -2040,7 +2040,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T07:58:53.552Z",
+    "at": "2026-11-25T14:03:12.720Z",
     "lang": "hi",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -2075,11 +2075,11 @@
       "reason": "Age sets which eye changes to look for: myopia in children, presbyopia after 40, cataract after 50.",
       "raw": "नौ साल",
       "value": 9,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.552Z"
+      "at": "2026-11-25T14:03:44.203Z"
      },
      {
       "qid": "sex",
@@ -2093,7 +2093,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.555Z"
+      "at": "2026-11-25T14:04:14.151Z"
      },
      {
       "qid": "complaint",
@@ -2109,7 +2109,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.565Z"
+      "at": "2026-11-25T14:04:44.376Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -2123,7 +2123,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.634Z"
+      "at": "2026-11-25T14:05:23.495Z"
      },
      {
       "qid": "rf_flashes",
@@ -2137,7 +2137,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.639Z"
+      "at": "2026-11-25T14:05:48.901Z"
      },
      {
       "qid": "rf_double",
@@ -2151,7 +2151,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.644Z"
+      "at": "2026-11-25T14:06:14.319Z"
      },
      {
       "qid": "rf_red",
@@ -2165,7 +2165,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.649Z"
+      "at": "2026-11-25T14:06:49.895Z"
      },
      {
       "qid": "rf_injury",
@@ -2179,7 +2179,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.656Z"
+      "at": "2026-11-25T14:07:10.074Z"
      },
      {
       "qid": "child_white",
@@ -2189,11 +2189,11 @@
       "reason": "A white pupil glow (leukocoria) can be childhood cataract or retinoblastoma: specialist within 2 weeks, the same day if there is also a squint.",
       "raw": "नहीं",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.661Z"
+      "at": "2026-11-25T14:07:28.574Z"
      },
      {
       "qid": "child_squint",
@@ -2203,11 +2203,11 @@
       "reason": "A squint or head tilt can mean amblyopia (lazy eye), which responds best when treated young.",
       "raw": "नहीं",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.666Z"
+      "at": "2026-11-25T14:07:47.719Z"
      },
      {
       "qid": "glasses_now",
@@ -2221,7 +2221,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.672Z"
+      "at": "2026-11-25T14:08:18.039Z"
      },
      {
       "qid": "near_hours",
@@ -2231,11 +2231,11 @@
       "reason": "More than about 3 hours of close work a day raises a child’s myopia risk.",
       "raw": "चार घंटे",
       "value": 4,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.672Z"
+      "at": "2026-11-25T14:08:32.872Z"
      },
      {
       "qid": "outdoor_hours",
@@ -2245,11 +2245,11 @@
       "reason": "Daylight outdoors protects against myopia; children with under 2 hours a day are at higher risk.",
       "raw": "आधा घंटा",
       "value": 0.5,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.673Z"
+      "at": "2026-11-25T14:08:48.029Z"
      },
      {
       "qid": "child_board",
@@ -2259,11 +2259,11 @@
       "reason": "The classic early sign of myopia in school children.",
       "raw": "हाँ",
       "value": true,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.678Z"
+      "at": "2026-11-25T14:09:09.811Z"
      },
      {
       "qid": "parent_myopia",
@@ -2277,7 +2277,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.681Z"
+      "at": "2026-11-25T14:09:46.608Z"
      },
      {
       "qid": "budget",
@@ -2287,16 +2287,16 @@
       "reason": "Lens options for near-and-far needs range from low-cost bifocals to progressives; advice must be affordable to be followed.",
       "raw": "एक से तीन हज़ार",
       "value": "mid",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.687Z"
+      "at": "2026-11-25T14:10:13.250Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.552Z",
-    "finishedAt": "2026-11-14T08:56:53.687Z",
+    "startedAt": "2026-11-25T14:03:12.720Z",
+    "finishedAt": "2026-11-25T14:10:33.250Z",
     "asked": 16,
     "bank": 38,
     "notAsked": [
@@ -2537,7 +2537,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "16 by voice, 0 by tap",
+       "value": "9 by voice, 7 by tap",
        "ok": true
       }
      ],
@@ -2549,7 +2549,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "hi",
-    "text": "दिव्यदृष्टि विज़न पासपोर्ट · DD-E5E39D\nPriya (child of A. Devi) · 14/11/2026\nआपकी आँखें ज़्यादातर किस काम में लगती हैं: पास का काम (पढ़ना, फ़ोन, सिलाई).\nहमारी सलाह: पहले ऑप्टोमेट्रिस्ट आँख में दवा डालकर पूरी जाँच करेंगे, फिर चश्मा.\nअगले कुछ हफ़्तों में आँखों का पूरा चेक-अप करा लीजिए। कहाँ जाना है, यह ऑप्टोमेट्रिस्ट बताएँगे।\nयह भी ज़रूरी है: बच्चे की आँख में दवा डालकर पूरी जाँच.\nकाम की बातें: पास का या स्क्रीन का काम करते समय, हर 20 मिनट बाद 20 सेकंड के लिए 6 मीटर दूर देखिए। बच्चों को रोज़ कम से कम 2 घंटे दिन की रोशनी में बाहर खेलने दीजिए। इससे दूर की नज़र कमज़ोर होने (मायोपिया) का खतरा कम होता है।\nयह मैसेज किसी भी चश्मे की दुकान या आँखों के कैंप में दिखाइए।"
+    "text": "दिव्यदृष्टि विज़न पासपोर्ट · DD-E5E39D\nPriya (child of A. Devi) · 25/11/2026\nआपकी आँखें ज़्यादातर किस काम में लगती हैं: पास का काम (पढ़ना, फ़ोन, सिलाई).\nहमारी सलाह: पहले ऑप्टोमेट्रिस्ट आँख में दवा डालकर पूरी जाँच करेंगे, फिर चश्मा.\nअगले कुछ हफ़्तों में आँखों का पूरा चेक-अप करा लीजिए। कहाँ जाना है, यह ऑप्टोमेट्रिस्ट बताएँगे।\nयह भी ज़रूरी है: बच्चे की आँख में दवा डालकर पूरी जाँच.\nकाम की बातें: पास का या स्क्रीन का काम करते समय, हर 20 मिनट बाद 20 सेकंड के लिए 6 मीटर दूर देखिए। बच्चों को रोज़ कम से कम 2 घंटे दिन की रोशनी में बाहर खेलने दीजिए। इससे दूर की नज़र कमज़ोर होने (मायोपिया) का खतरा कम होता है।\nयह मैसेज किसी भी चश्मे की दुकान या आँखों के कैंप में दिखाइए।"
    }
   },
   "receivedMinutesAgo": 50
@@ -2557,7 +2557,7 @@
  {
   "case": {
    "id": "641898ff-e4dc-42eb-a849-cd626c0d62a7",
-   "createdAt": "2026-11-14T08:23:53.688Z",
+   "createdAt": "2026-11-25T14:28:12.934Z",
    "appVersion": "0.2.0",
    "lang": "hi",
    "demo": true,
@@ -2575,7 +2575,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T08:23:53.688Z",
+    "at": "2026-11-25T14:28:12.934Z",
     "lang": "hi",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -2603,11 +2603,11 @@
       "reason": "Age sets which eye changes to look for: myopia in children, presbyopia after 40, cataract after 50.",
       "raw": "अट्ठावन",
       "value": 58,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.688Z"
+      "at": "2026-11-25T14:28:44.048Z"
      },
      {
       "qid": "sex",
@@ -2621,7 +2621,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.691Z"
+      "at": "2026-11-25T14:29:20.185Z"
      },
      {
       "qid": "complaint",
@@ -2633,11 +2633,11 @@
       "value": [
        "far_blur"
       ],
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.701Z"
+      "at": "2026-11-25T14:29:43.537Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -2651,7 +2651,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.706Z"
+      "at": "2026-11-25T14:30:11.190Z"
      },
      {
       "qid": "rf_onset",
@@ -2665,11 +2665,11 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.714Z"
+      "at": "2026-11-25T14:30:32.738Z"
      },
      {
       "event": "urgent_mode",
-      "at": "2026-11-14T08:56:53.714Z",
+      "at": "2026-11-25T14:30:32.738Z",
       "reason": "Red flag: remaining lifestyle questions dropped."
      },
      {
@@ -2684,7 +2684,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.720Z"
+      "at": "2026-11-25T14:31:01.087Z"
      },
      {
       "qid": "conditions",
@@ -2700,12 +2700,12 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "hi",
-      "at": "2026-11-14T08:56:53.724Z"
+      "at": "2026-11-25T14:31:19.482Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.688Z",
-    "finishedAt": "2026-11-14T08:56:53.724Z",
+    "startedAt": "2026-11-25T14:28:12.934Z",
+    "finishedAt": "2026-11-25T14:31:39.482Z",
     "asked": 7,
     "bank": 38,
     "notAsked": [
@@ -2966,7 +2966,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "7 by voice, 0 by tap",
+       "value": "5 by voice, 2 by tap",
        "ok": true
       }
      ],
@@ -2978,7 +2978,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "hi",
-    "text": "दिव्यदृष्टि विज़न पासपोर्ट · DD-641898\nM. Ravi · 14/11/2026\nआपकी आँखें ज़्यादातर किस काम में लगती हैं: पास, हाथ भर की दूरी और दूर, तीनों मिलाकर.\nहमारी सलाह: आज चश्मा नहीं: पहले डॉक्टर को दिखाइए.\nआज ही आँखों के अस्पताल जाइए। नए चश्मे के चक्कर में मत रुकिए।\nयह भी ज़रूरी है: नज़र में आई परछाईं के लिए आज ही आँखों का अस्पताल; आँखों की पूरी जाँच.\nकाम की बातें: शुगर हो तो साफ़ दिखता हो तब भी साल में एक बार आँख में दवा डालकर अंदर (आँख के पर्दे) की जाँच करवाइए।\nयह मैसेज किसी भी चश्मे की दुकान या आँखों के कैंप में दिखाइए।"
+    "text": "दिव्यदृष्टि विज़न पासपोर्ट · DD-641898\nM. Ravi · 25/11/2026\nआपकी आँखें ज़्यादातर किस काम में लगती हैं: पास, हाथ भर की दूरी और दूर, तीनों मिलाकर.\nहमारी सलाह: आज चश्मा नहीं: पहले डॉक्टर को दिखाइए.\nआज ही आँखों के अस्पताल जाइए। नए चश्मे के चक्कर में मत रुकिए।\nयह भी ज़रूरी है: नज़र में आई परछाईं के लिए आज ही आँखों का अस्पताल; आँखों की पूरी जाँच.\nकाम की बातें: शुगर हो तो साफ़ दिखता हो तब भी साल में एक बार आँख में दवा डालकर अंदर (आँख के पर्दे) की जाँच करवाइए।\nयह मैसेज किसी भी चश्मे की दुकान या आँखों के कैंप में दिखाइए।"
    }
   },
   "receivedMinutesAgo": 25
@@ -2986,7 +2986,7 @@
  {
   "case": {
    "id": "fc001e3d-1f4b-4830-a4de-94e67c0e6451",
-   "createdAt": "2026-11-14T03:18:53.725Z",
+   "createdAt": "2026-11-25T09:23:12.981Z",
    "appVersion": "0.2.0",
    "lang": "en",
    "demo": true,
@@ -3004,7 +3004,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T03:18:53.725Z",
+    "at": "2026-11-25T09:23:12.981Z",
     "lang": "en",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -3055,7 +3055,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.725Z"
+      "at": "2026-11-25T09:23:47.518Z"
      },
      {
       "qid": "sex",
@@ -3069,7 +3069,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.727Z"
+      "at": "2026-11-25T09:24:11.531Z"
      },
      {
       "qid": "complaint",
@@ -3085,7 +3085,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.736Z"
+      "at": "2026-11-25T09:24:35.782Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -3095,11 +3095,11 @@
       "reason": "A sudden drop (not a slow one) can be a detachment, a blocked blood vessel or an optic-nerve problem. When it started decides same day or within 48 hours.",
       "raw": "no",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.736Z"
+      "at": "2026-11-25T09:25:06.238Z"
      },
      {
       "qid": "rf_flashes",
@@ -3113,7 +3113,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.737Z"
+      "at": "2026-11-25T09:25:33.321Z"
      },
      {
       "qid": "rf_double",
@@ -3127,7 +3127,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.737Z"
+      "at": "2026-11-25T09:26:11.419Z"
      },
      {
       "qid": "rf_red",
@@ -3137,11 +3137,11 @@
       "reason": "Most red eyes are mild. Pain, blur, coloured rings or contact lenses make one urgent; the next question sorts which.",
       "raw": "no",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.737Z"
+      "at": "2026-11-25T09:26:41.896Z"
      },
      {
       "qid": "rf_injury",
@@ -3155,7 +3155,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.738Z"
+      "at": "2026-11-25T09:27:10.903Z"
      },
      {
       "qid": "conditions",
@@ -3167,11 +3167,11 @@
       "value": [
        "bp"
       ],
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.741Z"
+      "at": "2026-11-25T09:27:34.418Z"
      },
      {
       "qid": "glaucoma_family",
@@ -3181,11 +3181,11 @@
       "reason": "Glaucoma runs in families and steals sight painlessly; relatives over 40 need an eye-pressure and optic-nerve check.",
       "raw": "no",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.742Z"
+      "at": "2026-11-25T09:27:56.893Z"
      },
      {
       "qid": "eye_surgery",
@@ -3199,7 +3199,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.745Z"
+      "at": "2026-11-25T09:28:36.493Z"
      },
      {
       "qid": "glasses_now",
@@ -3209,11 +3209,11 @@
       "reason": "Current glasses show the past prescription and what is or isn’t working.",
       "raw": "yes",
       "value": true,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.745Z"
+      "at": "2026-11-25T09:28:59.394Z"
      },
      {
       "qid": "glasses_type",
@@ -3227,7 +3227,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.751Z"
+      "at": "2026-11-25T09:29:26.198Z"
      },
      {
       "qid": "glasses_years",
@@ -3237,11 +3237,11 @@
       "reason": "Prescriptions older than about two years are often out of date, especially after 40.",
       "raw": "five",
       "value": 5,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.751Z"
+      "at": "2026-11-25T09:29:51.407Z"
      },
      {
       "qid": "glasses_ok",
@@ -3255,7 +3255,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.756Z"
+      "at": "2026-11-25T09:30:15.593Z"
      },
      {
       "qid": "rx_known",
@@ -3267,11 +3267,11 @@
       "value": {
        "skipped": true
       },
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.756Z"
+      "at": "2026-11-25T09:30:32.665Z"
      },
      {
       "qid": "frequent_change",
@@ -3285,7 +3285,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.757Z"
+      "at": "2026-11-25T09:31:08.876Z"
      },
      {
       "qid": "occupation",
@@ -3299,7 +3299,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.777Z"
+      "at": "2026-11-25T09:31:29.522Z"
      },
      {
       "qid": "near_hours",
@@ -3309,11 +3309,11 @@
       "reason": "From the late 30s, hours of close work decide the reading add and the lens type.",
       "raw": "three hours",
       "value": 3,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.777Z"
+      "at": "2026-11-25T09:31:59.214Z"
      },
      {
       "qid": "outdoor_hours",
@@ -3323,11 +3323,11 @@
       "reason": "Long hours in sunlight call for UV protection and possibly photochromic lenses.",
       "raw": "two hours",
       "value": 2,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.778Z"
+      "at": "2026-11-25T09:32:14.572Z"
      },
      {
       "qid": "drives",
@@ -3341,7 +3341,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.778Z"
+      "at": "2026-11-25T09:32:32.861Z"
      },
      {
       "qid": "night_glare",
@@ -3351,11 +3351,11 @@
       "reason": "Glare and faded colours after 50 are early cataract signs.",
       "raw": "no",
       "value": false,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.778Z"
+      "at": "2026-11-25T09:32:55.728Z"
      },
      {
       "qid": "falls",
@@ -3365,11 +3365,11 @@
       "reason": "In active older people, bifocals and progressives blur steps and kerbs; a separate distance pair for walking can prevent falls.",
       "raw": "yes I fell twice",
       "value": true,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.779Z"
+      "at": "2026-11-25T09:33:13.740Z"
      },
      {
       "qid": "budget",
@@ -3383,12 +3383,12 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.784Z"
+      "at": "2026-11-25T09:33:44.325Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.725Z",
-    "finishedAt": "2026-11-14T08:56:53.784Z",
+    "startedAt": "2026-11-25T09:23:12.981Z",
+    "finishedAt": "2026-11-25T09:34:04.325Z",
     "asked": 24,
     "bank": 38,
     "notAsked": [
@@ -3663,7 +3663,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "24 by voice, 0 by tap",
+       "value": "13 by voice, 11 by tap",
        "ok": true
       },
       {
@@ -3681,7 +3681,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "en",
-    "text": "DivyaDrishti Vision Passport · DD-FC001E\nA. Fatima · 14/11/2026\nYour eyes are mostly used for: a mix of near, arm’s-length and distance.\nSuggested: Two pairs: one for walking and distance, one for reading (add +2.50).\nAn optometrist will check these results and confirm your glasses.\nTips: Use bright light for close work such as reading and sewing.\nShow this message at any optical store or eye camp."
+    "text": "DivyaDrishti Vision Passport · DD-FC001E\nA. Fatima · 25/11/2026\nYour eyes are mostly used for: a mix of near, arm’s-length and distance.\nSuggested: Two pairs: one for walking and distance, one for reading (add +2.50).\nAn optometrist will check these results and confirm your glasses.\nTips: Use bright light for close work such as reading and sewing.\nShow this message at any optical store or eye camp."
    }
   },
   "receivedMinutesAgo": 330
@@ -3689,7 +3689,7 @@
  {
   "case": {
    "id": "a4fc74ff-4c19-4998-a88e-ae0e143cd6da",
-   "createdAt": "2026-11-13T07:48:53.785Z",
+   "createdAt": "2026-11-24T13:53:13.062Z",
    "appVersion": "0.2.0",
    "lang": "en",
    "demo": true,
@@ -3707,7 +3707,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-13T07:48:53.785Z",
+    "at": "2026-11-24T13:53:13.062Z",
     "lang": "en",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -3759,11 +3759,11 @@
       "reason": "Age sets which eye changes to look for: myopia in children, presbyopia after 40, cataract after 50.",
       "raw": "24",
       "value": 24,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.785Z"
+      "at": "2026-11-24T13:53:26.829Z"
      },
      {
       "qid": "sex",
@@ -3777,7 +3777,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.788Z"
+      "at": "2026-11-24T13:53:49.825Z"
      },
      {
       "qid": "complaint",
@@ -3793,7 +3793,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.798Z"
+      "at": "2026-11-24T13:54:26.870Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -3803,11 +3803,11 @@
       "reason": "A sudden drop (not a slow one) can be a detachment, a blocked blood vessel or an optic-nerve problem. When it started decides same day or within 48 hours.",
       "raw": "no",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.799Z"
+      "at": "2026-11-24T13:54:47.482Z"
      },
      {
       "qid": "rf_flashes",
@@ -3821,7 +3821,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.799Z"
+      "at": "2026-11-24T13:55:21.199Z"
      },
      {
       "qid": "rf_double",
@@ -3835,7 +3835,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.800Z"
+      "at": "2026-11-24T13:55:44.551Z"
      },
      {
       "qid": "rf_red",
@@ -3849,7 +3849,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.800Z"
+      "at": "2026-11-24T13:56:11.431Z"
      },
      {
       "qid": "rf_injury",
@@ -3859,11 +3859,11 @@
       "reason": "Chemical and high-speed injuries are emergencies; a scratch from a leaf or crop needs antibiotic ointment within 18 hours to prevent a fungal ulcer.",
       "raw": "no",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.801Z"
+      "at": "2026-11-24T13:56:27.761Z"
      },
      {
       "qid": "conditions",
@@ -3875,11 +3875,11 @@
       "value": [
        "none"
       ],
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.805Z"
+      "at": "2026-11-24T13:56:48.416Z"
      },
      {
       "qid": "glasses_now",
@@ -3889,11 +3889,11 @@
       "reason": "Current glasses show the past prescription and what is or isn’t working.",
       "raw": "yes",
       "value": true,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.805Z"
+      "at": "2026-11-24T13:57:07.798Z"
      },
      {
       "qid": "glasses_type",
@@ -3903,11 +3903,11 @@
       "reason": "Tells us which zones the patient already relies on, and whether they have adapted to multifocals before.",
       "raw": "distance",
       "value": "distance",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.810Z"
+      "at": "2026-11-24T13:57:31.036Z"
      },
      {
       "qid": "glasses_years",
@@ -3917,11 +3917,11 @@
       "reason": "Prescriptions older than about two years are often out of date, especially after 40.",
       "raw": "three",
       "value": 3,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.810Z"
+      "at": "2026-11-24T13:57:53.511Z"
      },
      {
       "qid": "glasses_ok",
@@ -3931,11 +3931,11 @@
       "reason": "Separates an outdated prescription from a wrong lens type or a poor fit.",
       "raw": "far is blurry",
       "value": "far_blur",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.816Z"
+      "at": "2026-11-24T13:58:17.658Z"
      },
      {
       "qid": "rx_known",
@@ -3956,11 +3956,11 @@
        "text": "R −2.50   L −2.75",
        "warnings": []
       },
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.817Z"
+      "at": "2026-11-24T13:58:44.133Z"
      },
      {
       "qid": "occupation",
@@ -3970,11 +3970,11 @@
       "reason": "Work sets how many hours go to near, arm’s-length and far vision, the core of the vision profile.",
       "raw": "student",
       "value": "student",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.837Z"
+      "at": "2026-11-24T13:59:12.629Z"
      },
      {
       "qid": "near_hours",
@@ -3984,11 +3984,11 @@
       "reason": "Long close work explains strain symptoms and shapes the lens design.",
       "raw": "five hours",
       "value": 5,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.838Z"
+      "at": "2026-11-24T13:59:37.595Z"
      },
      {
       "qid": "screen_hours",
@@ -3998,11 +3998,11 @@
       "reason": "Screens sit at arm’s length (\"intermediate\" vision), which standard bifocals do not cover and progressives cover narrowly.",
       "raw": "five hours",
       "value": 5,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.838Z"
+      "at": "2026-11-24T14:00:04.231Z"
      },
      {
       "qid": "outdoor_hours",
@@ -4012,11 +4012,11 @@
       "reason": "Long hours in sunlight call for UV protection and possibly photochromic lenses.",
       "raw": "one hour",
       "value": 1,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.838Z"
+      "at": "2026-11-24T14:00:30.470Z"
      },
      {
       "qid": "drives",
@@ -4026,11 +4026,11 @@
       "reason": "Driving needs sharp distance vision and wide side vision; it changes lens design and coating advice.",
       "raw": "yes",
       "value": true,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.838Z"
+      "at": "2026-11-24T14:00:49.987Z"
      },
      {
       "qid": "night_glare",
@@ -4040,16 +4040,16 @@
       "reason": "Night glare for a driver calls for an anti-reflective coating.",
       "raw": "no",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "en",
-      "at": "2026-11-14T08:56:53.839Z"
+      "at": "2026-11-24T14:01:15.894Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.785Z",
-    "finishedAt": "2026-11-14T08:56:53.839Z",
+    "startedAt": "2026-11-24T13:53:13.062Z",
+    "finishedAt": "2026-11-24T14:01:35.894Z",
     "asked": 20,
     "bank": 38,
     "notAsked": [
@@ -4369,7 +4369,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "20 by voice, 0 by tap",
+       "value": "5 by voice, 15 by tap",
        "ok": true
       },
       {
@@ -4393,7 +4393,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "en",
-    "text": "DivyaDrishti Vision Passport · DD-A4FC74\nV. Arjun · 14/11/2026\nYour eyes are mostly used for: a mix of near, arm’s-length and distance.\nSuggested: Single-vision glasses for distance.\nRx: R −2.50   L −2.75\nAn optometrist will check these results and confirm your glasses.\nAlso needed: an eye-teaming check for strain with close work; a note: possible colour vision difference (usually from birth).\nTips: Every 20 minutes of close or screen work, look 6 metres away for 20 seconds.\nShow this message at any optical store or eye camp."
+    "text": "DivyaDrishti Vision Passport · DD-A4FC74\nV. Arjun · 25/11/2026\nYour eyes are mostly used for: a mix of near, arm’s-length and distance.\nSuggested: Single-vision glasses for distance.\nRx: R −2.50   L −2.75\nAn optometrist will check these results and confirm your glasses.\nAlso needed: an eye-teaming check for strain with close work; a note: possible colour vision difference (usually from birth).\nTips: Every 20 minutes of close or screen work, look 6 metres away for 20 seconds.\nShow this message at any optical store or eye camp."
    }
   },
   "receivedMinutesAgo": 1500,
@@ -4414,7 +4414,7 @@
  {
   "case": {
    "id": "a128e76b-a437-49ee-a0ae-a5aede913044",
-   "createdAt": "2026-11-14T08:08:53.839Z",
+   "createdAt": "2026-11-25T14:13:13.158Z",
    "appVersion": "0.2.0",
    "lang": "ta",
    "demo": true,
@@ -4432,7 +4432,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T08:08:53.839Z",
+    "at": "2026-11-25T14:13:13.158Z",
     "lang": "ta",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -4474,7 +4474,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.840Z"
+      "at": "2026-11-25T14:13:32.087Z"
      },
      {
       "qid": "sex",
@@ -4488,7 +4488,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.842Z"
+      "at": "2026-11-25T14:14:07.665Z"
      },
      {
       "qid": "complaint",
@@ -4504,7 +4504,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.852Z"
+      "at": "2026-11-25T14:14:40.461Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -4514,11 +4514,11 @@
       "reason": "A sudden drop (not a slow one) can be a detachment, a blocked blood vessel or an optic-nerve problem. When it started decides same day or within 48 hours.",
       "raw": "இல்லை",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.853Z"
+      "at": "2026-11-25T14:15:05.443Z"
      },
      {
       "qid": "rf_flashes",
@@ -4532,7 +4532,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.853Z"
+      "at": "2026-11-25T14:15:28.248Z"
      },
      {
       "qid": "rf_double",
@@ -4546,7 +4546,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.854Z"
+      "at": "2026-11-25T14:15:59.271Z"
      },
      {
       "qid": "rf_red",
@@ -4560,7 +4560,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.855Z"
+      "at": "2026-11-25T14:16:23.858Z"
      },
      {
       "qid": "rf_injury",
@@ -4574,7 +4574,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.855Z"
+      "at": "2026-11-25T14:16:55.470Z"
      },
      {
       "qid": "conditions",
@@ -4586,11 +4586,11 @@
       "value": [
        "none"
       ],
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.860Z"
+      "at": "2026-11-25T14:17:13.892Z"
      },
      {
       "qid": "glaucoma_family",
@@ -4600,11 +4600,11 @@
       "reason": "Glaucoma runs in families and steals sight painlessly; relatives over 40 need an eye-pressure and optic-nerve check.",
       "raw": "இல்லை",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.860Z"
+      "at": "2026-11-25T14:17:31.661Z"
      },
      {
       "qid": "eye_surgery",
@@ -4614,11 +4614,11 @@
       "reason": "After cataract surgery the eye cannot focus up close, so near glasses are needed whatever the age.",
       "raw": "இல்லை",
       "value": "none",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.864Z"
+      "at": "2026-11-25T14:18:04.016Z"
      },
      {
       "qid": "glasses_now",
@@ -4628,11 +4628,11 @@
       "reason": "Current glasses show the past prescription and what is or isn’t working.",
       "raw": "இல்லை",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.864Z"
+      "at": "2026-11-25T14:18:24.347Z"
      },
      {
       "qid": "occupation",
@@ -4646,7 +4646,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.884Z"
+      "at": "2026-11-25T14:18:49.824Z"
      },
      {
       "qid": "near_hours",
@@ -4660,7 +4660,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.884Z"
+      "at": "2026-11-25T14:19:19.426Z"
      },
      {
       "qid": "outdoor_hours",
@@ -4670,11 +4670,11 @@
       "reason": "Long hours in sunlight call for UV protection and possibly photochromic lenses.",
       "raw": "ஒரு மணி",
       "value": 1,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.884Z"
+      "at": "2026-11-25T14:19:49.540Z"
      },
      {
       "qid": "drives",
@@ -4688,7 +4688,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.885Z"
+      "at": "2026-11-25T14:20:13.866Z"
      },
      {
       "qid": "budget",
@@ -4702,12 +4702,12 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:53.890Z"
+      "at": "2026-11-25T14:20:51.031Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.840Z",
-    "finishedAt": "2026-11-14T08:56:53.890Z",
+    "startedAt": "2026-11-25T14:13:13.158Z",
+    "finishedAt": "2026-11-25T14:21:11.031Z",
     "asked": 17,
     "bank": 38,
     "notAsked": [
@@ -4961,7 +4961,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "17 by voice, 0 by tap",
+       "value": "11 by voice, 6 by tap",
        "ok": true
       }
      ],
@@ -4973,7 +4973,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "ta",
-    "text": "திவ்யதிருஷ்டி விஷன் பாஸ்போர்ட் · DD-A128E7\nP. Selvi · 14/11/2026\nஉங்க கண்ணுக்கு அதிகமா வேலை வர்றது: பக்கத்து, கை நீட்டுற தூரம், தூரம்: மூணும் கலந்து.\nஎங்க ஆலோசனை: பக்கத்து வேலைக்கும், கை நீட்டுற தூர வேலைக்கும் வொர்க் கண்ணாடி (add +0.75).\nஆப்டோமெட்ரிஸ்ட் இந்த ரிசல்ட்டைப் பார்த்து, உங்க கண்ணாடியை உறுதி பண்ணுவாங்க.\nசின்ன டிப்ஸ்: பக்கத்து வேலையோ, ஸ்கிரீன் வேலையோ பண்ணும்போது, ஒவ்வொரு 20 நிமிஷத்துக்கும், 20 நொடி 6 மீட்டர் தூரத்துல இருக்கிறதைப் பாருங்க. படிக்கிறது, தையல் மாதிரி பக்கத்து வேலைக்கு நல்ல வெளிச்சம் வெச்சுக்கோங்க.\nஇந்த மெசேஜை எந்த கண்ணாடிக் கடையிலயும், கண் கேம்ப்லயும் காட்டுங்க."
+    "text": "திவ்யதிருஷ்டி விஷன் பாஸ்போர்ட் · DD-A128E7\nP. Selvi · 25/11/2026\nஉங்க கண்ணுக்கு அதிகமா வேலை வர்றது: பக்கத்து, கை நீட்டுற தூரம், தூரம்: மூணும் கலந்து.\nஎங்க ஆலோசனை: பக்கத்து வேலைக்கும், கை நீட்டுற தூர வேலைக்கும் வொர்க் கண்ணாடி (add +0.75).\nஆப்டோமெட்ரிஸ்ட் இந்த ரிசல்ட்டைப் பார்த்து, உங்க கண்ணாடியை உறுதி பண்ணுவாங்க.\nசின்ன டிப்ஸ்: பக்கத்து வேலையோ, ஸ்கிரீன் வேலையோ பண்ணும்போது, ஒவ்வொரு 20 நிமிஷத்துக்கும், 20 நொடி 6 மீட்டர் தூரத்துல இருக்கிறதைப் பாருங்க. படிக்கிறது, தையல் மாதிரி பக்கத்து வேலைக்கு நல்ல வெளிச்சம் வெச்சுக்கோங்க.\nஇந்த மெசேஜை எந்த கண்ணாடிக் கடையிலயும், கண் கேம்ப்லயும் காட்டுங்க."
    }
   },
   "receivedMinutesAgo": 40
@@ -4981,7 +4981,7 @@
  {
   "case": {
    "id": "2fa50b51-88d9-4777-a863-03cb4b9b4456",
-   "createdAt": "2026-11-14T06:58:53.891Z",
+   "createdAt": "2026-11-25T13:03:13.269Z",
    "appVersion": "0.2.0",
    "lang": "te",
    "demo": true,
@@ -4999,7 +4999,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T06:58:53.891Z",
+    "at": "2026-11-25T13:03:13.269Z",
     "lang": "te",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -5039,11 +5039,11 @@
       "reason": "Age sets which eye changes to look for: myopia in children, presbyopia after 40, cataract after 50.",
       "raw": "యాభై తొమ్మిది",
       "value": 59,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.891Z"
+      "at": "2026-11-25T13:03:25.360Z"
      },
      {
       "qid": "sex",
@@ -5053,11 +5053,11 @@
       "reason": "Needed for the record; some conditions differ by sex (angle-closure glaucoma is more common in women).",
       "raw": "మగ",
       "value": "male",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.893Z"
+      "at": "2026-11-25T13:03:51.049Z"
      },
      {
       "qid": "complaint",
@@ -5074,7 +5074,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.903Z"
+      "at": "2026-11-25T13:04:12.781Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -5084,11 +5084,11 @@
       "reason": "A sudden drop (not a slow one) can be a detachment, a blocked blood vessel or an optic-nerve problem. When it started decides same day or within 48 hours.",
       "raw": "లేదు",
       "value": false,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.907Z"
+      "at": "2026-11-25T13:04:35.309Z"
      },
      {
       "qid": "rf_flashes",
@@ -5102,7 +5102,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.908Z"
+      "at": "2026-11-25T13:04:53.923Z"
      },
      {
       "qid": "rf_double",
@@ -5116,7 +5116,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.908Z"
+      "at": "2026-11-25T13:05:27.714Z"
      },
      {
       "qid": "rf_red",
@@ -5130,7 +5130,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.909Z"
+      "at": "2026-11-25T13:06:02.780Z"
      },
      {
       "qid": "rf_injury",
@@ -5144,7 +5144,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.910Z"
+      "at": "2026-11-25T13:06:23.571Z"
      },
      {
       "qid": "conditions",
@@ -5160,7 +5160,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.914Z"
+      "at": "2026-11-25T13:06:56.728Z"
      },
      {
       "qid": "diabetes_years",
@@ -5170,11 +5170,11 @@
       "reason": "Retinopathy risk rises with every year of diabetes; a new diagnosis also means the glasses power may still be shifting.",
       "raw": "ఆరు సంవత్సరాలు",
       "value": 6,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.914Z"
+      "at": "2026-11-25T13:07:26.150Z"
      },
      {
       "qid": "retina_exam",
@@ -5188,7 +5188,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.920Z"
+      "at": "2026-11-25T13:08:04.327Z"
      },
      {
       "qid": "glaucoma_family",
@@ -5198,11 +5198,11 @@
       "reason": "Glaucoma runs in families and steals sight painlessly; relatives over 40 need an eye-pressure and optic-nerve check.",
       "raw": "లేదు",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.921Z"
+      "at": "2026-11-25T13:08:21.082Z"
      },
      {
       "qid": "eye_surgery",
@@ -5212,11 +5212,11 @@
       "reason": "After cataract surgery the eye cannot focus up close, so near glasses are needed whatever the age.",
       "raw": "లేదు",
       "value": "none",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.924Z"
+      "at": "2026-11-25T13:08:54.630Z"
      },
      {
       "qid": "glasses_now",
@@ -5230,7 +5230,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.925Z"
+      "at": "2026-11-25T13:09:18.583Z"
      },
      {
       "qid": "occupation",
@@ -5244,7 +5244,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.946Z"
+      "at": "2026-11-25T13:09:56.725Z"
      },
      {
       "qid": "near_hours",
@@ -5254,11 +5254,11 @@
       "reason": "From the late 30s, hours of close work decide the reading add and the lens type.",
       "raw": "ఒక గంట",
       "value": 1,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.946Z"
+      "at": "2026-11-25T13:10:16.836Z"
      },
      {
       "qid": "night_glare",
@@ -5268,11 +5268,11 @@
       "reason": "Glare and faded colours after 50 are early cataract signs.",
       "raw": "అవును రాత్రి లైట్లు కళ్ళు చెదురుతాయి",
       "value": true,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.947Z"
+      "at": "2026-11-25T13:10:46.081Z"
      },
      {
       "qid": "budget",
@@ -5282,16 +5282,16 @@
       "reason": "Lens options for near-and-far needs range from low-cost bifocals to progressives; advice must be affordable to be followed.",
       "raw": "రెండు వేలు",
       "value": "mid",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "te",
-      "at": "2026-11-14T08:56:53.953Z"
+      "at": "2026-11-25T13:11:08.339Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.891Z",
-    "finishedAt": "2026-11-14T08:56:53.953Z",
+    "startedAt": "2026-11-25T13:03:13.269Z",
+    "finishedAt": "2026-11-25T13:11:28.339Z",
     "asked": 18,
     "bank": 38,
     "notAsked": [
@@ -5595,7 +5595,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "18 by voice, 0 by tap",
+       "value": "9 by voice, 9 by tap",
        "ok": true
       }
      ],
@@ -5607,7 +5607,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "te",
-    "text": "దివ్యదృష్టి విజన్ పాస్‌పోర్ట్ · DD-2FA50B\nG. Ramulu · 14/11/2026\nమీ కళ్ళకి ఎక్కువగా ఉండే పని: దూరం చూడడం (బయట, బండి నడపడం, మనుషుల ముఖాలు).\nమా సలహా: ప్రోగ్రెసివ్ కళ్ళద్దాలు (అన్ని దూరాలకీ, గీత లేకుండా) (add +2.50).\nఆప్టోమెట్రిస్ట్ ఈ రిజల్ట్స్ చూసి, మీ కళ్ళద్దాలు ఫైనల్ చేస్తారు.\nఇంకా కావాల్సింది: కాటరాక్ట్ (శుక్లం) చెకప్; షుగర్ కోసం కంటి చెకప్ (రెటీనా, చుక్కలు వేసి).\nచిట్కాలు: షుగర్ ఉంటే, బాగానే కనిపిస్తున్నా సరే, సంవత్సరానికి ఒకసారి కంట్లో చుక్కలు వేసి లోపల (రెటీనా) చెకప్ చేయించుకోండి. ఎండ ఎక్కువగా ఉన్నప్పుడు UV ప్రొటెక్షన్ ఉన్న కూలింగ్ గ్లాసెస్ గానీ, వెడల్పు టోపీ గానీ పెట్టుకోండి.\nఈ మెసేజ్‌ని ఏ కళ్ళద్దాల షాప్‌లో అయినా, కంటి క్యాంప్‌లో అయినా చూపించండి."
+    "text": "దివ్యదృష్టి విజన్ పాస్‌పోర్ట్ · DD-2FA50B\nG. Ramulu · 25/11/2026\nమీ కళ్ళకి ఎక్కువగా ఉండే పని: దూరం చూడడం (బయట, బండి నడపడం, మనుషుల ముఖాలు).\nమా సలహా: ప్రోగ్రెసివ్ కళ్ళద్దాలు (అన్ని దూరాలకీ, గీత లేకుండా) (add +2.50).\nఆప్టోమెట్రిస్ట్ ఈ రిజల్ట్స్ చూసి, మీ కళ్ళద్దాలు ఫైనల్ చేస్తారు.\nఇంకా కావాల్సింది: కాటరాక్ట్ (శుక్లం) చెకప్; షుగర్ కోసం కంటి చెకప్ (రెటీనా, చుక్కలు వేసి).\nచిట్కాలు: షుగర్ ఉంటే, బాగానే కనిపిస్తున్నా సరే, సంవత్సరానికి ఒకసారి కంట్లో చుక్కలు వేసి లోపల (రెటీనా) చెకప్ చేయించుకోండి. ఎండ ఎక్కువగా ఉన్నప్పుడు UV ప్రొటెక్షన్ ఉన్న కూలింగ్ గ్లాసెస్ గానీ, వెడల్పు టోపీ గానీ పెట్టుకోండి.\nఈ మెసేజ్‌ని ఏ కళ్ళద్దాల షాప్‌లో అయినా, కంటి క్యాంప్‌లో అయినా చూపించండి."
    }
   },
   "receivedMinutesAgo": 110
@@ -5615,7 +5615,7 @@
  {
   "case": {
    "id": "63c4f51c-a450-43ac-a876-2700fba9daa0",
-   "createdAt": "2026-11-14T08:28:53.954Z",
+   "createdAt": "2026-11-25T14:33:13.421Z",
    "appVersion": "0.2.0",
    "lang": "mr",
    "demo": true,
@@ -5633,7 +5633,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T08:28:53.954Z",
+    "at": "2026-11-25T14:33:13.421Z",
     "lang": "mr",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -5691,11 +5691,11 @@
       "reason": "Age sets which eye changes to look for: myopia in children, presbyopia after 40, cataract after 50.",
       "raw": "पंचेचाळीस",
       "value": 45,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.954Z"
+      "at": "2026-11-25T14:33:37.239Z"
      },
      {
       "qid": "sex",
@@ -5705,11 +5705,11 @@
       "reason": "Needed for the record; some conditions differ by sex (angle-closure glaucoma is more common in women).",
       "raw": "स्त्री",
       "value": "female",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.957Z"
+      "at": "2026-11-25T14:33:56.779Z"
      },
      {
       "qid": "complaint",
@@ -5726,7 +5726,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.968Z"
+      "at": "2026-11-25T14:34:31.096Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -5736,11 +5736,11 @@
       "reason": "A sudden drop (not a slow one) can be a detachment, a blocked blood vessel or an optic-nerve problem. When it started decides same day or within 48 hours.",
       "raw": "नाही",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.973Z"
+      "at": "2026-11-25T14:34:50.398Z"
      },
      {
       "qid": "rf_flashes",
@@ -5750,11 +5750,11 @@
       "reason": "New flashes or floaters can come with a retinal tear (10-15% of cases): dilated retina check within 24 hours. Old floaters that have not changed are not a concern.",
       "raw": "नाही",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.973Z"
+      "at": "2026-11-25T14:35:22.436Z"
      },
      {
       "qid": "rf_double",
@@ -5768,7 +5768,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.974Z"
+      "at": "2026-11-25T14:35:49.859Z"
      },
      {
       "qid": "rf_red",
@@ -5782,7 +5782,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.975Z"
+      "at": "2026-11-25T14:36:28.359Z"
      },
      {
       "qid": "rf_injury",
@@ -5796,7 +5796,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.975Z"
+      "at": "2026-11-25T14:37:05.741Z"
      },
      {
       "qid": "conditions",
@@ -5812,7 +5812,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.978Z"
+      "at": "2026-11-25T14:37:44.313Z"
      },
      {
       "qid": "glaucoma_family",
@@ -5822,11 +5822,11 @@
       "reason": "Glaucoma runs in families and steals sight painlessly; relatives over 40 need an eye-pressure and optic-nerve check.",
       "raw": "नाही",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.979Z"
+      "at": "2026-11-25T14:38:11.664Z"
      },
      {
       "qid": "eye_surgery",
@@ -5836,11 +5836,11 @@
       "reason": "After cataract surgery the eye cannot focus up close, so near glasses are needed whatever the age.",
       "raw": "नाही",
       "value": "none",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.983Z"
+      "at": "2026-11-25T14:38:25.196Z"
      },
      {
       "qid": "glasses_now",
@@ -5850,11 +5850,11 @@
       "reason": "Current glasses show the past prescription and what is or isn’t working.",
       "raw": "हो",
       "value": true,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.983Z"
+      "at": "2026-11-25T14:38:46.140Z"
      },
      {
       "qid": "glasses_type",
@@ -5864,11 +5864,11 @@
       "reason": "Tells us which zones the patient already relies on, and whether they have adapted to multifocals before.",
       "raw": "दूरचा",
       "value": "distance",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.989Z"
+      "at": "2026-11-25T14:39:02.975Z"
      },
      {
       "qid": "glasses_years",
@@ -5878,11 +5878,11 @@
       "reason": "Prescriptions older than about two years are often out of date, especially after 40.",
       "raw": "चार वर्षे",
       "value": 4,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.989Z"
+      "at": "2026-11-25T14:39:27.653Z"
      },
      {
       "qid": "glasses_ok",
@@ -5896,7 +5896,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.994Z"
+      "at": "2026-11-25T14:39:59.321Z"
      },
      {
       "qid": "rx_known",
@@ -5918,11 +5918,11 @@
        "text": "R −1.00 / −0.50 × 90   L −1.25",
        "warnings": []
       },
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.996Z"
+      "at": "2026-11-25T14:40:24.581Z"
      },
      {
       "qid": "frequent_change",
@@ -5936,7 +5936,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:53.996Z"
+      "at": "2026-11-25T14:40:50.203Z"
      },
      {
       "qid": "occupation",
@@ -5950,7 +5950,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.017Z"
+      "at": "2026-11-25T14:41:26.871Z"
      },
      {
       "qid": "near_hours",
@@ -5964,7 +5964,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.017Z"
+      "at": "2026-11-25T14:42:05.397Z"
      },
      {
       "qid": "screen_hours",
@@ -5974,11 +5974,11 @@
       "reason": "Screens sit at arm’s length (\"intermediate\" vision), which standard bifocals do not cover and progressives cover narrowly.",
       "raw": "दोन तास",
       "value": 2,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.017Z"
+      "at": "2026-11-25T14:42:20.853Z"
      },
      {
       "qid": "outdoor_hours",
@@ -5988,11 +5988,11 @@
       "reason": "Long hours in sunlight call for UV protection and possibly photochromic lenses.",
       "raw": "एक तास",
       "value": 1,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.018Z"
+      "at": "2026-11-25T14:42:43.054Z"
      },
      {
       "qid": "drives",
@@ -6002,11 +6002,11 @@
       "reason": "Driving needs sharp distance vision and wide side vision; it changes lens design and coating advice.",
       "raw": "हो स्कूटर चालवते",
       "value": true,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.018Z"
+      "at": "2026-11-25T14:43:07.584Z"
      },
      {
       "qid": "night_glare",
@@ -6016,11 +6016,11 @@
       "reason": "Night glare for a driver calls for an anti-reflective coating.",
       "raw": "नाही",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.019Z"
+      "at": "2026-11-25T14:43:36.571Z"
      },
      {
       "qid": "budget",
@@ -6030,16 +6030,16 @@
       "reason": "Lens options for near-and-far needs range from low-cost bifocals to progressives; advice must be affordable to be followed.",
       "raw": "तीन हजारांपेक्षा जास्त",
       "value": "high",
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.025Z"
+      "at": "2026-11-25T14:43:51.670Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:53.954Z",
-    "finishedAt": "2026-11-14T08:56:54.025Z",
+    "startedAt": "2026-11-25T14:33:13.421Z",
+    "finishedAt": "2026-11-25T14:44:11.670Z",
     "asked": 24,
     "bank": 38,
     "notAsked": [
@@ -6317,7 +6317,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "24 by voice, 0 by tap",
+       "value": "9 by voice, 15 by tap",
        "ok": true
       }
      ],
@@ -6329,7 +6329,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "mr",
-    "text": "दिव्यदृष्टी व्हिजन पासपोर्ट · DD-63C4F5\nSunita Patil · 14/11/2026\nतुमच्या डोळ्यांचं जास्त काम: जवळचं, हाताच्या अंतरावरचं आणि लांबचं, सगळं थोडं थोडं.\nसुचवलेलं: प्रोग्रेसिव्ह चष्मा (सगळ्या अंतरांसाठी, रेषा नसलेला) (add +1.50).\nRx: R −1.00 / −0.50 × 90   L −1.25\nऑप्टोमेट्रिस्ट हे रिपोर्ट बघून तुमचा चष्मा पक्का करतील.\nसल्ला: जवळचं काम किंवा स्क्रीन बघताना, दर 20 मिनिटांनी 20 सेकंद 6 मीटर लांब बघा. वाचन, शिवणकाम असं जवळचं काम भरपूर उजेडात करा.\nहा मेसेज कुठल्याही चष्म्याच्या दुकानात किंवा डोळ्यांच्या कॅम्पमध्ये दाखवा."
+    "text": "दिव्यदृष्टी व्हिजन पासपोर्ट · DD-63C4F5\nSunita Patil · 25/11/2026\nतुमच्या डोळ्यांचं जास्त काम: जवळचं, हाताच्या अंतरावरचं आणि लांबचं, सगळं थोडं थोडं.\nसुचवलेलं: प्रोग्रेसिव्ह चष्मा (सगळ्या अंतरांसाठी, रेषा नसलेला) (add +1.50).\nRx: R −1.00 / −0.50 × 90   L −1.25\nऑप्टोमेट्रिस्ट हे रिपोर्ट बघून तुमचा चष्मा पक्का करतील.\nसल्ला: जवळचं काम किंवा स्क्रीन बघताना, दर 20 मिनिटांनी 20 सेकंद 6 मीटर लांब बघा. वाचन, शिवणकाम असं जवळचं काम भरपूर उजेडात करा.\nहा मेसेज कुठल्याही चष्म्याच्या दुकानात किंवा डोळ्यांच्या कॅम्पमध्ये दाखवा."
    }
   },
   "receivedMinutesAgo": 20
@@ -6337,7 +6337,7 @@
  {
   "case": {
    "id": "bcb6b3fa-181f-4c89-a42b-bb5c5ac5e105",
-   "createdAt": "2026-11-14T07:43:54.026Z",
+   "createdAt": "2026-11-25T13:48:13.538Z",
    "appVersion": "0.2.0",
    "lang": "kn",
    "demo": true,
@@ -6355,7 +6355,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T07:43:54.026Z",
+    "at": "2026-11-25T13:48:13.538Z",
     "lang": "kn",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -6405,7 +6405,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.026Z"
+      "at": "2026-11-25T13:48:36.276Z"
      },
      {
       "qid": "sex",
@@ -6419,7 +6419,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.028Z"
+      "at": "2026-11-25T13:49:12.949Z"
      },
      {
       "qid": "complaint",
@@ -6435,7 +6435,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.039Z"
+      "at": "2026-11-25T13:49:32.046Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -6445,11 +6445,11 @@
       "reason": "A sudden drop (not a slow one) can be a detachment, a blocked blood vessel or an optic-nerve problem. When it started decides same day or within 48 hours.",
       "raw": "ಇಲ್ಲ",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.045Z"
+      "at": "2026-11-25T13:50:00.720Z"
      },
      {
       "qid": "rf_flashes",
@@ -6463,7 +6463,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.046Z"
+      "at": "2026-11-25T13:50:22.415Z"
      },
      {
       "qid": "rf_double",
@@ -6477,7 +6477,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.047Z"
+      "at": "2026-11-25T13:50:46.933Z"
      },
      {
       "qid": "rf_red",
@@ -6491,7 +6491,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.047Z"
+      "at": "2026-11-25T13:51:09.742Z"
      },
      {
       "qid": "rf_injury",
@@ -6505,7 +6505,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.048Z"
+      "at": "2026-11-25T13:51:33.835Z"
      },
      {
       "qid": "conditions",
@@ -6521,7 +6521,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.052Z"
+      "at": "2026-11-25T13:52:00.320Z"
      },
      {
       "qid": "glaucoma_family",
@@ -6535,7 +6535,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.053Z"
+      "at": "2026-11-25T13:52:37.127Z"
      },
      {
       "qid": "eye_surgery",
@@ -6549,7 +6549,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.056Z"
+      "at": "2026-11-25T13:53:15.185Z"
      },
      {
       "qid": "glasses_now",
@@ -6559,11 +6559,11 @@
       "reason": "Current glasses show the past prescription and what is or isn’t working.",
       "raw": "ಹೌದು",
       "value": true,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.057Z"
+      "at": "2026-11-25T13:53:39.967Z"
      },
      {
       "qid": "glasses_type",
@@ -6577,7 +6577,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.063Z"
+      "at": "2026-11-25T13:53:58.862Z"
      },
      {
       "qid": "glasses_years",
@@ -6587,11 +6587,11 @@
       "reason": "Prescriptions older than about two years are often out of date, especially after 40.",
       "raw": "ಎರಡು ವರ್ಷ",
       "value": 2,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.064Z"
+      "at": "2026-11-25T13:54:30.902Z"
      },
      {
       "qid": "glasses_ok",
@@ -6605,7 +6605,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.070Z"
+      "at": "2026-11-25T13:54:50.634Z"
      },
      {
       "qid": "rx_known",
@@ -6617,11 +6617,11 @@
       "value": {
        "skipped": true
       },
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.070Z"
+      "at": "2026-11-25T13:55:04.808Z"
      },
      {
       "qid": "frequent_change",
@@ -6635,7 +6635,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.070Z"
+      "at": "2026-11-25T13:55:32.938Z"
      },
      {
       "qid": "occupation",
@@ -6649,7 +6649,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.090Z"
+      "at": "2026-11-25T13:55:52.765Z"
      },
      {
       "qid": "near_hours",
@@ -6663,7 +6663,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.090Z"
+      "at": "2026-11-25T13:56:26.868Z"
      },
      {
       "qid": "outdoor_hours",
@@ -6673,11 +6673,11 @@
       "reason": "Long hours in sunlight call for UV protection and possibly photochromic lenses.",
       "raw": "ಅರ್ಧ ಗಂಟೆ",
       "value": 0.5,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.090Z"
+      "at": "2026-11-25T13:56:52.349Z"
      },
      {
       "qid": "drives",
@@ -6687,11 +6687,11 @@
       "reason": "Driving needs sharp distance vision and wide side vision; it changes lens design and coating advice.",
       "raw": "ಇಲ್ಲ",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.091Z"
+      "at": "2026-11-25T13:57:06.564Z"
      },
      {
       "qid": "night_glare",
@@ -6705,7 +6705,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.092Z"
+      "at": "2026-11-25T13:57:37.686Z"
      },
      {
       "qid": "budget",
@@ -6719,12 +6719,12 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "kn",
-      "at": "2026-11-14T08:56:54.096Z"
+      "at": "2026-11-25T13:58:09.758Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:54.026Z",
-    "finishedAt": "2026-11-14T08:56:54.096Z",
+    "startedAt": "2026-11-25T13:48:13.538Z",
+    "finishedAt": "2026-11-25T13:58:29.758Z",
     "asked": 23,
     "bank": 38,
     "notAsked": [
@@ -6992,7 +6992,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "23 by voice, 0 by tap",
+       "value": "17 by voice, 6 by tap",
        "ok": true
       }
      ],
@@ -7004,7 +7004,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "kn",
-    "text": "ದಿವ್ಯದೃಷ್ಟಿ ವಿಷನ್ ಪಾಸ್‌ಪೋರ್ಟ್ · DD-BCB6B3\nS. Manjula · 14/11/2026\nನಿಮ್ ಕಣ್ಣಿಗೆ ಜಾಸ್ತಿ ಕೆಲಸ ಕೊಡೋದು: ಹತ್ತಿರದ ಕೆಲಸ (ಓದೋದು, ಫೋನ್, ಹೊಲಿಗೆ).\nನಮ್ ಸಲಹೆ: ಓದೋಕೆ ಕನ್ನಡಕ (add +2.75).\nಆಪ್ಟೋಮೆಟ್ರಿಸ್ಟ್ ಈ ರಿಸಲ್ಟ್ ನೋಡಿ, ನಿಮ್ ಕನ್ನಡಕ ಫೈನಲ್ ಮಾಡ್ತಾರೆ.\nಇನ್ನೂ ಬೇಕಾಗಿರೋದು: ಕಣ್ಣಿನ ಪ್ರೆಶರ್ (ಗ್ಲಾಕೋಮಾ) ಚೆಕಪ್.\nಸಲಹೆಗಳು: ಹತ್ತಿರದ ಕೆಲಸ ಇಲ್ಲಾ ಸ್ಕ್ರೀನ್ ಕೆಲಸ ಮಾಡ್ತಿದ್ರೆ, ಪ್ರತಿ 20 ನಿಮಿಷಕ್ಕೆ ಒಂದ್ಸಲ, 20 ಸೆಕೆಂಡ್ ಕಾಲ 6 ಮೀಟರ್ ದೂರ ನೋಡಿ. ಓದೋದು, ಹೊಲಿಗೆ ತರದ ಹತ್ತಿರದ ಕೆಲಸಕ್ಕೆ ಒಳ್ಳೇ ಬೆಳಕು ಇಟ್ಕೊಳ್ಳಿ.\nಈ ಮೆಸೇಜ್ ಅನ್ನ ಯಾವುದೇ ಕನ್ನಡಕದ ಅಂಗಡಿಯಲ್ಲಾಗ್ಲೀ, ಕಣ್ಣಿನ ಕ್ಯಾಂಪ್‌ನಲ್ಲಾಗ್ಲೀ ತೋರಿಸಿ."
+    "text": "ದಿವ್ಯದೃಷ್ಟಿ ವಿಷನ್ ಪಾಸ್‌ಪೋರ್ಟ್ · DD-BCB6B3\nS. Manjula · 25/11/2026\nನಿಮ್ ಕಣ್ಣಿಗೆ ಜಾಸ್ತಿ ಕೆಲಸ ಕೊಡೋದು: ಹತ್ತಿರದ ಕೆಲಸ (ಓದೋದು, ಫೋನ್, ಹೊಲಿಗೆ).\nನಮ್ ಸಲಹೆ: ಓದೋಕೆ ಕನ್ನಡಕ (add +2.75).\nಆಪ್ಟೋಮೆಟ್ರಿಸ್ಟ್ ಈ ರಿಸಲ್ಟ್ ನೋಡಿ, ನಿಮ್ ಕನ್ನಡಕ ಫೈನಲ್ ಮಾಡ್ತಾರೆ.\nಇನ್ನೂ ಬೇಕಾಗಿರೋದು: ಕಣ್ಣಿನ ಪ್ರೆಶರ್ (ಗ್ಲಾಕೋಮಾ) ಚೆಕಪ್.\nಸಲಹೆಗಳು: ಹತ್ತಿರದ ಕೆಲಸ ಇಲ್ಲಾ ಸ್ಕ್ರೀನ್ ಕೆಲಸ ಮಾಡ್ತಿದ್ರೆ, ಪ್ರತಿ 20 ನಿಮಿಷಕ್ಕೆ ಒಂದ್ಸಲ, 20 ಸೆಕೆಂಡ್ ಕಾಲ 6 ಮೀಟರ್ ದೂರ ನೋಡಿ. ಓದೋದು, ಹೊಲಿಗೆ ತರದ ಹತ್ತಿರದ ಕೆಲಸಕ್ಕೆ ಒಳ್ಳೇ ಬೆಳಕು ಇಟ್ಕೊಳ್ಳಿ.\nಈ ಮೆಸೇಜ್ ಅನ್ನ ಯಾವುದೇ ಕನ್ನಡಕದ ಅಂಗಡಿಯಲ್ಲಾಗ್ಲೀ, ಕಣ್ಣಿನ ಕ್ಯಾಂಪ್‌ನಲ್ಲಾಗ್ಲೀ ತೋರಿಸಿ."
    }
   },
   "receivedMinutesAgo": 65
@@ -7012,7 +7012,7 @@
  {
   "case": {
    "id": "b9902b0b-a9db-4f6d-a981-132b324765f3",
-   "createdAt": "2026-11-14T07:48:54.097Z",
+   "createdAt": "2026-11-25T13:53:13.638Z",
    "appVersion": "0.2.0",
    "lang": "ta",
    "demo": true,
@@ -7030,7 +7030,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T07:48:54.097Z",
+    "at": "2026-11-25T13:53:13.638Z",
     "lang": "ta",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -7073,7 +7073,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.097Z"
+      "at": "2026-11-25T13:53:45.442Z"
      },
      {
       "qid": "sex",
@@ -7087,7 +7087,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.100Z"
+      "at": "2026-11-25T13:54:24.183Z"
      },
      {
       "qid": "complaint",
@@ -7103,7 +7103,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.109Z"
+      "at": "2026-11-25T13:54:54.707Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -7117,7 +7117,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.110Z"
+      "at": "2026-11-25T13:55:15.481Z"
      },
      {
       "qid": "rf_flashes",
@@ -7131,7 +7131,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.111Z"
+      "at": "2026-11-25T13:55:51.744Z"
      },
      {
       "qid": "rf_curtain",
@@ -7141,11 +7141,11 @@
       "reason": "A fixed shadow or curtain suggests a retinal detachment: eye hospital the same day.",
       "raw": "இல்லை",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.111Z"
+      "at": "2026-11-25T13:56:16.884Z"
      },
      {
       "qid": "rf_double",
@@ -7159,7 +7159,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.112Z"
+      "at": "2026-11-25T13:56:52.357Z"
      },
      {
       "qid": "rf_red",
@@ -7169,11 +7169,11 @@
       "reason": "Most red eyes are mild. Pain, blur, coloured rings or contact lenses make one urgent; the next question sorts which.",
       "raw": "இல்லை",
       "value": false,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.112Z"
+      "at": "2026-11-25T13:57:06.468Z"
      },
      {
       "qid": "rf_injury",
@@ -7187,7 +7187,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.113Z"
+      "at": "2026-11-25T13:57:39.497Z"
      },
      {
       "qid": "conditions",
@@ -7203,7 +7203,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.117Z"
+      "at": "2026-11-25T13:58:09.436Z"
      },
      {
       "qid": "glaucoma_family",
@@ -7217,7 +7217,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.117Z"
+      "at": "2026-11-25T13:58:47.930Z"
      },
      {
       "qid": "eye_surgery",
@@ -7231,7 +7231,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.121Z"
+      "at": "2026-11-25T13:59:15.747Z"
      },
      {
       "qid": "glasses_now",
@@ -7245,7 +7245,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.121Z"
+      "at": "2026-11-25T13:59:53.167Z"
      },
      {
       "qid": "occupation",
@@ -7255,11 +7255,11 @@
       "reason": "Work sets how many hours go to near, arm’s-length and far vision, the core of the vision profile.",
       "raw": "விவசாயம்",
       "value": "farmer",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.140Z"
+      "at": "2026-11-25T14:00:18.804Z"
      },
      {
       "qid": "near_hours",
@@ -7273,7 +7273,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.141Z"
+      "at": "2026-11-25T14:00:43.935Z"
      },
      {
       "qid": "drives",
@@ -7287,7 +7287,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.141Z"
+      "at": "2026-11-25T14:01:19.375Z"
      },
      {
       "qid": "night_glare",
@@ -7301,7 +7301,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.142Z"
+      "at": "2026-11-25T14:01:40.979Z"
      },
      {
       "qid": "budget",
@@ -7315,12 +7315,12 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "ta",
-      "at": "2026-11-14T08:56:54.147Z"
+      "at": "2026-11-25T14:02:15.513Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:54.097Z",
-    "finishedAt": "2026-11-14T08:56:54.147Z",
+    "startedAt": "2026-11-25T13:53:13.638Z",
+    "finishedAt": "2026-11-25T14:02:35.513Z",
     "asked": 18,
     "bank": 38,
     "notAsked": [
@@ -7601,7 +7601,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "18 by voice, 0 by tap",
+       "value": "15 by voice, 3 by tap",
        "ok": true
       }
      ],
@@ -7613,7 +7613,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "ta",
-    "text": "திவ்யதிருஷ்டி விஷன் பாஸ்போர்ட் · DD-B9902B\nT. Gopal · 14/11/2026\nஉங்க கண்ணுக்கு அதிகமா வேலை வர்றது: தூரம் பாக்குறது (வெளிய, வண்டி ஓட்டுறது, ஆளுங்க முகம்).\nஎங்க ஆலோசனை: பைஃபோகல் கண்ணாடி (தூரம் + படிக்க) (add +2.50).\nதயவு செஞ்சு ஒண்ணு ரெண்டு நாள்ல இதை டாக்டர்கிட்ட காட்டுங்க. எங்க, எப்போன்னு ஆப்டோமெட்ரிஸ்ட் உங்களுக்கு போன் பண்ணிச் சொல்வாங்க.\nஇன்னும் வேணும்: புதுசா தெரியுற மிதக்குற புள்ளிகளுக்காக, 24 மணி நேரத்துக்குள்ள கண்ணுல சொட்டு மருந்து போட்டு ரெட்டினா செக்கப்.\nசின்ன டிப்ஸ்: வெயில் அதிகமா இருக்கும்போது UV பாதுகாப்பு இருக்கிற கூலிங் கிளாஸ் இல்லனா அகலமான தொப்பி போட்டுக்கோங்க.\nஇந்த மெசேஜை எந்த கண்ணாடிக் கடையிலயும், கண் கேம்ப்லயும் காட்டுங்க."
+    "text": "திவ்யதிருஷ்டி விஷன் பாஸ்போர்ட் · DD-B9902B\nT. Gopal · 25/11/2026\nஉங்க கண்ணுக்கு அதிகமா வேலை வர்றது: தூரம் பாக்குறது (வெளிய, வண்டி ஓட்டுறது, ஆளுங்க முகம்).\nஎங்க ஆலோசனை: பைஃபோகல் கண்ணாடி (தூரம் + படிக்க) (add +2.50).\nதயவு செஞ்சு ஒண்ணு ரெண்டு நாள்ல இதை டாக்டர்கிட்ட காட்டுங்க. எங்க, எப்போன்னு ஆப்டோமெட்ரிஸ்ட் உங்களுக்கு போன் பண்ணிச் சொல்வாங்க.\nஇன்னும் வேணும்: புதுசா தெரியுற மிதக்குற புள்ளிகளுக்காக, 24 மணி நேரத்துக்குள்ள கண்ணுல சொட்டு மருந்து போட்டு ரெட்டினா செக்கப்.\nசின்ன டிப்ஸ்: வெயில் அதிகமா இருக்கும்போது UV பாதுகாப்பு இருக்கிற கூலிங் கிளாஸ் இல்லனா அகலமான தொப்பி போட்டுக்கோங்க.\nஇந்த மெசேஜை எந்த கண்ணாடிக் கடையிலயும், கண் கேம்ப்லயும் காட்டுங்க."
    }
   },
   "receivedMinutesAgo": 60
@@ -7621,7 +7621,7 @@
  {
   "case": {
    "id": "6ee02ff4-51e5-4cf0-a5b1-d010c38a58bb",
-   "createdAt": "2026-11-14T07:48:54.148Z",
+   "createdAt": "2026-11-25T13:53:13.712Z",
    "appVersion": "0.2.0",
    "lang": "mr",
    "demo": true,
@@ -7639,7 +7639,7 @@
    },
    "consent": {
     "given": true,
-    "at": "2026-11-14T07:48:54.148Z",
+    "at": "2026-11-25T13:53:13.712Z",
     "lang": "mr",
     "textVersion": "consent-v1",
     "method": "demo"
@@ -7681,11 +7681,11 @@
       "reason": "Age sets which eye changes to look for: myopia in children, presbyopia after 40, cataract after 50.",
       "raw": "अडतीस",
       "value": 38,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.148Z"
+      "at": "2026-11-25T13:53:46.665Z"
      },
      {
       "qid": "sex",
@@ -7699,7 +7699,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.151Z"
+      "at": "2026-11-25T13:54:21.535Z"
      },
      {
       "qid": "complaint",
@@ -7715,7 +7715,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.161Z"
+      "at": "2026-11-25T13:54:52.815Z"
      },
      {
       "qid": "rf_vision_drop",
@@ -7729,7 +7729,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.161Z"
+      "at": "2026-11-25T13:55:26.380Z"
      },
      {
       "qid": "rf_flashes",
@@ -7739,11 +7739,11 @@
       "reason": "New flashes or floaters can come with a retinal tear (10-15% of cases): dilated retina check within 24 hours. Old floaters that have not changed are not a concern.",
       "raw": "नाही",
       "value": false,
-      "mode": "voice",
+      "mode": "typed",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.162Z"
+      "at": "2026-11-25T13:55:40.431Z"
      },
      {
       "qid": "rf_double",
@@ -7753,11 +7753,11 @@
       "reason": "New double vision can come from a nerve palsy or a stroke; double vision in one eye only is usually cataract or astigmatism.",
       "raw": "नाही",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.162Z"
+      "at": "2026-11-25T13:56:07.929Z"
      },
      {
       "qid": "rf_red",
@@ -7771,7 +7771,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.162Z"
+      "at": "2026-11-25T13:56:30.338Z"
      },
      {
       "qid": "rf_red_detail",
@@ -7784,11 +7784,11 @@
        "discharge",
        "pain"
       ],
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.177Z"
+      "at": "2026-11-25T13:56:59.363Z"
      },
      {
       "qid": "rf_injury",
@@ -7798,11 +7798,11 @@
       "reason": "Chemical and high-speed injuries are emergencies; a scratch from a leaf or crop needs antibiotic ointment within 18 hours to prevent a fungal ulcer.",
       "raw": "हो काल उसाचं पान लागलं",
       "value": true,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.177Z"
+      "at": "2026-11-25T13:57:30.517Z"
      },
      {
       "qid": "rf_injury_type",
@@ -7818,7 +7818,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.189Z"
+      "at": "2026-11-25T13:57:59.976Z"
      },
      {
       "qid": "conditions",
@@ -7830,11 +7830,11 @@
       "value": [
        "none"
       ],
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.192Z"
+      "at": "2026-11-25T13:58:14.002Z"
      },
      {
       "qid": "glasses_now",
@@ -7844,11 +7844,11 @@
       "reason": "Current glasses show the past prescription and what is or isn’t working.",
       "raw": "नाही",
       "value": false,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.193Z"
+      "at": "2026-11-25T13:58:43.008Z"
      },
      {
       "qid": "occupation",
@@ -7858,11 +7858,11 @@
       "reason": "Work sets how many hours go to near, arm’s-length and far vision, the core of the vision profile.",
       "raw": "शेती",
       "value": "farmer",
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.213Z"
+      "at": "2026-11-25T13:59:09.525Z"
      },
      {
       "qid": "near_hours",
@@ -7872,11 +7872,11 @@
       "reason": "From the late 30s, hours of close work decide the reading add and the lens type.",
       "raw": "एक तास",
       "value": 1,
-      "mode": "voice",
+      "mode": "tap",
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.213Z"
+      "at": "2026-11-25T13:59:36.538Z"
      },
      {
       "qid": "drives",
@@ -7890,7 +7890,7 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.214Z"
+      "at": "2026-11-25T13:59:57.664Z"
      },
      {
       "qid": "night_glare",
@@ -7904,12 +7904,12 @@
       "confidence": null,
       "lowConfidence": false,
       "lang": "mr",
-      "at": "2026-11-14T08:56:54.215Z"
+      "at": "2026-11-25T14:00:29.714Z"
      }
     ],
     "skipped": [],
-    "startedAt": "2026-11-14T08:56:54.148Z",
-    "finishedAt": "2026-11-14T08:56:54.215Z",
+    "startedAt": "2026-11-25T13:53:13.712Z",
+    "finishedAt": "2026-11-25T14:00:49.714Z",
     "asked": 16,
     "bank": 38,
     "notAsked": [
@@ -8181,7 +8181,7 @@
       {
        "key": "answers",
        "label": "Answers",
-       "value": "16 by voice, 0 by tap",
+       "value": "7 by voice, 9 by tap",
        "ok": true
       }
      ],
@@ -8193,7 +8193,7 @@
    "rulesVersion": "2026.11-r3",
    "passport": {
     "lang": "mr",
-    "text": "दिव्यदृष्टी व्हिजन पासपोर्ट · DD-6EE02F\nSantosh Jadhav · 14/11/2026\nतुमच्या डोळ्यांचं जास्त काम: लांबचं बघणं (बाहेर, गाडी चालवणं, चेहरे ओळखणं).\nसुचवलेलं: आत्ता नवीन चष्म्याची गरज नाही.\nएक-दोन दिवसांत हे तपासून घ्या. कुठे आणि कधी जायचं, ते ऑप्टोमेट्रिस्ट फोन करून सांगतील.\nहेही गरजेचं: 18 तासांच्या आत डोळ्यात अँटिबायोटिकचं मलम लावणं (स्टिरॉइडचे ड्रॉप्स नकोत, घरगुती उपाय नकोत); डोळा दुखतोय, म्हणून 1-2 दिवसांत डोळ्यांच्या डॉक्टरांना दाखवणं.\nसल्ला: कडक उन्हात UV पासून वाचवणारा गॉगल, किंवा मोठ्या कडांची टोपी वापरा.\nहा मेसेज कुठल्याही चष्म्याच्या दुकानात किंवा डोळ्यांच्या कॅम्पमध्ये दाखवा."
+    "text": "दिव्यदृष्टी व्हिजन पासपोर्ट · DD-6EE02F\nSantosh Jadhav · 25/11/2026\nतुमच्या डोळ्यांचं जास्त काम: लांबचं बघणं (बाहेर, गाडी चालवणं, चेहरे ओळखणं).\nसुचवलेलं: आत्ता नवीन चष्म्याची गरज नाही.\nएक-दोन दिवसांत हे तपासून घ्या. कुठे आणि कधी जायचं, ते ऑप्टोमेट्रिस्ट फोन करून सांगतील.\nहेही गरजेचं: 18 तासांच्या आत डोळ्यात अँटिबायोटिकचं मलम लावणं (स्टिरॉइडचे ड्रॉप्स नकोत, घरगुती उपाय नकोत); डोळा दुखतोय, म्हणून 1-2 दिवसांत डोळ्यांच्या डॉक्टरांना दाखवणं.\nसल्ला: कडक उन्हात UV पासून वाचवणारा गॉगल, किंवा मोठ्या कडांची टोपी वापरा.\nहा मेसेज कुठल्याही चष्म्याच्या दुकानात किंवा डोळ्यांच्या कॅम्पमध्ये दाखवा."
    }
   },
   "receivedMinutesAgo": 60

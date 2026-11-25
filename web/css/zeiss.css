@@ -1,0 +1,169 @@
+/* DivyaDrishti Network: the ZEISS partner view. Built on app.css (tokens,
+   night bands, cards, charts) and portal.css (the sidebar shell, tiles,
+   tables). Aggregates only. Every number carries a label and a unit; urgency
+   colours appear only beside their word; ranked bars use one hue. */
+
+/* ---------------------------------------------------------------- entry gate */
+.gate { max-width: 1180px; margin: 0 auto; padding: 16px 16px 48px; }
+.gate .welcome .band .mark { color: var(--sky); }
+.gate .welcome h1 { max-width: 12ch; }
+.gate .band .lede { max-width: 48ch; }
+.gate .band .btn.big { width: auto; align-self: flex-start; margin: 26px 0 0; padding: 0 1.5rem; }
+.gate .band .btn.big .ic { transition: transform .2s var(--ease-out); }
+.gate .band .btn.big:hover .ic { transform: translateX(3px); }
+.privacy { display: flex; align-items: flex-start; gap: 10px; max-width: 54ch; margin: 22px 0 0; font-size: .9rem; line-height: 1.45; color: var(--on-night-2); }
+.privacy .ic { color: var(--sky); margin-top: 1px; }
+.signin h2 { display: block; font-family: var(--display); font-size: 1.65rem; font-weight: 450; letter-spacing: -.015em; line-height: 1.15; margin-bottom: .4rem; }
+.signin form { margin-top: 10px; }
+.signin form .btn { width: 100%; margin-top: 4px; }
+.signin input { font-variant-numeric: tabular-nums; }
+.zhint { margin-top: 14px; line-height: 1.45; }
+.signin .err { margin-top: 10px; }
+@media (min-width: 900px) { .gate { padding: 7vh 28px 72px; } }
+.zeiss > noscript .gate { display: block; }
+
+/* ---------------------------------------------------------------- top bar: who is signed in, data age, refresh, sign out */
+.zbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 58px; padding: 10px 32px; font-size: .86rem; box-shadow: 0 1px 0 var(--line); }
+.zbar .zspace { flex: 1; }
+.zmode { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; color: var(--ink); }
+.zmode .ic { color: var(--accent); }
+.zdemo { font-size: .76rem; font-weight: 600; line-height: 1.35; padding: 3px 10px; border-radius: 999px; background: var(--t3); color: var(--t3-ink); }
+.zgen { color: var(--muted); font-variant-numeric: tabular-nums; }
+.zbar .btn { min-height: 38px; }
+.sidenav .brand em { line-height: 1.35; }
+
+/* ---------------------------------------------------------------- bands and tiles */
+.zeiss .tabpage .band h1 { font-size: clamp(2.1rem, 1.7rem + 1.2vw, 2.8rem); }
+.zeiss .tiles { grid-template-columns: repeat(auto-fit, minmax(min(166px, 100%), 1fr)); }
+.zeiss .tile .l { min-height: 2.6em; align-items: flex-start; }
+.zeiss .tile .l::before { margin-top: .42em; }
+.zeiss .tile:nth-child(n) .l::before { background: var(--accent); }
+.zeiss .band .tile:nth-child(n) .l::before { background: var(--sky); }
+.tile .n small, .zstat b small { font: 500 .92rem/1 var(--font); letter-spacing: 0; margin-left: 5px; opacity: .74; }
+.tile.none .n { opacity: .55; }
+.zbtns { margin-top: 20px; }
+
+/* loading: quiet placeholders in the shape of what is coming */
+.sk .n, .sk .l, .sk h2, .skbody { border-radius: 8px; background: color-mix(in srgb, var(--ink) 7%, transparent); animation: skpulse 1.4s ease-in-out infinite; }
+.band .sk .n, .band .sk .l { background: rgba(255, 255, 255, .1); }
+.sk .n { height: 2.2rem; width: 60%; }
+.sk .l { height: .9rem; width: 85%; min-height: 0; }
+.sk .l::before { display: none; }
+.sk h2 { height: 1.1rem; width: 45%; }
+.skbody { height: 180px; }
+@keyframes skpulse { 50% { opacity: .5; } }
+
+/* ---------------------------------------------------------------- sections and cards */
+.zsec { font-size: 1.12rem; margin: 26px 2px 12px; }
+.zeiss .dash { grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr)); margin: 14px 0; }
+.zeiss .dash > .wide { grid-column: 1 / -1; }
+.zeiss .dash h2 { margin-bottom: .3rem; }
+.card > .cmeta { font-size: .8rem; font-weight: 450; margin: 0 0 16px; line-height: 1.4; }
+.card > .cmeta + .zempty { margin-top: 6px; }
+.zeiss .next { margin: 0 0 6px; }
+.zeiss .next .nx { min-height: 64px; }
+.zempty { display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 16px; border-radius: 14px; font-size: .9rem; color: var(--ink-2); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+.zempty .ic { flex: none; color: var(--accent); }
+.zeiss .kv:first-of-type { border-top: 0; }
+
+/* chart extras: hover a whole day, table view, average tick */
+.zeiss .zdaily .hit { fill: transparent; stroke: none; }
+.zeiss .zdaily svg:hover rect:not(.hit) { opacity: 1; }
+.zeiss .zdaily svg:hover g.day:not(:hover) rect:not(.hit) { opacity: .5; }
+.zeiss .zdaily g.day:hover .hit { fill: color-mix(in srgb, var(--ink) 4%, transparent); }
+.ztv { margin-top: 12px; }
+.ztv > summary { font-size: .84rem; font-weight: 550; color: var(--ink-2); padding: 8px 0; }
+.ztv .tablewrap { max-height: 300px; overflow-y: auto; }
+.ztv table.rules { min-width: 0; font-variant-numeric: tabular-nums; }
+.ztv .num, .zvers .num { text-align: right; }
+.zbars .ht { position: relative; overflow: visible; }
+.zbars .avg { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--ink); opacity: .72; }
+.zkey { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; font-size: .8rem; color: var(--ink-2); }
+.zkey i { width: 2px; height: 14px; border-radius: 1px; background: var(--ink); opacity: .72; }
+
+/* figures inside a card */
+.zstats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 6px; }
+.zstat { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 14px; background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); min-width: 0; }
+.zstat b { font: 400 2.1rem/1 var(--display); letter-spacing: -.02em; font-variant-numeric: lining-nums tabular-nums; }
+.zstat span { font-size: .8rem; color: var(--muted); line-height: 1.35; }
+
+/* review time by lane against its target */
+.zlanes { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.zlanes li { display: grid; gap: 8px; }
+.zl-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; }
+.zl-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.zl-bar .ht { height: 8px; border-radius: 4px; background: var(--paper-2); overflow: hidden; }
+.zl-bar .ht i { display: block; height: 100%; border-radius: 4px; background: var(--c1); }
+.zl-bar b { font-size: .88rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.zl-bar b .muted { font-weight: 500; }
+.zlanes small { font-size: .78rem; }
+
+/* ---------------------------------------------------------------- field network table */
+.ztools { margin-top: 26px; }
+.ztools .zsec { margin: 0; }
+.ztools select { width: auto; margin: 0; min-height: 44px; padding-top: .55rem; padding-bottom: .55rem; background-color: var(--surface); }
+.ztools .seg .chip { min-height: 38px; padding: .3rem .9rem; font-size: .88rem; }
+.ztools .seg .chip b { font-weight: 600; color: var(--muted); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.ztools .seg .chip.on b { color: var(--accent); }
+.zshops { min-width: 1120px; }
+.zshops th, .zclins th { padding: 2px 10px; }
+.zshops td { padding: 11px 10px; }
+.zshops th.num, .zshops td.num { text-align: right; }
+.zshops th.num .sorth { flex-direction: row-reverse; }
+.zshops .pcell b { white-space: nowrap; }
+.sorth { display: inline-flex; align-items: center; gap: 4px; margin: -6px -4px; padding: 6px 4px; border: 0; border-radius: 6px; background: none; color: inherit; font: inherit; cursor: pointer; white-space: nowrap; }
+.sorth:hover { color: var(--ink); }
+th[aria-sort] .sorth { color: var(--accent); }
+.kind { display: inline-flex; padding: 2px 9px; border-radius: 999px; font-size: .74rem; font-weight: 600; color: var(--ink-2); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line-2); }
+.pcell .av.camp { background: var(--t5); color: var(--t5-ink); }
+.dtable small.above { color: var(--ink); font-weight: 600; }
+.zrow-empty { text-align: center; color: var(--muted); padding: 22px 14px !important; }
+.zfoot { margin: 6px 4px 0; max-width: 110ch; line-height: 1.45; }
+.zmap { display: grid; gap: 22px; align-items: start; }
+@media (min-width: 760px) { .zmap { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 36px; } }
+
+/* ---------------------------------------------------------------- verification */
+.zpend { display: grid; gap: 12px; }
+.zclin { margin: 0; display: grid; gap: 16px; }
+.zclin-head { display: flex; align-items: center; gap: 14px; }
+.zclin-head .av, .zclins .av { display: grid; place-items: center; flex: none; border-radius: 50%; font-style: normal; font-weight: 650; background: var(--t1); color: var(--t1-ink); }
+.zclin-head .av { width: 48px; height: 48px; font-size: .86rem; }
+.zclin-head .zname { margin: 0 0 2px; font-family: var(--display); font-size: 1.55rem; font-weight: 450; letter-spacing: -.015em; line-height: 1.1; }
+.zfacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 0 22px; margin: 0; }
+.zfacts > div { padding: 10px 0; border-top: 1px solid var(--line); min-width: 0; }
+.zfacts dt { font-size: .76rem; font-weight: 500; color: var(--muted); }
+.zfacts dd { margin: 2px 0 0; font-weight: 550; overflow-wrap: anywhere; }
+.zact { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+.zact label { flex: 1 1 280px; margin: 0; }
+.zact .btn { flex: none; }
+.zclin .err:empty { display: none; }
+.zflash { display: flex; align-items: center; gap: 12px; margin: 0 0 6px; padding: 14px 16px; border-radius: 16px; font-size: .93rem; background: var(--green-soft); color: var(--green); box-shadow: inset 0 0 0 1px var(--green-line); }
+.zflash span { color: var(--ink); }
+.zflash b { color: var(--green); }
+.zflash.neutral { background: var(--surface); color: var(--ink-2); box-shadow: var(--lift); }
+.zflash.neutral b { color: var(--ink); }
+.zclins { min-width: 980px; }
+.zclins td { padding: 11px 10px; vertical-align: top; }
+.zchips { display: flex; flex-wrap: wrap; gap: 4px; max-width: 360px; }
+.zchips span { padding: 2px 9px; border-radius: 999px; font-size: .74rem; white-space: nowrap; color: var(--ink-2); background: var(--paper); box-shadow: inset 0 0 0 1px var(--line); }
+.zvers { min-width: 0; }
+.zvers small { display: inline; margin-left: 8px; }
+
+/* ---------------------------------------------------------------- phones */
+@media (max-width: 900px) {
+  /* eight sections: the nav gets its own row and scrolls sideways, the page never does */
+  .zeiss .shell { grid-template-columns: minmax(0, 1fr); }
+  .zeiss .sidenav { min-width: 0; padding-bottom: 6px; }
+  .zeiss .navlist { flex: 1 1 100%; min-width: 0; padding-bottom: 4px; scroll-padding: 0 12px; }
+  .zbar { padding: 8px 16px; }
+  .zbar .zspace { display: none; }
+  .zgen { flex: 1 1 auto; }
+  .ztools .row { width: 100%; }
+  .ztools input[type=search] { flex: 1 1 100%; width: 100%; }
+}
+@media (max-width: 520px) {
+  .zdemo { order: 5; }
+  .zeiss .tile { min-height: 100px; padding: 14px; }
+  .zeiss .tile .n { font-size: 2rem; }
+  .zeiss .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

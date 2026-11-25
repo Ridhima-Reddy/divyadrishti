@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Answer pad · DivyaDrishti</title>
+  <meta name="description" content="Answer the eye test on the shop's screen from your own phone. Nothing to install; nothing is stored on this phone.">
+  <meta name="theme-color" content="#0b1433">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/answer.css">
+</head>
+<body class="answerpad">
+  <header class="ahead">
+    <svg class="mark" viewBox="0 0 32 32" width="24" height="24" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
+    <span>Answer pad</span>
+    <span class="pill listening" id="conn">Connected</span>
+  </header>
+  <main id="pad" aria-live="polite">
+    <section class="wait"><h1>Opening…</h1></section>
+  </main>
+  <p class="afoot">Your answers go to the shop's test only. Nothing is saved on this phone, and this page stops working when your tests are done.</p>
+  <script type="module" src="js/answer.js"></script>
+</body>
+</html>

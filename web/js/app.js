@@ -1,4 +1,4 @@
-// DivyaDrishti field app: runs on the phone a store owner or camp volunteer
+// DivyaDrishti optical store app: runs on the phone a store owner or camp volunteer
 // already has. Flow: consent -> adaptive voice interview -> quick checks ->
 // functional vision profile -> send to the remote optometrist -> Vision Passport.
 import * as E from './engine/adaptive.js';
@@ -16,7 +16,9 @@ import * as account from './account.js';
 import { tryOn } from './tryon.js';
 import { openCall, createCall } from './call.js';
 import { setRuleOverrides, TIERS } from './engine/redflags.js';
-import { barChart, donut, hbars, indiaMap, pinToState, lastDays } from './charts_ui.js';
+import { barChart, donut, lastDays } from './charts_ui.js';
+import { dashboard, pushMetrics, shopCodeExact, shopCodeFor, shopHeaders } from './dashboard.js';
+import { zeissOptions } from './zeiss_lenses.js';
 
 // Referral-rule edits made by the hub optometrists (engine/redflags.js), cached
 // so the phone applies them offline too.
@@ -83,6 +85,7 @@ function setScreen(html, name) {
   window.scrollTo(0, 0);
   updateHeader();
   updateTabs(name);
+  updatePadPill();
 }
 
 const PL = () => (C ? C.lang : settings.lang);
@@ -168,12 +171,12 @@ async function home() {
     ? `<div class="nx t3">${ic('send')}<span>${t('hUnsent', { n: x.unsent })}</span><button class="btn small" id="sendNow">${t('hSendNow')}</button></div>`
     : `<div class="nx t3">${ic('send')}<span>${t('hUnsent', { n: x.unsent })}<small>${t('hOffline')}</small></span></div>`);
 
-  const stats = x.any ? `<section class="stats">
+  const stats = x.any ? `<div class="stats">
       <div class="stat"><span>${t('hToday')}</span><b>${x.today}</b></div>
       <div class="stat"><span>${t('hReferred')}</span><b>${x.referred}</b></div>
       <div class="stat"><span>${t('hWaiting')}</span><b>${x.waiting}</b></div>
       <div class="stat"><span>${t('hReplied')}</span><b>${x.replies}</b></div>
-    </section>` : '';
+    </div>` : '';
 
   const steps = [
     { done: Boolean(calib.pxPerMm), label: t('hSetupScreen'), go: 'cal' },
@@ -192,42 +195,50 @@ async function home() {
     ? `<details class="card"><summary>${t('hPractice')}</summary>${demoBody}</details>`
     : `<section class="card"><h2>${t('demo')}</h2>${demoBody}</section>`;
 
+  // The night band holds the greeting and the one thing this screen is for:
+  // starting a patient. Today's numbers follow in light cards below.
   setScreen(`
-    <section class="band hero">
-      <p class="eyebrow">${esc(settings.site)} · ${esc(dateStr)}</p>
-      <h1>${esc(settings.operator ? `${greet}, ${settings.operator}` : greet)}</h1>
-      <p class="lede">${t('appTagline')}</p>
+    <section class="band hero home-hero">
+      <div class="hero-copy">
+        <h1>${esc(settings.operator ? `${greet}, ${settings.operator}` : greet)}</h1>
+        <p class="meta">${esc(settings.site)} · ${esc(dateStr)}</p>
+        <p class="lede">${t('appTagline')}</p>
+      </div>
+      <div class="homegrid one">
+        <div class="col">
+          <section class="card start">
+            <h2>${t('language')}</h2>
+            <div class="seg">${chips(settings.lang, 'plang', langOrder)}</div>
+            <button class="btn primary big" id="newBtn">${ic('plus')} ${t('newScreening')}</button>
+          </section>
+        </div>
+      </div>
+    </section>
+    ${next.length ? `<section class="next">${next.join('')}</section>` : ''}
+    ${!x.any ? `<div class="firstrun">${setup}${demoCard}</div>` : ''}
+    ${x.any ? `<section class="today">
       ${stats}
-      ${x.any ? `<div class="bandcharts">
+      <div class="bandcharts">
         <div><h3>Patients, last 7 days</h3>${barChart({ labels: x.week.labels, title: 'Patients per day', series: [
           { name: 'Routine', color: 'var(--c2)', values: x.week.green }, { name: 'Referral', color: 'var(--lane-amber)', values: x.week.amber },
           { name: 'Emergency', color: 'var(--lane-red)', values: x.week.red }] })}</div>
         <div><h3>Urgency, all patients</h3>${donut({ title: 'Patients by urgency', center: String(x.mix.emergency + x.mix.urgent + x.mix.soon + x.mix.routine), sub: 'patients', segments: [
           { label: 'Emergency', value: x.mix.emergency, color: 'var(--lane-red)' }, { label: 'Urgent', value: x.mix.urgent, color: 'var(--c4)' },
           { label: 'Soon', value: x.mix.soon, color: 'var(--lane-amber)' }, { label: 'Routine', value: x.mix.routine, color: 'var(--c2)' }] })}</div>
-      </div>` : ''}
-    </section>
-    ${next.length ? `<section class="next">${next.join('')}</section>` : ''}
-    <div class="homegrid one">
-      <div class="col">
-        <section class="card start">
-          <h2>${t('language')}</h2>
-          <div class="seg">${chips(settings.lang, 'plang', langOrder)}</div>
-          <button class="btn primary big" id="newBtn">${ic('plus')} ${t('newScreening')}</button>
-        </section>
       </div>
-      
-    </div>`, 'home');
+    </section>` : ''}`, 'home');
   if (draft) {
     $('#resumeBtn').onclick = () => resumeDraft(draft);
     $('#discardBtn').onclick = async () => { await store.clearDraft(); home(); };
   }
   const startDemo = (p) => { flags.demoTried = true; save('dd.flags', flags); startCase(p.lang, p); };
   $$('[data-go]', main).forEach((b) => b.onclick = () => ({ inbox, cal: calibration, demo: () => startDemo(PERSONAS[0]) }[b.dataset.go])());
+  $$('.demo[data-demo]', main).forEach((b) => b.onclick = () => startDemo(PERSONA_BY_KEY[b.dataset.demo]));
   const sendNow = $('#sendNow');
   if (sendNow) sendNow.onclick = async () => { sendNow.disabled = true; await store.syncPending().catch(() => {}); home(); };
   $$('[data-plang]', main).forEach((b) => b.onclick = () => { settings.lang = b.dataset.plang; save('dd.settings', settings); home(); });
   $('#newBtn').onclick = () => setupGate(() => startCase(settings.lang));
+  maybePushMetrics();
   { const my = turn; syncNow().then((n) => { if (n && my === turn) home(); }); }
   // Fetch optometrist replies in the background; redraw only if something new arrived.
   if (store.isUnlocked() && x.online && x.waiting) {
@@ -244,6 +255,7 @@ function rulesScreen(back = home) {
 }
 
 function startCase(lang, persona = null) {
+  remote.endAnswers(); // the previous patient's answer code stops working
   C = {
     id: store.uuid(), lang, createdAt: new Date().toISOString(), demo: persona,
     patient: persona ? { name: persona.name, phone: persona.phone, village: persona.village } : { name: '', phone: '', village: '' },
@@ -265,10 +277,11 @@ function register() {
   const p = C.patient;
   setScreen(`
     <section class="card">
-      <p class="eyebrow">${LANGS[C.lang]}${C.demo ? ' · demo' : ''}</p>
+      <div class="row between wrap gap"><h2>${t('newScreening')}</h2><span class="tier info">${LANGS[C.lang]}${C.demo ? ' · demo' : ''}</span></div>
       <label>${t('patientName')}<input id="pName" value="${esc(p.name)}" autocomplete="off"></label>
       <label>${t('phone')}<input id="pPhone" value="${esc(p.phone)}" inputmode="tel" autocomplete="off"></label>
       <label>${t('village')}<input id="pVillage" value="${esc(p.village)}" autocomplete="off"></label>
+      <label class="check"><input type="checkbox" id="pRecord" ${p.toRecord === false ? '' : 'checked'}> <span>Send the results to the patient's My eyes record, by this mobile number (the patient agrees)</span></label>
     </section>
     <section class="card consent">
       <h2>${t('consentTitle')}</h2>
@@ -285,7 +298,7 @@ function register() {
   sayP(tp('consentText'));
   $('#playConsent').onclick = () => V.speak(tp('consentText'), C.lang);
   $('#agree').onclick = () => {
-    C.patient = { name: $('#pName').value.trim(), phone: $('#pPhone').value.trim(), village: $('#pVillage').value.trim() };
+    C.patient = { name: $('#pName').value.trim(), phone: $('#pPhone').value.trim(), village: $('#pVillage').value.trim(), toRecord: $('#pRecord').checked };
     C.consent = { given: true, at: new Date().toISOString(), lang: C.lang, textVersion: 'consent-v1', method: 'verbal, recorded by operator' };
     saveDraft();
     interview();
@@ -367,6 +380,7 @@ async function interview() {
     ${s.d.urgent ? `<div class="banner red">${ic('alert')} ${t('urgentBanner')}</div>` : ''}
     <div class="ivgrid">
     <section class="card qcard">
+      ${s.d.age !== null ? `<div class="qprog" aria-hidden="true"><i style="width:${Math.round((asked / Math.max(1, asked + more + 1)) * 100)}%"></i></div>` : ''}
       <div class="row between"><span class="tag">${MODULE_LABEL[q.module] || q.module}</span><span class="muted small">Q${asked + 1}${s.d.age !== null ? ` · ${t('aboutMore', { n: more })}` : ''}</span></div>
       <p class="question" lang="${C.lang}">${esc(text)}</p>
       ${settings.uiLang !== C.lang ? `<p class="muted small en" lang="${settings.uiLang}">${esc(textOp)}</p>` : ''}
@@ -575,8 +589,47 @@ const SCREEN_WHY = {
   duochrome: 'The red-green test checks focus for distance and is read at 3 to 6 m, as in a store. Closer than that, the eye’s own focusing shifts the answer by about half a dioptre.',
 };
 const onScreen = (k) => remote.paired() && DEVICE[k] !== 'phone';
+
+// The patient answers from their own phone (they scan the QR on the chart
+// screen). Each answer is applied to the test on this screen as if tapped here.
+const tapEl = (el) => { if (!el || el.disabled) return false; el.dispatchEvent(new MouseEvent('click', { bubbles: true })); return true; };
+function applyAnswer(a) {
+  if (!C) return;
+  const v = String(a.value);
+  const q = (sel) => $(sel, main);
+  let ok = false;
+  if (['up', 'down', 'left', 'right'].includes(v)) ok = tapEl(q(`[data-d="${v}"]`));
+  else if (v === 'cant') ok = tapEl(q('#cant'));
+  else if (/^\d{1,2}$/.test(v) && q('.numpad')) {
+    for (let i = 0; i < 3; i++) tapEl(q('[data-n="del"]'));
+    for (const d of v) tapEl(q(`.numpad [data-n="${d}"]`));
+    ok = tapEl(q('#plateNext'));
+  } else if (v === 'none') ok = tapEl(q('#noNum'));
+  else if (['red', 'green', 'equal'].includes(v)) ok = tapEl(q(`[data-side="${v}"]`));
+  else if (v === 'yes') ok = tapEl(q('#aYes'));
+  else if (v === 'no') ok = tapEl(q('#aNo'));
+  else if (v === 'even') ok = tapEl(q('#even'));
+  else if (/^line[1-6]$/.test(v)) ok = tapEl(q(`#dial [data-line="${v.slice(4)}"]`));
+  else if (/^N\d{1,2}$/.test(v)) ok = tapEl(q(`[data-n="${v.slice(1)}"]`));
+  if (ok) {
+    C.measurements.patientRemote = true;
+    const pill = document.getElementById('padPill');
+    if (pill) { pill.classList.remove('flash'); void pill.offsetWidth; pill.classList.add('flash'); }
+  }
+}
+function updatePadPill() {
+  let pill = document.getElementById('padPill');
+  const show = remote.answering() && /^(checks|check-|pinhole|amsler-onset)/.test(main.dataset.screen || '');
+  if (!show) { if (pill) pill.hidden = true; return; }
+  if (!pill) { pill = document.createElement('div'); pill.id = 'padPill'; pill.className = 'padpill'; pill.setAttribute('role', 'status'); document.body.append(pill); }
+  pill.hidden = false;
+  pill.innerHTML = remote.patientJoined()
+    ? `<span class="pill listening">Patient’s phone</span><span>Answers from the patient’s phone arrive here</span>`
+    : `<span class="pill">Waiting</span><span>Ask the patient to scan the QR code on the test screen</span>`;
+}
 const screenNote = (extra = '') => `<div class="onscreen">${ic('monitor', { size: 22 })}<div><b>${t('onScreen')}</b>${extra ? `<small>${esc(extra)}</small>` : ''}</div></div>`;
-function runCheck(k) {
+async function runCheck(k) {
+  if (DEVICE[k] !== 'phone' && !remote.paired()) await remote.connect(shopHeaders(dashApi)); // the shop's own screen, if it is open
   if (DEVICE[k] === 'screen' && isPhone() && !remote.paired()) { needsScreen(k); return; }
   CHECK_RUN[k]();
 }
@@ -585,7 +638,6 @@ function needsScreen(k) {
       <h2>${t(`chk_${k}`)}</h2>
       <div class="banner amber">${ic('monitor')}<span>${t('needsScreen')}</span></div>
       <p class="small">${esc(SCREEN_WHY[k] || '')}</p>
-      <p class="small muted">Open the chart screen on a laptop or TV and pair it: the chart shows there and this phone becomes the remote.</p>
       <button class="btn primary big" id="pairNow">${ic('monitor')} ${t('pairScreen')}</button>
       ${demoBtn(k)}
       <button class="btn ghost" id="backChecks">${ic('left')} ${t('back')}</button></section>`, `check-${k}`);
@@ -593,26 +645,39 @@ function needsScreen(k) {
   $('#backChecks').onclick = checks;
   wireDemo();
 }
-function pairScreen(then = home, code = '') {
-  const url = new URL('display.html', location.href).href;
+// The test screen is linked to the shop: any laptop or TV that opens the chart
+// screen signed in as this shop (or the same demo shop) is found with no code.
+// A small shop can use this same computer: the chart screen opens in a second
+// window, and the patient answers from their own phone.
+function screenUrl() {
+  const u = new URL('display.html', location.href);
+  if (!account.signedIn()) u.searchParams.set('shop', shopCodeFor(settings));
+  return u.href;
+}
+function pairScreen(then = home) {
+  const shopName = account.signedIn() ? (account.info()?.shop?.name || settings.site || 'this shop') : `the demo shop (${shopCodeFor(settings)})`;
   setScreen(`<section class="card">
       <h2>${ic('monitor')} ${t('screenTitle')}</h2>
-      <p>On the laptop or TV, open <b class="mono">${esc(url)}</b>. It shows a 6-digit code.</p>
-      <label>Code<input id="pairCode" inputmode="numeric" autocomplete="one-time-code" maxlength="7" value="${esc(code)}"></label>
-      <button class="btn primary big" id="pairGo">${t('pairGo')}</button>
-      <p class="err" id="pairErr"></p>
+      <p>The tests show full size on the shop's screen; the patient scans its QR code and answers from their own phone.</p>
+      <div class="opts">
+        <button class="btn primary big" id="sameGo">${ic('monitor')} Use this computer as the test screen</button>
+        <p class="small muted">For one computer: opens the test screen in a new window. Move it to the TV, or make it full screen.</p>
+        <button class="btn big" id="findGo">${ic('refresh')} Find the shop's test screen</button>
+        <p class="small muted">For a separate laptop or TV: open <b class="mono">${esc(new URL('display.html', location.href).href)}</b> there and sign in as ${esc(shopName)}. It is found here by itself.</p>
+      </div>
+      <p class="err" id="pairErr" role="status"></p>
       <button class="btn ghost" id="pairBack">${ic('left')} ${t('back')}</button></section>`, 'pair');
-  const go = async () => {
-    const v = $('#pairCode').value.replace(/\D/g, '');
-    if (v.length !== 6) { $('#pairErr').textContent = t('pairBad'); return; }
-    $('#pairGo').disabled = true;
-    const ok = await remote.pair(v).catch(() => false);
-    if (!ok) { $('#pairGo').disabled = false; $('#pairErr').textContent = t('pairBad'); return; }
-    then();
+  const find = async (tries = 1) => {
+    $('#pairErr').textContent = 'Looking for the shop’s test screen…';
+    for (let i = 0; i < tries; i++) {
+      if (await remote.connect(shopHeaders(dashApi))) { then(); return; }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    if ($('#pairErr')) $('#pairErr').textContent = `No test screen is open for ${shopName} yet. Open it, then try again.`;
   };
-  $('#pairGo').onclick = go;
+  $('#sameGo').onclick = () => { window.open(screenUrl(), 'dd-chart-screen', 'popup,width=1280,height=800'); find(8); };
+  $('#findGo').onclick = () => find(1);
   $('#pairBack').onclick = () => then();
-  if (code.length === 6) go();
 }
 function screenCard() {
   const o = remote.options();
@@ -620,7 +685,7 @@ function screenCard() {
     return `<section class="card screencard"><div class="sc-head">${ic('monitor')}<div><b>${t('screenTitle')}</b><small>${t('screenNone')}</small></div></div>
       <button class="btn small" id="pairBtn">${t('pairScreen')}</button></section>`;
   }
-  return `<section class="card screencard on"><div class="sc-head">${ic('monitor')}<div><b>${t('screenTitle')}</b><small>${t('screenPaired')}</small></div></div>
+  return `<section class="card screencard on"><div class="sc-head">${ic('monitor')}<div><b>${t('screenTitle')}</b><small>${remote.shopScreen() ? `Linked to ${esc(remote.shopScreen().name)}: this device runs the tests, the patient answers by phone` : t('screenPaired')}</small></div></div>
     <div class="row gap wrap"><select id="chartDist" aria-label="Chart distance">
       <option value="3" ${o.distanceM === 3 && !o.mirror ? 'selected' : ''}>3 m</option>
       <option value="6" ${o.distanceM === 6 && !o.mirror ? 'selected' : ''}>6 m</option>
@@ -630,6 +695,7 @@ function screenCard() {
 function wireScreenCard(back = checks) {
   const here = main.dataset.screen;
   const pb = $('#pairBtn'); if (pb) pb.onclick = () => pairScreen(back);
+  if (!remote.paired()) remote.connect(shopHeaders(dashApi)).then((shop) => { if (shop && main.dataset.screen === here) back(); });
   const ub = $('#unpairBtn'); if (ub) ub.onclick = async () => { await remote.unpair(); back(); };
   const cd = $('#chartDist'); if (cd) cd.onchange = () => remote.setOptions({ distanceM: cd.value === '3' ? 3 : 6, mirror: cd.value === '6m' });
   if (remote.paired()) {
@@ -675,6 +741,7 @@ function checks() {
   // record how trustworthy the phone's measurements are, for the reviewer
   C.measurements.calibration = { screen: Boolean(calib.pxPerMm), camera: Boolean(calib.focalNorm) };
   saveDraft();
+  if (remote.paired()) { remote.setLang(C.lang); remote.startAnswers(C.id, { onAnswer: applyAnswer, onJoin: updatePadPill }).then(updatePadPill); }
   const prof = buildProfile(C.session.answers, C.measurements);
   const plan = Object.fromEntries(prof.checkPlan.map((c) => [c.key, c]));
   const row = (k) => {
@@ -847,7 +914,7 @@ function checkAcuity(eye = 'R', pinhole = false) {
     const o = A.nextOptotype(st);
     if (scr) {
       remote.send({ chart: 'acuity', optotype, level: o.level, dir: o.dir, distanceM: ro.distanceM, eye });
-      $('#lvl').textContent = `Line ${A.snellen(o.level)} · on the chart screen`;
+      $('#lvl').textContent = `Line ${A.snellen(o.level)} · on the test screen`;
       return;
     }
     const px = Math.max(6, G.optotypeMm(o.level, distanceMm) * pxPerMm());
@@ -995,7 +1062,7 @@ function buildCasePayload(prof) {
   const asked = C.session.trace.filter((x) => x.qid && !x.event).length;
   return {
     id: C.id, createdAt: C.createdAt, appVersion: APP_VERSION, lang: C.lang,
-    site: C.site, operator: C.operator || settings.operator || null, demo: Boolean(C.demo),
+    site: { ...C.site, code: C.demo ? undefined : (shopCodeExact(settings) || undefined) }, operator: C.operator || settings.operator || null, demo: Boolean(C.demo),
     patient: { ...C.patient, age: C.session.answers.age ?? null, sex: C.session.answers.sex ?? null },
     consent: C.consent,
     interview: { answers: C.session.answers, trace: C.session.trace, skipped: C.session.skipped, startedAt: C.session.startedAt, finishedAt: C.session.finishedAt, asked, bank: E.bankSize(), notAsked: E.notAsked(C.session) },
@@ -1008,16 +1075,44 @@ function buildCasePayload(prof) {
   };
 }
 
+// ZEISS lens families to discuss at the counter, from this patient's profile and answers.
+function zeissCard(prof) {
+  const z = zeissOptions({ category: prof.recommendation?.category, age: C.session.answers.age ?? null, answers: C.session.answers });
+  if (!z.lenses.length) return '';
+  return `<section class="card zeisscard"><h2>${ic('glasses')} ZEISS lens options to discuss</h2>
+    <p class="muted small">${esc(z.note)}</p>
+    <ul class="zlist">${z.lenses.map((l) => `<li><b>${esc(l.name)}</b><small>${esc(l.why)}</small></li>`).join('')}</ul>
+    ${z.coatings.length ? `<p class="small"><b>Coatings:</b> ${esc(z.coatings.map((c) => c.name).join(' · '))}</p>` : ''}</section>`;
+}
+
+// The visit in the patient's own record (My eyes app), if they agreed and gave a
+// mobile number. The optometrist's sign-off is added to it on the hub.
+function pushVisit(prof, payload) {
+  const phone = String(C.patient.phone || '').replace(/\D/g, '');
+  if (!C.patient.toRecord || phone.length < 10) return;
+  const tri = prof.triage || {};
+  const tests = Object.keys(C.measurements || {}).filter((k) => !['simulated', 'patientRemote'].includes(k));
+  fetch(`${store.API}/patient/records`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', ...shopHeaders(dashApi) },
+    body: JSON.stringify({ phone, kind: 'visit', ref: C.id, date: String(C.createdAt || new Date().toISOString()).slice(0, 10), consent: true, data: {
+      summary: `Eye check: ${prof.recommendation?.title || 'screening'}`, urgency: TIERS[tri.urgency]?.label || 'Routine', within: tri.within || '',
+      tests, next: tri.urgency === 'emergency' ? 'Go to an eye hospital today.' : 'Your optometrist reviews the results; the shop will call you.',
+      passport: payload.passport.text } }),
+  }).catch(() => { /* offline: the passport still reaches the patient by SMS */ });
+}
+
 function summary() {
+  remote.endAnswers(); // tests are done: this patient's answer code stops working
   const prof = buildProfile(C.session.answers, C.measurements, { trace: C.session.trace });
   const payload = buildCasePayload(prof);
   const mins = Math.max(1, Math.round((Date.now() - new Date(C.session.startedAt).getTime()) / 60000));
   setScreen(`
     <section class="card wide">
-      <p class="eyebrow">${esc(C.patient.name || 'Patient')} · ${esc(shortCode(C.id))}${C.demo ? ' · demo' : ''}</p>
+      <div class="row between wrap gap"><h2>${esc(C.patient.name || 'Patient')}</h2><span class="meta mono">${esc(shortCode(C.id))}${C.demo ? ' · demo' : ''}</span></div>
       ${profileHtml(prof, C.measurements, C.session.answers, { collapse: true })}
-      <p class="muted small">Asked ${payload.interview.asked} of ${payload.interview.bank} questions (${payload.interview.bank - payload.interview.asked} not relevant for this patient) · about ${mins} min${C.measurements.simulated ? ` · simulated tests: ${C.measurements.simulated.join(', ')}` : ''}</p>
+      <p class="muted small">Asked ${payload.interview.asked} of ${payload.interview.bank} questions (${payload.interview.bank - payload.interview.asked} not relevant for this patient) · about ${mins} min${C.measurements.simulated ? ` · simulated tests: ${C.measurements.simulated.join(', ')}` : ''}${C.measurements.patientRemote ? ' · answered on the patient’s phone' : ''}</p>
     </section>
+    ${zeissCard(prof)}
     <button class="btn big" id="tryBtn">${ic('glasses')} ${t('tryOn')}</button>
     <button class="btn primary big" id="sendBtn">${ic('send')} ${t('sendToOptom')}</button>
     <p id="sendState" class="muted small center"></p>
@@ -1035,10 +1130,11 @@ function summary() {
     $('#sendState').textContent = t('queued');
     const n = await store.syncPending();
     const hub = await store.getHubKey({ refresh: false });
-    $('#sendState').textContent = `${n ? t('sent') : t('queued')} · ${hub ? 'name and phone sealed so only the optometrist can read them' : 'name and phone stay on this phone'}`;
+    $('#sendState').textContent = `${n ? t('sent') : t('queued')} · ${hub ? 'name and phone sealed so only the optometrist can read them' : 'name and phone stay on this device'}`;
     $('#passportCard').hidden = false;
     syncNow();
     if (n) { $('#consultBtn').hidden = false; sentIds = [...new Set([...sentIds, C.id])]; sentNames[C.id] = C.patient.name || shortCode(C.id); }
+    pushVisit(prof, payload);
     updateHeader();
   };
   $('#tryBtn').onclick = () => tryOn(api, { back: summary, recTitle: prof.recommendation?.title || '' });
@@ -1204,15 +1300,45 @@ function tools() {
       <section class="tools">
         <button class="tool" id="rulesBtn">${ic('rules')}<span>${t('rules')}</span></button>
         <button class="tool" id="calBtn">${ic('ruler')}<span>${t('calibrate')}</span></button>
-        <button class="tool" id="checkBtn">${ic('phone')}<span>Phone check</span></button>
+        <button class="tool" id="lensoBtn">${ic('glasses')}<span>Lensometer: read a pair of glasses</span></button>
+        <button class="tool" id="checkBtn">${ic('phone')}<span>Device check</span></button>
         <a class="tool" href="display.html" target="_blank" rel="noopener">${ic('monitor')}<span>${t('screenTitle')} (open on the laptop)</span></a>
-        <a class="tool" href="portal.html" target="_blank" rel="noopener">${ic('external')}<span>Optometrist portal</span></a>
       </section></section>`, 'tools');
   $('#calBtn').onclick = calibration;
+  $('#lensoBtn').onclick = lensoTool;
   $('#checkBtn').onclick = phoneCheck;
   $('#rulesBtn').onclick = () => rulesScreen(tools);
   wireSetup(tools);
   wireScreenCard(tools);
+}
+
+// Lensometer from Tools: read the power of a pair of glasses a customer brings
+// in, with no screening. Both lenses, then the result and a glasses order.
+function lensoTool() {
+  const tmp = { measurements: {} };
+  const toolApi = Object.create(api, {
+    C: { get: () => tmp },
+    back: { value: () => lensoResult(tmp.measurements.lensometry) },
+    demoBtn: { value: () => '' },
+  });
+  T.lensometry(toolApi, 'R');
+}
+function lensoResult(r) {
+  const eye = (e) => (e ? `${e.sph > 0 ? '+' : ''}${Number(e.sph).toFixed(2)}${e.cyl ? ` / ${Number(e.cyl).toFixed(2)} × ${e.axis}` : ' DS'}` : 'not measured');
+  setScreen(`<section class="card">
+      <h2>${ic('glasses')} Lensometer reading</h2>
+      ${r ? `<div class="kv"><span>Right lens</span><b class="mono">${esc(eye(r.R))}</b></div>
+        <div class="kv"><span>Left lens</span><b class="mono">${esc(eye(r.L))}</b></div>
+        <p class="muted small">An estimate from the camera (about ±0.50 D). Confirm on a lensmeter before making new lenses.</p>`
+    : '<p class="muted">No reading was saved.</p>'}
+      <div class="row gap wrap">
+        <button class="btn primary" id="lOrder">${ic('plus')} Start a glasses order</button>
+        <button class="btn" id="lAgain">${ic('refresh')} Read another pair</button>
+        <button class="btn ghost" id="lBack">${ic('left')} ${t('back')}</button>
+      </div></section>`, 'tools');
+  $('#lOrder').onclick = () => dashboard(dashApi, 'orders', { form: true });
+  $('#lAgain').onclick = lensoTool;
+  $('#lBack').onclick = tools;
 }
 
 // Set-up depends on the device: a phone needs its camera distance and a chart
@@ -1226,7 +1352,7 @@ function setupSteps() {
 function setupCardHtml() {
   const st = setupSteps();
   const done = st.filter((x) => x.done).length;
-  return `<section class="card setup"><div class="row between"><h2>${isPhone() ? t('hSetup') : 'Get this computer ready'}</h2><span class="muted small mono">${done}/${st.length}</span></div>
+  return `<section class="card setup"><div class="row between"><h2>${t('hSetup')}</h2><span class="muted small mono">${done}/${st.length}</span></div>
     <div class="progress"><i style="width:${Math.round((done / st.length) * 100)}%"></i></div>
     <ul class="steps">${st.map((x) => `<li class="${x.done ? 'done' : ''}"><button data-go="${x.go}">${ic(x.done ? 'check' : 'plus', { size: 16 })}<span>${x.label}</span></button></li>`).join('')}</ul></section>`;
 }
@@ -1239,7 +1365,7 @@ function setupGate(go) {
   try { skipped = Boolean(sessionStorage.getItem('dd.setupSkip')); } catch { /* ignore */ }
   if (!isPhone() || skipped || setupSteps().every((x) => x.done)) { go(); return; }
   setScreen(`${setupCardHtml()}
-    <p class="small muted">Charts show on the chart screen and the camera measures distances, so both work better set up first. You can still start now.</p>
+    <p class="small muted">Charts show on the test screen and the camera measures distances, so both work better set up first. You can still start now.</p>
     <div class="row gap wrap"><button class="btn primary" id="gateTools">${ic('sliders')} Set up in Tools</button><button class="btn" id="gateGo">Start the patient anyway</button></div>`, 'setup-gate');
   wireSetup(home);
   $('#gateTools').onclick = tools;
@@ -1247,122 +1373,26 @@ function setupGate(go) {
 }
 
 // ---------------------------------------------------------------- shop dashboard
-// Stock, sales and patients for the shop. Kept encrypted on the device and in
-// the shop account's sync (between devices the latest change wins).
+// Sales, orders (prescription to delivery, remakes and cancellations), stock,
+// appointment requests and bookings with linked professionals: js/dashboard.js.
 const rupee = (n) => `₹${Math.round(n || 0).toLocaleString('en-IN')}`;
-async function loadShop() { return (await store.getSecret('shopdata')) || { stock: [], sales: [], updatedAt: '' }; }
-async function saveShop(d) { d.updatedAt = new Date().toISOString(); await store.putSecret('shopdata', d); account.push('shop', 'data', d); }
-const SAMPLE_STOCK = [
-  ['Rectangle acetate frame, black', 'frame', 14, 1200, 4], ['Round metal frame, gold', 'frame', 3, 1800, 4], ['Cat-eye acetate frame, tortoise', 'frame', 6, 1500, 3],
-  ['Kids flexible frame, blue', 'frame', 0, 900, 3], ['Single-vision lens pair, 1.56', 'lens', 40, 600, 10], ['Single-vision lens pair, anti-reflective', 'lens', 22, 1100, 8],
-  ['Progressive lens pair', 'lens', 5, 4200, 4], ['Office lens pair', 'lens', 2, 3200, 3], ['Photochromic lens pair', 'lens', 9, 2400, 4],
-  ['Reading glasses +2.00', 'ready', 12, 350, 5], ['Lens cleaning kit', 'accessory', 30, 120, 10],
-].map(([name, type, qty, price, reorder], i) => ({ id: `s${i + 1}`, name, type, qty, price, reorder }));
-const TYPE_LABEL = { frame: 'Frame', lens: 'Lens', ready: 'Ready readers', accessory: 'Accessory' };
-const stockStatus = (it) => (it.qty <= 0 ? ['out', 'Out of stock'] : it.qty <= Math.max(1, Math.floor(it.reorder / 2)) ? ['reorder', 'Reorder'] : it.qty <= it.reorder ? ['low', `${it.qty} left`] : ['ok', 'In stock']);
-
-async function shopScreen(filter = 'all') {
-  const [d, cases] = await Promise.all([loadShop(), store.allCases().catch(() => [])]);
-  const real = cases.filter((c) => !c.unreadable);
-  const now = new Date();
-  const inMonth = (iso) => { const x = new Date(iso); return x.getMonth() === now.getMonth() && x.getFullYear() === now.getFullYear(); };
-  const monthSales = d.sales.filter((x) => inMonth(x.at));
-  const low = d.stock.filter((it) => stockStatus(it)[0] !== 'ok');
-  const days = lastDays(14);
-  const perDay = days.map((dd) => d.sales.filter((x) => new Date(x.at).toDateString() === dd.key).reduce((a, x) => a + x.amount, 0));
-  const byState = {}; const byPin = {};
-  for (const c of real) {
-    const pin = c.patient?.pin; const st = pinToState(pin);
-    if (st) byState[st] = (byState[st] || 0) + 1;
-    if (pin) byPin[pin] = (byPin[pin] || 0) + 1;
-  }
-  const shown = d.stock.filter((it) => filter === 'all' || (filter === 'low' ? stockStatus(it)[0] !== 'ok' : it.type === filter));
-  setScreen(`
-    <section class="band">
-      <p class="eyebrow">${esc(settings.site)} · ${esc(now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }))}</p>
-      <h1>Shop</h1>
-      <section class="stats">
-        <div class="stat"><span>Patients this month</span><b>${real.filter((c) => c.createdAt && inMonth(c.createdAt)).length}</b></div>
-        <div class="stat"><span>Glasses sold</span><b>${monthSales.length}</b></div>
-        <div class="stat"><span>Sales this month</span><b>${rupee(monthSales.reduce((a, x) => a + x.amount, 0))}</b></div>
-        <div class="stat"><span>Items to reorder</span><b>${low.length}</b></div>
-      </section>
-    </section>
-    <div class="dash">
-      <section class="card"><div class="row between wrap gap"><h2>Sales, last 14 days</h2><button class="btn small primary" id="saleBtn">${ic('plus')} Record a sale</button></div>
-        ${barChart({ labels: days.map((x, i) => (i % 2 ? '' : x.label)), title: 'Sales per day in rupees', stacked: false, series: [{ name: 'Sales', color: 'var(--accent)', values: perDay }] })}</section>
-      <section class="card"><h2>Patients by area</h2>${indiaMap(byState)}
-        ${Object.keys(byPin).length ? `<h3>Top PIN codes</h3>${hbars(Object.entries(byPin).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([k, v]) => ({ label: k, value: v })))}` : '<p class="muted small">PIN codes appear here as patients are registered with one.</p>'}</section>
-    </div>
-    <div id="shopForm"></div>
-    <section class="card"><div class="row between wrap gap"><h2>Stock</h2><div class="row gap wrap">
-        <button class="btn small" id="addItem">${ic('plus')} Add item</button>${d.stock.length ? '' : '<button class="btn small ghost" id="sampleStock">Load sample stock</button>'}</div></div>
-      <div class="seg" id="stockFilter">${[['all', 'All', d.stock.length], ['frame', 'Frames'], ['lens', 'Lenses'], ['low', 'To reorder', low.length]].map(([k, l, n]) => `<button class="chip ${filter === k ? 'on' : ''}" data-sf="${k}">${l}${n !== undefined ? ` · ${n}` : ''}</button>`).join('')}</div>
-      ${shown.length ? `<div class="dtable-wrap"><table class="dtable stock"><thead><tr><th>Item</th><th>Type</th><th>In stock</th><th>Price</th><th>Status</th></tr></thead><tbody>
-        ${shown.map((it) => { const [cls, lbl] = stockStatus(it); return `<tr><td><b>${esc(it.name)}</b></td><td>${esc(TYPE_LABEL[it.type] || it.type)}</td>
-          <td><span class="qty"><button data-dq="-1" data-id="${esc(it.id)}" aria-label="One less">−</button><b class="num">${it.qty}</b><button data-dq="1" data-id="${esc(it.id)}" aria-label="One more">+</button></span></td>
-          <td class="num">${rupee(it.price)}</td><td><span class="status ${cls}">${esc(lbl)}</span></td></tr>`; }).join('')}</tbody></table></div>`
-    : '<p class="muted small">No stock yet. Add items, or load the sample list to try it.</p>'}
-    </section>
-    <section class="card sales"><h2>Recent sales</h2>
-      ${d.sales.length ? `<div class="dtable-wrap"><table class="dtable"><thead><tr><th>Date</th><th>Patient</th><th>Items</th><th>Amount</th></tr></thead><tbody>
-        ${d.sales.slice(-8).reverse().map((x) => `<tr><td class="num">${esc(new Date(x.at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }))}</td><td>${esc(x.patient || 'Walk-in')}</td><td>${esc(x.items.map((i) => i.name).join(', '))}</td><td class="num"><b>${rupee(x.amount)}</b></td></tr>`).join('')}</tbody></table></div>`
-    : '<p class="muted small">No sales recorded yet.</p>'}</section>`, 'shop');
-  $$('[data-sf]', main).forEach((b) => b.onclick = () => shopScreen(b.dataset.sf));
-  $$('[data-dq]', main).forEach((b) => b.onclick = async () => {
-    const it = d.stock.find((x) => x.id === b.dataset.id); if (!it) return;
-    it.qty = Math.max(0, it.qty + Number(b.dataset.dq)); await saveShop(d); shopScreen(filter);
-  });
-  const ss = $('#sampleStock'); if (ss) ss.onclick = async () => { d.stock = SAMPLE_STOCK.map((x) => ({ ...x })); await saveShop(d); shopScreen(); };
-  const closeForm = () => { $('#shopForm').innerHTML = ''; };
-  $('#addItem').onclick = () => {
-    $('#shopForm').innerHTML = `<form class="card shopform" id="itemForm"><h2>Add a stock item</h2>
-      <div class="row gap wrap"><label>Name<input id="iName" maxlength="80"></label><label>Type<select id="iType">${Object.entries(TYPE_LABEL).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label></div>
-      <div class="row gap wrap"><label>Quantity<input id="iQty" type="number" min="0" value="1"></label><label>Price (₹)<input id="iPrice" type="number" min="0" value="0"></label><label>Reorder when at<input id="iRe" type="number" min="0" value="3"></label></div>
-      <div class="row gap"><button class="btn primary" type="submit">Save item</button><button class="btn ghost" type="button" id="formX">Cancel</button></div></form>`;
-    $('#itemForm').onsubmit = async (e) => {
-      e.preventDefault();
-      if (!$('#iName').value.trim()) return;
-      d.stock.push({ id: `s${Date.now()}`, name: $('#iName').value.trim(), type: $('#iType').value, qty: Number($('#iQty').value) || 0, price: Number($('#iPrice').value) || 0, reorder: Number($('#iRe').value) || 0 });
-      await saveShop(d); shopScreen(filter);
-    };
-    $('#formX').onclick = closeForm;
-    $('#itemForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-  $('#saleBtn').onclick = () => {
-    const frames = d.stock.filter((x) => x.type === 'frame' && x.qty > 0);
-    const lenses = d.stock.filter((x) => (x.type === 'lens' || x.type === 'ready') && x.qty > 0);
-    const pats = real.slice(0, 30);
-    const opt = (list, none) => `<option value="">${none}</option>${list.map((x) => `<option value="${esc(x.id)}">${esc(x.name)} · ${rupee(x.price)} (${x.qty} left)</option>`).join('')}`;
-    $('#shopForm').innerHTML = `<form class="card shopform" id="saleForm"><h2>Record a sale</h2>
-      <label>Patient<select id="saleCase"><option value="">Walk-in customer</option>${pats.map((c) => `<option value="${esc(c.id)}">${esc(c.patient?.name || shortCode(c.id))} · ${esc(shortCode(c.id))}</option>`).join('')}</select></label>
-      <div class="row gap wrap"><label>Frame<select id="saleFrame">${opt(frames, 'No frame')}</select></label><label>Lenses<select id="saleLens">${opt(lenses, 'No lenses')}</select></label></div>
-      <label>Amount (₹)<input id="salePrice" type="number" min="0"></label>
-      <div class="row gap"><button class="btn primary" type="submit" id="saleSave">Save sale</button><button class="btn ghost" type="button" id="formX">Cancel</button></div><p class="err" id="saleErr"></p></form>`;
-    if (pats.length) $('#saleCase').value = pats[0].id;
-    if (frames.length) $('#saleFrame').value = frames[0].id;
-    if (lenses.length) $('#saleLens').value = lenses[0].id;
-    const sum = () => { const f = d.stock.find((x) => x.id === $('#saleFrame').value); const l = d.stock.find((x) => x.id === $('#saleLens').value); $('#salePrice').value = (f?.price || 0) + (l?.price || 0); };
-    $('#saleFrame').onchange = sum; $('#saleLens').onchange = sum; sum();
-    $('#saleForm').onsubmit = async (e) => {
-      e.preventDefault();
-      const items = [$('#saleFrame').value, $('#saleLens').value].map((id) => d.stock.find((x) => x.id === id)).filter(Boolean);
-      if (!items.length) { $('#saleErr').textContent = 'Choose a frame or lenses.'; return; }
-      items.forEach((x) => { x.qty = Math.max(0, x.qty - 1); });
-      const c = real.find((x) => x.id === $('#saleCase').value);
-      d.sales.push({ id: `v${Date.now()}`, at: new Date().toISOString(), caseId: c?.id || null, patient: c ? (c.patient?.name || shortCode(c.id)) : '',
-        items: items.map((x) => ({ id: x.id, name: x.name, price: x.price })), amount: Number($('#salePrice').value) || 0 });
-      await saveShop(d); shopScreen(filter);
-    };
-    $('#formX').onclick = closeForm;
-    $('#saleForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
+const dashApi = {
+  setScreen, $: (sel) => $(sel, main), $$: (sel) => $$(sel, main), esc, ic, store, account, settings, rupee, shortCode,
+  barChart, lastDays,
+};
+const shopScreen = (filter = 'all') => dashboard(dashApi, 'overview', { filter });
+// de-identified daily counts for the network, at most once an hour
+function maybePushMetrics() {
+  let last = 0; try { last = Number(localStorage.getItem('dd.metricsAt') || 0); } catch { /* private mode */ }
+  if (Date.now() - last < 3600e3 || !store.isUnlocked() || navigator.onLine === false) return;
+  try { localStorage.setItem('dd.metricsAt', String(Date.now())); } catch { /* private mode */ }
+  store.getSecret('shopdata').then((d) => pushMetrics(dashApi, { stock: [], sales: [], orders: [], ...(d || {}) })).catch(() => {});
 }
 
 // ---------------------------------------------------------------- navigation
 // Top-level sections: tabs in the header on a laptop, a bottom bar on a phone.
 // Hidden while a patient is being seen, so that screen stays focused.
-const TAB_OF = { home: 'home', patients: 'patients', shop: 'shop', tools: 'tools', calibration: 'tools', phonecheck: 'tools', pair: 'tools', rules: 'tools', 'account-panel': 'account' };
+const TAB_OF = { home: 'home', patients: 'patients', shop: 'shop', 'shop-orders': 'shop', 'shop-appts': 'shop', tools: 'tools', calibration: 'tools', phonecheck: 'tools', pair: 'tools', rules: 'tools', 'account-panel': 'account' };
 const TABS = [['home', 'home', 'tabHome'], ['patients', 'users', 'tabPatients'], ['shop', 'chart', 'tabShop'], ['tools', 'sliders', 'tabTools'], ['account', 'user', 'tabAccount']];
 const OPEN_TAB = { home: () => home(), patients: () => inbox(), shop: () => shopScreen(), tools: () => tools(), account: () => accountPanel() };
 function updateTabs(name) {
@@ -1437,13 +1467,17 @@ function recordFailure() {
 
 function pinScreen(mode, next) {
   setScreen(`<section class="card pin">
+    <span class="lockmark" aria-hidden="true">${ic(mode === 'set' ? 'shield' : 'lock', { size: 26 })}</span>
     <h2>${mode === 'set' ? t('pinSetTitle') : t('pinEnterTitle')}</h2>
-    ${mode === 'set' ? `<p class="muted small">${t('pinSetHint')}</p>` : ''}
+    ${mode === 'set' ? `<p class="muted small">${t('pinSetHint')}</p>` : '<p class="muted small">This device already has a PIN from an earlier visit. Enter that PIN, or reset below to start again.</p>'}
     <input id="pin1" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••••" aria-label="PIN">
+    <div class="pindots" aria-hidden="true">${'<i></i>'.repeat(6)}</div>
     ${mode === 'set' ? `<input id="pin2" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="${esc(t('pinConfirm'))}" aria-label="${esc(t('pinConfirm'))}">` : ''}
     <button class="btn primary big" id="pinGo">${ic(mode === 'set' ? 'check' : 'unlock')} ${t('next')}</button>
     <p id="pinErr" class="err" role="alert"></p>
-    ${mode === 'enter' ? `<button class="btn ghost small" id="pinReset">${t('forgotPin')}</button>` : ''}
+    ${mode === 'enter' ? `<button class="btn ghost small" id="pinReset">${t('forgotPin')}</button>
+    <div class="gatesep"><span>or</span></div>
+    <button class="btn big" id="pinDemo">${ic('play')} Explore the demo (no sign-in)</button>` : ''}
   </section>`, `pin-${mode}`);
   const go = async () => {
     const err = $('#pinErr');
@@ -1466,11 +1500,18 @@ function pinScreen(mode, next) {
       err.textContent = t('pinWrong');
       $('#pinGo').disabled = false;
       $('#pin1').value = '';
+      fillDots();
+      const card = $('.pin', main);
+      if (card) { card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); }
     }
   };
+  // six dots under the PIN field fill as digits are typed
+  const fillDots = () => { const n = ($('#pin1')?.value || '').length; $$('.pindots i', main).forEach((d, i) => d.classList.toggle('on', i < n)); };
+  $('#pin1').addEventListener('input', fillDots);
   $('#pinGo').onclick = go;
   $$('input', main).forEach((i) => { i.onkeydown = (e) => { if (e.key === 'Enter') go(); }; });
   $('#pin1').focus();
+  const pd = $('#pinDemo'); if (pd) pd.onclick = startDemo;
   const rb = $('#pinReset');
   if (rb) rb.onclick = async () => { if (confirm(`${t('forgotPin')}?`)) { await store.resetVault(); pinScreen('set', next); } };
 }
@@ -1499,12 +1540,12 @@ async function phoneCheck() {
   let persisted = null;
   try { persisted = await navigator.storage?.persisted?.(); } catch { persisted = null; }
   add('Storage protected from clean-up', persisted ?? null, persisted ? 'Queued cases will not be evicted' : 'Not granted yet (Chrome grants it to installed or often-used sites)');
-  add('Patient data encrypted on this phone', store.isUnlocked(), 'AES-256-GCM; key unlocked by your PIN; locks after 15 min idle');
+  add('Patient data encrypted on this device', store.isUnlocked(), 'AES-256-GCM; key unlocked by your PIN; locks after 15 min idle');
   let health = null;
   try { const r = await fetch(`${store.API}/health`, { cache: 'no-store' }); health = r.ok ? await r.json() : null; } catch { health = null; }
   add('Bridge server reachable', Boolean(health), health ? `${health.cases} cases on the server` : 'Offline: cases queue and send later');
   const hub = await store.getHubKey();
-  add('Optometrist hub key', Boolean(hub), hub ? `key ${hub.kid.slice(0, 10)}…: names and phones sealed to the hub` : 'No hub key yet: names and phones stay on this phone');
+  add('Optometrist hub key', Boolean(hub), hub ? `key ${hub.kid.slice(0, 10)}…: names and phones sealed to the hub` : 'No hub key yet: names and phones stay on this device');
   let bat = null;
   try { bat = await navigator.getBattery?.(); } catch { bat = null; }
   if (bat) add('Battery', bat.level >= 0.3 || bat.charging, `${Math.round(bat.level * 100)}%${bat.charging ? ', charging' : ''}`);
@@ -1553,8 +1594,13 @@ $('#lockBtn').onclick = lockNow;
 ['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, store.touch, { passive: true }));
 setInterval(() => { if (store.idleTooLong()) lockNow(); }, 30000);
 
+// The demo: no account and no PIN, in its own database for this tab (store.DEMO).
+function startDemo() { sessionStorage.setItem('dd.demo', '1'); location.reload(); }
+function leaveDemo() { sessionStorage.removeItem('dd.demo'); location.reload(); }
+
 async function boot() {
   document.documentElement.lang = settings.uiLang;
+  if (store.DEMO) { await store.resetVault(); await store.ephemeral(); afterUnlock(); return; }
   await Promise.race([pullRules(), new Promise((r) => setTimeout(r, 1500))]);
   // shared or camp computer: the account key lived only in the closed tab
   if (account.signedIn() && account.info().shared) { await signOutHere(); return; }
@@ -1580,7 +1626,17 @@ async function afterUnlock() {
 function accountScreen(after = null) {
   const canShare = !store.hasVault();
   let mode = 'in';
-  setScreen(`<section class="card acct">
+  setScreen(`<div class="welcome">
+    <section class="band intro">
+      <svg class="mark" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
+      <h1>${t('appTagline')}</h1>
+      <ul class="facts"><li><b>6</b>languages</li><li><b>12</b>tests on the phone</li><li><b>2 h</b>emergency review</li></ul>
+      <a class="how" href="about.html">How DivyaDrishti works ${ic('right', { size: 16 })}</a>
+    </section>
+    <section class="card acct">
+      ${after ? '' : `<button class="btn primary big" type="button" id="accDemo">${ic('play')} Explore the demo (no sign-in)</button>
+      <p class="muted small">Opens a demo optical shop with sample patients. Nothing is kept after you close the tab.</p>
+      <div class="gatesep"><span>or sign in to your shop</span></div>`}
       <h2>${ic('user')} ${t('accTitle')}</h2>
       <div class="seg" id="accMode"><button class="chip on" data-mode="in" type="button">${t('accSignIn')}</button><button class="chip" data-mode="up" type="button">${t('accCreate')}</button></div>
       <form id="accForm" novalidate>
@@ -1593,7 +1649,7 @@ function accountScreen(after = null) {
       </form>
       <p class="muted small">Your password never leaves this device. It unlocks your shop's encryption key, so the hub cannot read your shop's records. On a shared computer nothing stays after you sign out.</p>
       ${after ? `<button class="btn ghost" id="accBack">${ic('left')} ${t('back')}</button>` : `<button class="btn ghost" id="accLocalBtn">${t('accLocal')}</button>`}
-    </section>`, 'account');
+    </section></div>`, 'account');
   const setMode = (m) => {
     mode = m;
     $$('[data-mode]', main).forEach((b) => b.classList.toggle('on', b.dataset.mode === m));
@@ -1627,21 +1683,56 @@ function accountScreen(after = null) {
     pinScreen('set', async () => { await store.putSecret('dataKey', await account.exportKey()); afterUnlock(); });
   };
   const lb = $('#accLocalBtn'); if (lb) lb.onclick = () => { localStorage.setItem('dd.localOnly', '1'); pinScreen('set', afterUnlock); };
+  // Demo: no account and no PIN. This screen only shows when the phone has no
+  // vault, so clearing leftovers from an earlier demo tab cannot touch real data.
+  const db = $('#accDemo'); if (db) db.onclick = startDemo;
   const bb = $('#accBack'); if (bb) bb.onclick = () => after();
+}
+
+// The shop's public ID and location on the care network: shops near a patient
+// are found by PIN code, and optometrists plan camps by shop and area.
+async function netCard() {
+  const box = $('#netCard'); if (!box) return;
+  const hdr = shopHeaders(dashApi);
+  let me;
+  try { const r = await fetch(`${store.API}/shops/me`, { headers: hdr }); if (!r.ok) throw new Error(String(r.status)); me = await r.json(); } catch {
+    box.innerHTML = `<h2>${ic('users')} This shop on the network</h2><p class="muted small">Offline: the shop ID and location load when the internet is back.</p>`; return;
+  }
+  const s = me.shop;
+  if (account.signedIn() && settings.shopCode !== s.code) { settings.shopCode = s.code; save('dd.settings', settings); }
+  box.innerHTML = `<h2>${ic('users')} This shop on the network</h2>
+    <p class="small">Shop ID <b class="mono">${esc(s.code)}</b>${s.demo ? ' · demo shop: sign in to a shop account for this shop’s own ID' : ''}. Patients find the shop by PIN code; linked optometrists plan camps by area.</p>
+    <form id="shopLoc" class="row gap wrap">
+      <label>Kind<select name="kind"><option value="store" ${s.kind === 'store' ? 'selected' : ''}>Optical store</option><option value="camp" ${s.kind === 'camp' ? 'selected' : ''}>Eye camp</option><option value="vision_centre" ${s.kind === 'vision_centre' ? 'selected' : ''}>Vision centre</option></select></label>
+      <label>Area<input name="area" maxlength="80" value="${esc(s.area || '')}"></label><label>PIN code<input name="pin" inputmode="numeric" maxlength="6" value="${esc(s.pin || '')}"></label>
+      <label>City<input name="city" maxlength="60" value="${esc(s.city || '')}"></label><label>State<input name="state" maxlength="60" value="${esc(s.state || '')}"></label>
+      <button class="btn" type="submit">Save location</button></form>
+    <p class="small muted" id="locOut">${me.links.filter((l) => l.status === 'active').length} linked professionals · manage them in Dashboard, Appointments.</p>`;
+  $('#shopLoc').onsubmit = async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    if (f.pin.value && !/^\d{6}$/.test(f.pin.value)) { $('#locOut').textContent = 'The PIN code has 6 digits.'; return; }
+    const body = { kind: f.kind.value, area: f.area.value.trim() || null, pin: f.pin.value || null, city: f.city.value.trim() || null, state: f.state.value.trim() || null };
+    const r = await fetch(`${store.API}/shops/me`, { method: 'PUT', headers: { ...hdr, 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => null);
+    $('#locOut').textContent = r?.ok ? 'Saved.' : 'Could not save: check the internet.';
+  };
 }
 
 async function accountPanel() {
   const a = account.info();
   const langChips = Object.keys(LANGS).map((k) => `<button class="chip lang ${settings.uiLang === k ? 'on' : ''}" data-ulang="${k}" lang="${k}" aria-pressed="${settings.uiLang === k}">${LANGS[k]}</button>`).join('');
-  setScreen(`${a ? `<section class="card">
+  setScreen(`${store.DEMO ? `<section class="card"><h2>${ic('play')} Demo shop</h2>
+      <p class="small">You are exploring the demo as Chennai Optics, Velachery. Nothing is kept after this tab closes.</p>
+      <button class="btn primary" id="leaveDemo">${ic('left')} Leave the demo</button></section>` : a ? `<section class="card">
       <h2>${ic('user')} ${esc(a.shop.name)}</h2>
       <p class="muted small">${esc(a.shop.login)} · ${a.shared ? 'shared computer: signed out when this tab closes' : 'this device stays signed in for 30 days'}</p>
       <h3>${t('accDevices')}</h3><ul class="pcheck" id="devList"><li class="muted small">…</li></ul>
       <div class="row gap wrap"><button class="btn" id="syncBtn">${ic('refresh')} Sync now</button><button class="btn warn" id="outBtn">${t('accSignOut')}</button></div>
       <p class="muted small" id="syncOut"></p></section>`
     : `<section class="card"><h2>${ic('user')} ${t('accTitle')}</h2>
-      <p class="small">Sign in to keep this phone in step with the shop's other devices, or to work from a camp computer.</p>
+      <p class="small">Sign in to keep this device in step with the shop's other devices, or to work from a camp computer.</p>
       <button class="btn primary" id="signInBtn">${t('accSignIn')}</button></section>`}
+    <section class="card" id="netCard"><h2>${ic('users')} This shop on the network</h2><p class="muted small">Loading…</p></section>
     <details class="card"><summary>Settings: app language, shop, listening</summary>
       <h3 class="sub">${t('uiLanguage')}</h3><div class="seg">${langChips}</div>
       <label>${t('site')}<input id="siteIn" value="${esc(settings.site)}"></label>
@@ -1655,6 +1746,8 @@ async function accountPanel() {
   $('#siteType').onchange = (e) => { settings.siteType = e.target.value; save('dd.settings', settings); pushSettings(); };
   $('#opIn').onchange = (e) => { settings.operator = e.target.value; save('dd.settings', settings); };
   $('#listenSel').onchange = (e) => { settings.listen = e.target.value; save('dd.settings', settings); };
+  netCard();
+  const ld = $('#leaveDemo'); if (ld) { ld.onclick = leaveDemo; return; }
   if (!a) { $('#signInBtn').onclick = () => accountScreen(accountPanel); return; }
   $('#syncBtn').onclick = async () => { const n = await syncNow(); $('#syncOut').textContent = `${t('accSynced')} · ${n} new from other devices`; };
   $('#outBtn').onclick = signOutHere;
@@ -1747,7 +1840,7 @@ async function route() {
     return;
   }
   if (q.get('screen') === 'rules') { rulesScreen(home); return; }
-  if (/^\d{6}$/.test(q.get('pair') || '')) { history.replaceState(null, '', location.pathname); pairScreen(home, q.get('pair')); return; }
+  if (/^\d{6}$/.test(q.get('pair') || '')) { history.replaceState(null, '', location.pathname); pairScreen(home); return; }
   home();
   store.syncPending().then(updateHeader).catch(() => {});
 }

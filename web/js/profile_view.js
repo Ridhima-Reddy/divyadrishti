@@ -1,4 +1,4 @@
-// Renders a functional vision profile: shared by the field app (summary
+// Renders a functional vision profile: shared by the optical store app (summary
 // screen) and the optometrist portal. Also renders the referral-rules table,
 // so operators and reviewers see exactly what is and is not a red flag.
 import { snellen } from './measure/acuity.js';

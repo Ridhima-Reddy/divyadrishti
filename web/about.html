@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>DivyaDrishti · Voice-first eye screening</title>
+  <meta name="description" content="Voice-first eye screening for optical stores and eye camps in India: six languages, twelve tests with the charts on a real screen, and a remote optometrist who signs off every case.">
+  <meta name="theme-color" content="#e9ecf3">
+  <meta property="og:title" content="DivyaDrishti · Voice-first eye screening">
+  <meta property="og:description" content="Six languages, twelve tests with the charts on a real screen, and a remote optometrist who signs off every case.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/about.css">
+</head>
+<body class="about">
+  <a class="skip" href="#top">Skip to content</a>
+
+  <header class="nav" id="nav" data-tone="light">
+    <div class="wrap navin">
+      <a href="about.html" class="brand" aria-label="DivyaDrishti">
+        <svg class="mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
+        <span>DivyaDrishti</span>
+      </a>
+      <nav class="links" id="links" aria-label="Sections">
+        <a href="#how">How it works</a>
+        <a href="#tests">Tests</a>
+        <a href="#triage">Triage</a>
+        <a href="#privacy">Privacy</a>
+        <a href="#network">Network</a>
+        <a href="#faq">FAQ</a>
+        <a href="./" class="sheet-only">Optical store</a>
+        <a href="portal.html" class="sheet-only">Optometrist portal</a>
+        <a href="patient.html" class="sheet-only">Patient app</a>
+        <a href="zeiss.html" class="sheet-only">ZEISS dashboard</a>
+      </nav>
+      <div class="navcta">
+        <nav class="appnav" aria-label="Open an app">
+          <a href="./">Optical store</a><a href="portal.html">Optometrist</a><a href="patient.html">Patient</a><a href="zeiss.html">ZEISS</a>
+        </nav>
+        <button class="menubtn" id="menuBtn" type="button" aria-expanded="false" aria-controls="links"><span class="sr">Menu</span><i></i><i></i></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- 1. Hero: the offer, the action, and the product working -->
+    <section class="hero sky-dawn" data-tone="light" aria-labelledby="h-hero">
+      <div class="placido" aria-hidden="true"><i class="signal"></i></div>
+      <div class="wrap herocopy" data-enter>
+        <h1 id="h-hero">Voice-first eye screening <em>for optical stores and eye camps.</em></h1>
+        <p class="sub">The patient answers in Tamil, Hindi, Telugu, Marathi, Kannada or English. The app asks only what can change the outcome, measures what a questionnaire would guess, and sends the case to a remote optometrist who signs it off.</p>
+        <div class="actions">
+          <a class="pillbtn solid big" href="./">Open the optical store app <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="pillbtn ghost big" href="portal.html">See the optometrist portal</a>
+        </div>
+        <p class="alsoapps">Also on the network: <a href="patient.html">the patient app</a> and <a href="zeiss.html">the ZEISS network dashboard</a>. Every app opens with <b>Explore the demo</b>, no sign-in needed.</p>
+        <ul class="factline" aria-label="At a glance">
+          <li><b>6</b> languages</li><li><b>12</b> tests, charts on a real screen</li><li><b>2 h</b> to review an emergency</li>
+        </ul>
+      </div>
+
+      <div class="wrap stagewrap">
+        <div class="stage" id="stage">
+          <!-- the optometrist's queue, as the portal shows it -->
+          <div class="window" aria-hidden="true">
+            <div class="wbar"><i></i><i></i><i></i><span>Optometrist Bridge · Patients</span></div>
+            <div class="wbody">
+              <div class="wtools"><b>Patients</b><span class="wseg"><em class="on">All 11</em><em>Emergency 1</em><em>Urgent 2</em><em>Soon 3</em></span></div>
+              <ol class="queue" id="queue">
+                <li class="qrow red"><em class="av">MR</em><span><b>M. Ravi</b><small>Possible retinal detachment</small></span><span class="tier emergency">Emergency</span><span class="due mono">due in 1 h 34 min</span></li>
+                <li class="qrow amber"><em class="av">TG</em><span><b>T. Gopal</b><small>New flashes or floaters, no curtain</small></span><span class="tier urgent">Urgent</span><span class="due mono">due in 22 h 59 min</span></li>
+                <li class="qrow amber"><em class="av">KM</em><span><b>K. Murugan</b><small>Possible cataract affecting vision</small></span><span class="tier soon">Soon</span><span class="due mono">due in 20 h 49 min</span></li>
+                <li class="qrow"><em class="av">GR</em><span><b>G. Ramulu</b><small>Routine sign-off</small></span><span class="tier routine">Routine</span><span class="due mono">due in 70 h 9 min</span></li>
+              </ol>
+            </div>
+          </div>
+          <!-- the optical store app, playing a real interview from the demo patients -->
+          <div class="phone" id="phone">
+            <div class="pscreen">
+              <div class="ptop"><svg viewBox="0 0 32 32" width="16" height="16" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.6"/><circle cx="16" cy="16" r="3.4" fill="currentColor"/></svg><span>DivyaDrishti</span></div>
+              <div class="pcard">
+                <div class="pprog"><i id="pProg"></i></div>
+                <div class="prow1"><span class="ptag" id="pTag">Health</span><span class="mono pq" id="pQ">Q6</span></div>
+                <p class="pquestion" lang="ta" id="pQuestion">சுகர், பிபி, தைராய்டு ஏதாவது இருக்கா?</p>
+                <p class="pen" id="pEn">Do you have diabetes, high blood pressure, or a thyroid problem?</p>
+                <div class="pvoice"><span class="pill listening" id="pState">Listening</span><span class="ptrans" lang="ta" id="pTrans"></span></div>
+                <div class="pheard" id="pHeard" hidden>Heard: <b id="pHeardV">Diabetes</b></div>
+                <div class="pwhy" id="pWhy"><b>Why we ask</b><span id="pWhyT">Diabetes damages the retina silently and makes glasses power fluctuate.</span></div>
+              </div>
+            </div>
+          </div>
+          <button class="playctl" id="playCtl" type="button" aria-pressed="false">Pause</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. How it works: the visual follows the step being read -->
+    <section class="how" id="how" data-tone="light" aria-labelledby="h-how">
+      <div class="wrap">
+        <h2 class="h2" id="h-how">Ask, measure, profile, then an optometrist decides.</h2>
+        <div class="howgrid">
+          <ol class="steps4">
+            <li class="step on" data-step="0">
+              <span class="sn mono">Ask</span>
+              <h3>One question at a time, in the patient’s own words.</h3>
+              <p>The app listens until the patient pauses, understands native number words and code-mixed speech like “sugar irukku”, and asks for a tap when it is unsure. Questions that cannot change this patient’s outcome are never asked, and each one says why it is.</p>
+              <div class="mvis"></div>
+            </li>
+            <li class="step" data-step="1">
+              <span class="sn mono">Measure</span>
+              <h3>Then it measures what a questionnaire would guess.</h3>
+              <p>All five checks of the ZEISS Online Vision Screening, plus duochrome and an N-chart in the patient’s language. The front camera measures reading distance, focusing and convergence near point, and PD; the rear camera reads the power of the glasses the patient already wears.</p>
+              <div class="mvis"></div>
+            </li>
+            <li class="step" data-step="2">
+              <span class="sn mono">Profile</span>
+              <h3>A functional vision profile, not a single number.</h3>
+              <p>Hours at near, arm’s length and distance map to the Balanced, Intermediate and Near design options that ZEISS individual progressive lenses already take. The reading add is estimated at the distance she actually reads: at a measured 29 cm that is +1.75 D, not the +1.00 a table gives at 40 cm.</p>
+              <div class="mvis"></div>
+            </li>
+            <li class="step" data-step="3">
+              <span class="sn mono">Decide</span>
+              <h3>A remote optometrist signs off every case.</h3>
+              <p>Cases are encrypted on the shop’s device and sent when signal returns. Optometrists review them against a deadline set by the most urgent finding, sign off or redirect, and send a PIN-protected referral letter to the hospital. Every case exports as a FHIR R4 bundle.</p>
+              <div class="mvis"></div>
+            </li>
+          </ol>
+          <div class="howvis" aria-hidden="true">
+            <div class="vpanel on" data-vis="0">
+              <div class="vcard">
+                <span class="ptag">Health</span>
+                <p class="vq" lang="ta">சுகர் எத்தனை வருஷமா இருக்குங்க?</p>
+                <p class="ven">For how many years have you had diabetes?</p>
+                <div class="pvoice"><span class="pill hearing">Listening</span><span class="ptrans" lang="ta">“எட்டு வருஷம்”</span></div>
+                <div class="pheard">Heard: <b>8 years</b></div>
+                <div class="pwhy"><b>Why we ask</b><span>Retinopathy risk rises with every year of diabetes.</span></div>
+              </div>
+            </div>
+            <div class="vpanel" data-vis="1">
+              <div class="vcam">
+                <svg class="vface" viewBox="0 0 400 300" aria-hidden="true">
+                  <defs>
+                    <radialGradient id="skin" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="#b98663"/><stop offset=".6" stop-color="#9a6a4b"/><stop offset="1" stop-color="#5f3f2c"/></radialGradient>
+                    <radialGradient id="irisL" cx="45%" cy="42%" r="60%"><stop offset="0" stop-color="#7a5232"/><stop offset=".55" stop-color="#4a2f1b"/><stop offset="1" stop-color="#22150c"/></radialGradient>
+                    <clipPath id="eyeL"><path d="M86 162 Q130 128 176 160 Q132 188 86 162 Z"/></clipPath>
+                    <clipPath id="eyeR"><path d="M314 162 Q270 128 224 160 Q268 188 314 162 Z"/></clipPath>
+                    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1430" stop-opacity="0"/><stop offset="1" stop-color="#0d1430" stop-opacity=".55"/></linearGradient>
+                  </defs>
+                  <ellipse cx="200" cy="250" rx="250" ry="235" fill="url(#skin)"/>
+                  <path d="M84 116 Q126 96 172 112" fill="none" stroke="#2b1a10" stroke-width="9" stroke-linecap="round" opacity=".85"/>
+                  <path d="M316 116 Q274 96 228 112" fill="none" stroke="#2b1a10" stroke-width="9" stroke-linecap="round" opacity=".85"/>
+                  <path d="M88 154 Q130 122 174 152" fill="none" stroke="#3a2416" stroke-width="2" opacity=".35"/>
+                  <path d="M312 154 Q270 122 226 152" fill="none" stroke="#3a2416" stroke-width="2" opacity=".35"/>
+                  <path d="M86 162 Q130 128 176 160 Q132 188 86 162 Z" fill="#f2ece4"/>
+                  <path d="M314 162 Q270 128 224 160 Q268 188 314 162 Z" fill="#f2ece4"/>
+                  <g clip-path="url(#eyeL)"><circle cx="132" cy="158" r="18" fill="url(#irisL)"/><circle cx="132" cy="158" r="7.5" fill="#0a0705"/><circle cx="126" cy="152" r="3.2" fill="#fff" opacity=".9"/></g>
+                  <g clip-path="url(#eyeR)"><circle cx="268" cy="158" r="18" fill="url(#irisL)"/><circle cx="268" cy="158" r="7.5" fill="#0a0705"/><circle cx="262" cy="152" r="3.2" fill="#fff" opacity=".9"/></g>
+                  <path d="M86 162 Q130 128 176 160" fill="none" stroke="#1d120a" stroke-width="3.2" stroke-linecap="round"/>
+                  <path d="M314 162 Q270 128 224 160" fill="none" stroke="#1d120a" stroke-width="3.2" stroke-linecap="round"/>
+                  <path d="M200 150 Q195 205 186 236" fill="none" stroke="#5a3a27" stroke-width="3" stroke-linecap="round" opacity=".35"/>
+                  <rect width="400" height="300" fill="url(#fade)"/>
+                  <g fill="none" stroke="#a9bbf2" stroke-width="1.6"><circle cx="132" cy="158" r="22"/><circle cx="268" cy="158" r="22"/>
+                    <path d="M132 130v-6M132 186v6M104 158h-6M160 158h6M268 130v-6M268 186v6M240 158h-6M296 158h6"/>
+                    <path d="M132 212h136M132 206v12M268 206v12" stroke-dasharray="0"/></g>
+                  <text x="200" y="232" text-anchor="middle" fill="#fff" font-family="Geist Mono, monospace" font-size="13">PD 62 mm</text>
+                  <text x="132" y="116" text-anchor="middle" fill="#dfe6fb" font-family="Geist Mono, monospace" font-size="11">iris 11.7 mm</text>
+                </svg>
+                <div class="vread"><b class="mono">29 cm</b><span>reading distance · stable</span></div>
+              </div>
+              <div class="vechart">
+                <svg viewBox="0 0 5 5" width="64" height="64" aria-hidden="true"><path d="M0 0H5V1H1V2H5V3H1V4H5V5H0Z" fill="currentColor"/></svg>
+                <svg viewBox="0 0 5 5" width="40" height="40" style="transform:rotate(90deg)" aria-hidden="true"><path d="M0 0H5V1H1V2H5V3H1V4H5V5H0Z" fill="currentColor"/></svg>
+                <svg viewBox="0 0 5 5" width="24" height="24" style="transform:rotate(180deg)" aria-hidden="true"><path d="M0 0H5V1H1V2H5V3H1V4H5V5H0Z" fill="currentColor"/></svg>
+                <svg viewBox="0 0 5 5" width="14" height="14" style="transform:rotate(270deg)" aria-hidden="true"><path d="M0 0H5V1H1V2H5V3H1V4H5V5H0Z" fill="currentColor"/></svg>
+              </div>
+            </div>
+            <div class="vpanel" data-vis="2">
+              <div class="vcard">
+                <p class="vdom">Near-dominant</p>
+                <span class="vchip">Lens design emphasis: Near</span>
+                <div class="vzone dom"><span>Near · reading, sewing</span><span class="mono">6 h</span><i style="--w:55%"></i></div>
+                <div class="vzone"><span>Arm’s length · counter</span><span class="mono">3 h</span><i style="--w:27%"></i></div>
+                <div class="vzone"><span>Distance · outdoors</span><span class="mono">2 h</span><i style="--w:18%"></i></div>
+                <div class="vkv"><span>Reading add at a measured 29 cm</span><b class="mono">+1.75 D</b></div>
+              </div>
+            </div>
+            <div class="vpanel" data-vis="3">
+              <div class="vcard vreview">
+                <div class="vhead"><b>R. Lakshmi · 47 F</b><span class="tier soon">Soon</span></div>
+                <p class="vsmall">Diabetes 8 years, retina never checked</p>
+                <div class="vdec"><span class="on">In-person examination</span><span>Approve</span><span>Urgent referral</span><span>Approve with changes</span></div>
+                <div class="vmsg" lang="ta">முழு கண் டெஸ்ட்டுக்கு தயவு செஞ்சு அடுத்த கண் கேம்ப் இல்லனா விஷன் சென்டர்-க்கு வாங்க.</div>
+                <div class="vsign"><span class="vbtn">Sign and send</span><span class="mono">FHIR R4</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. The tests, drawn as the patient sees them -->
+    <section class="tests" id="tests" data-tone="light" aria-labelledby="h-tests">
+      <div class="wrap">
+        <div class="secthead">
+          <h2 class="h2" id="h-tests">Twelve tests, set up the way an optometrist would.</h2>
+          <p class="lead">A phone screen is too small and too close for accurate charts, so the chart tests run on the shop’s test screen: a laptop, monitor or TV at 3 or 6 m, letters at their true size. The patient answers on their own phone. The camera handles what a camera measures best. Every test is always on the list; the engine marks the ones that matter for this patient, and says why.</p>
+        </div>
+        <div class="tfilter seg" role="tablist" aria-label="Test groups">
+          <button class="chip on" data-tg="all" role="tab" aria-selected="true">All 12</button><button class="chip" data-tg="vision" role="tab" aria-selected="false">Vision checks 5</button><button class="chip" data-tg="refraction" role="tab" aria-selected="false">Refraction 2</button><button class="chip" data-tg="camera" role="tab" aria-selected="false">Camera 4</button><button class="chip" data-tg="glasses" role="tab" aria-selected="false">Current glasses 1</button>
+        </div>
+        <div class="tgroups">
+          <section class="tgroup" data-g="vision">
+            <div class="tghead"><h3>The five ZEISS online screening checks <span class="mono">5</span></h3><p>On the shop’s test screen at true size: sharpness, contrast, colour, astigmatism and the central field, each eye on its own.</p></div>
+            <div class="bento b-vision">
+            <article class="tile t-acuity"><div class="viz viz-acuity" aria-hidden="true"></div><h3>Distance vision</h3><p>Tumbling E or Landolt C on the test screen at 3 or 6 m, each eye, with a pinhole retest.</p></article>
+            <article class="tile t-contrast"><div class="viz viz-contrast" aria-hidden="true"></div><h3>Contrast sensitivity</h3><p>Landolt C rings that fade step by step.</p></article>
+            <article class="tile t-colour"><div class="viz" aria-hidden="true"><svg class="plate" id="plate" viewBox="0 0 200 200"></svg></div><h3>Colour vision</h3><p>Number plates read aloud.</p></article>
+            <article class="tile t-dial"><div class="viz" aria-hidden="true"><svg viewBox="0 0 200 120" class="dial"></svg></div><h3>Astigmatism dial</h3><p>Which lines look darker, and the axis.</p></article>
+            <article class="tile t-amsler"><div class="viz viz-amsler" aria-hidden="true"><i></i></div><h3>Amsler grid</h3><p>Central distortion, each eye.</p></article>
+            </div>
+          </section>
+          <section class="tgroup" data-g="refraction">
+            <div class="tghead"><h3>Refraction helpers <span class="mono">2</span></h3><p>On the test screen: two quick checks that tell the optometrist whether a power is over or under, near and far.</p></div>
+            <div class="bento b-refraction">
+            <article class="tile t-duo"><div class="viz viz-duo" aria-hidden="true"><span><b>E</b><b>O</b></span><span><b>E</b><b>O</b></span></div><h3>Duochrome</h3><p>Over- or under-powered glasses.</p></article>
+            <article class="tile t-near"><div class="viz viz-near" aria-hidden="true"><p lang="hi" style="font-size:22px">आँख की जाँच</p><p lang="ta" style="font-size:16px">கண் பரிசோதனை</p><p lang="te" style="font-size:12px">కంటి పరీక్ష చేయించుకోండి</p><p style="font-size:9px">the quick brown fox reads small print</p></div><h3>Near vision</h3><p>An N-chart in the patient’s own script.</p></article>
+            </div>
+          </section>
+          <section class="tgroup" data-g="camera">
+            <div class="tghead"><h3>Camera measurements <span class="mono">4</span></h3><p>A camera measures what a questionnaire would only guess.</p></div>
+            <div class="bento b-camera">
+            <article class="tile t-reading"><div class="viz viz-read" aria-hidden="true"><b class="mono">29<small>cm</small></b></div><h3>Reading distance</h3><p>Measured from the size of the iris.</p></article>
+            <article class="tile t-focus"><div class="viz viz-focus" aria-hidden="true"><span>small print</span><span>small print</span><span>small print</span></div><h3>Focusing near point</h3><p>The focusing range, measured by camera.</p></article>
+            <article class="tile t-conv"><div class="viz viz-conv" aria-hidden="true"><svg viewBox="0 0 220 120"><circle cx="40" cy="96" r="16" fill="#fff" stroke="#0e1629" stroke-width="1.5"/><circle cx="44" cy="92" r="6" fill="#0e1629"/><circle cx="180" cy="96" r="16" fill="#fff" stroke="#0e1629" stroke-width="1.5"/><circle cx="176" cy="92" r="6" fill="#0e1629"/><path d="M44 92 L110 22 L176 92" fill="none" stroke="#2e4fc4" stroke-width="1.5" stroke-dasharray="4 4"/><circle cx="110" cy="20" r="5" fill="#2e4fc4"/></svg></div><h3>Convergence near point</h3><p>Eye-teaming up close.</p></article>
+            <article class="tile t-pd"><div class="viz viz-pd" aria-hidden="true"><span class="eye"></span><span class="ruler mono">62 mm</span><span class="eye"></span></div><h3>PD and fitting height</h3><p>With a head-pose check.</p></article>
+            </div>
+          </section>
+          <section class="tgroup" data-g="glasses">
+            <div class="tghead"><h3>Current glasses <span class="mono">1</span></h3><p>A camera reads the power of the glasses the patient already wears, against a pattern on the test screen. Also in the optical store app’s Tools for walk-in customers.</p></div>
+            <div class="bento b-glasses">
+            <article class="tile t-lenso"><div class="viz viz-lenso" aria-hidden="true"><i></i></div><h3>Lensometry</h3><p>The rear camera reads the patient’s current glasses through a checkerboard.</p></article>
+            </div>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Triage: graded, with a time to care -->
+    <section class="triage" id="triage" data-tone="light" aria-labelledby="h-triage">
+      <div class="wrap">
+        <div class="secthead">
+          <h2 class="h2" id="h-triage">Only emergencies go red.</h2>
+          <p class="lead">One symptom per question, each about something new or sudden, with follow-ups only after a yes. Every finding gets the slowest safe time to care, so a hospital sees the patients who need it today.</p>
+        </div>
+        <ol class="ladder">
+          <li class="rung emergency"><span class="tier emergency">Emergency</span><b>Same day</b><p>Chemical or high-speed injury, a fixed curtain, sudden loss within two days, angle-closure signs, contact-lens keratitis, double vision with neurological signs.</p></li>
+          <li class="rung urgent"><span class="tier urgent">Urgent</span><b>18 hours to 2 weeks</b><p>A crop-leaf scratch, new floaters, a painful red eye, new Amsler distortion, a white pupil glow.</p></li>
+          <li class="rung soon"><span class="tier soon">Soon</span><b>2 to 6 weeks</b><p>Possible cataract affecting vision, vision worse than 6/60 in an eye, an overdue diabetic retina check.</p></li>
+          <li class="rung routine"><span class="tier routine">Routine</span><b>Optometrist sign-off</b><p>Glasses can proceed after review; a routine referral where needed.</p></li>
+          <li class="rung info"><span class="tier info">Note</span><b>For the record</b><p>Recorded for the optometrist; no referral.</p></li>
+        </ol>
+        <div class="rulecall">
+          <p class="rcq">Every rule, its time to care and its source is open: in the optical store app, in the optometrist portal and in the project documentation.</p>
+          <ul class="rcl">
+            <li><b>43</b><span>graded referral rules, each citing the guideline or study it rests on</span></li>
+            <li><b>8</b><span>presentations that are deliberately <em>not</em> red flags, so the hospital sees the patients who need it today</span></li>
+            <li><b>Hub edits</b><span>the reviewing optometrists can change a rule’s tier, time to care and action from the portal; every edit is logged with a reason and reaches every shop</span></li>
+          </ul>
+          <a class="pillbtn solid" href="./?screen=rules">Read the referral rules</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. The bridge -->
+    <section class="bridge" id="bridge" data-tone="dark" aria-labelledby="h-bridge">
+      <div class="placido small" aria-hidden="true"></div>
+      <div class="wrap bridgegrid">
+        <div>
+          <h2 class="h2" id="h-bridge">The optometrist sees red first, with a deadline on every case.</h2>
+          <p class="lead">The queue sorts by urgency and counts down to each review target. The reviewer reads the whole interview with the patient’s own words, books the next step, and the reply goes back to the store in the patient’s language.</p>
+          <dl class="targets">
+            <div><dt class="mono">2 h</dt><dd>Emergency review</dd></div>
+            <div><dt class="mono">24 h</dt><dd>Urgent review</dd></div>
+            <div><dt class="mono">72 h</dt><dd>Everything else</dd></div>
+          </dl>
+        </div>
+        <div class="decide" aria-hidden="true">
+          <div class="dcard">
+            <div class="dtop"><b>Your decision</b><span class="mono">DD-4BA09D</span></div>
+            <div class="dopts"><span>Approve</span><span>Approve with changes</span><span class="on">In-person examination</span><span>Urgent referral</span></div>
+            <div class="dfield"><small>Message to the patient (தமிழ்)</small><p lang="ta">முழு கண் டெஸ்ட்டுக்கு தயவு செஞ்சு அடுத்த கண் கேம்ப் இல்லனா விஷன் சென்டர்-க்கு வாங்க.</p></div>
+            <div class="dfoot"><span class="vbtn">Sign and send</span><span>PIN-protected referral letter</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Privacy -->
+    <section class="privacy" id="privacy" data-tone="dark" aria-labelledby="h-privacy">
+      <div class="wrap">
+        <div class="secthead">
+          <h2 class="h2" id="h-privacy">Names never reach the server.</h2>
+          <p class="lead">Records on the shop’s device are encrypted with the operator’s PIN. A patient’s name and number are sealed to the optometrist hub’s key before they leave, so only the hub’s browser can open them.</p>
+        </div>
+        <div class="flow" aria-hidden="true">
+          <div class="node"><b>Shop device</b><span class="mono">AES-256-GCM</span><small>PIN-protected, works offline</small></div>
+          <div class="wire"><i></i></div>
+          <div class="node"><b>Bridge server</b><span class="plain">sees no names</span><small>access log, expiry, strict headers</small></div>
+          <div class="wire"><i></i></div>
+          <div class="node hub"><b>Optometrist hub</b><span class="mono">ECDH P-256</span><small>opens the sealed identity</small></div>
+        </div>
+        <ul class="pfacts">
+          <li><b>Files travel as expiring, encrypted links.</b> Patient files are shared as end-to-end encrypted links with the key in the link’s fragment, an optional PIN said aloud, and a QR code.</li>
+          <li><b>Every access is logged.</b> Views, reviews, exports and erasures, append-only, with no personal data in the log.</li>
+          <li><b>Consent is recorded</b> with its time and language, under the Digital Personal Data Protection Act, 2023.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 6b. One network, four apps -->
+    <section class="network" id="network" data-tone="dark" aria-labelledby="h-network">
+      <div class="wrap">
+        <div class="secthead">
+          <h2 class="h2" id="h-network">Four apps, one care network.</h2>
+          <p class="lead">Each person sees what their work needs and nothing more. Patient names stay on the shop’s device and in the hub’s browser; ZEISS sees aggregates.</p>
+        </div>
+        <ol class="netflow" aria-label="How a patient moves through the network">
+          <li>Patient books or walks in</li><li>Shop screens and orders glasses</li><li>Optometrist reviews and signs off</li><li>Patient gets the record</li><li>ZEISS sees the totals</li>
+        </ol>
+        <ul class="apps">
+          <li><span class="who">Optical shops and eye camps</span><b>Optical store</b>
+            <p>The shopkeeper&rsquo;s dashboard: the interview and tests, sales, glasses orders from prescription to delivery, remakes and cancellations, stock, ZEISS lens options, and booking optometrists&rsquo; slots.</p>
+            <ul class="appfeats"><li>The shop&rsquo;s test screen is linked to its account: a TV, a second computer, or a window on the same one</li><li>Patients answer on their own phone by scanning a QR code</li></ul>
+            <a class="pillbtn ghostlight" href="./">Open the optical store app</a></li>
+          <li><span class="who">Optometrists and ophthalmologists</span><b>Optometrist portal</b>
+            <p>Registered with a council number and verified before signing off. The review queue by deadline, referral letters, video consults, a calendar of slots, and camp planning by shop and PIN code.</p>
+            <ul class="appfeats"><li>Works with many shops; each shop with many clinicians</li><li>Edits a rule&rsquo;s tier and time to care, with a logged reason</li></ul>
+            <a class="pillbtn ghostlight" href="portal.html">Open the portal</a></li>
+          <li><span class="who">Patients and families</span><b>Patient app</b>
+            <p>Quick self-checks at home, by touch or by voice, and booking an eye check at a nearby network shop, as routine or with an optometrist present.</p>
+            <ul class="appfeats"><li>Every visit, prescription and glasses order from a network shop appears by itself, by mobile number</li><li>Reminders for the next check</li></ul>
+            <a class="pillbtn ghostlight" href="patient.html">Open the patient app</a></li>
+          <li><span class="who">ZEISS</span><b>Network dashboard</b>
+            <p>How the tool performs across the network, from de-identified totals only: screening and review times, the referral mix, the lens mix and ZEISS share, remakes, patient-app use and bookings.</p>
+            <ul class="appfeats"><li>Verifies each clinician who registers</li><li>No names or phone numbers ever reach it</li></ul>
+            <a class="pillbtn ghostlight" href="zeiss.html">Open the dashboard</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 6c. Questions -->
+    <section class="faq" id="faq" data-tone="dark" aria-labelledby="h-faq">
+      <div class="wrap faqgrid">
+        <h2 class="h2" id="h-faq">Questions people ask.</h2>
+        <div class="qa">
+          <details open><summary>Is this a diagnosis?</summary><p>No. It is a screening and triage tool. An optometrist reviews every case and confirms every power, and anything urgent goes to an eye hospital with a stated time to care.</p></details>
+          <details><summary>Does the patient need to install anything?</summary><p>No. The shop runs the interview. For the chart tests, the patient scans a QR code on the shop’s test screen and answers on their own phone in the browser; the code stops working when their tests end. The patient app is a website too: signing in with the same mobile number shows every visit, prescription and glasses order from network shops. Results can also go by SMS to any phone.</p></details>
+          <details><summary>Which languages does it speak?</summary><p>English, Hindi, Tamil, Telugu, Marathi and Kannada, written the way people speak: native number words, code-mixed answers like “sugar irukku”, and spoken prescriptions.</p></details>
+          <details><summary>Who decides what is an emergency?</summary><p>Forty-three graded rules with published sources set the tier and the time to care; only emergencies go to hospital today. The reviewing optometrists can change a rule’s tier and time from the portal; the check that decides when a rule fires stays fixed.</p></details>
+          <details><summary>Can a shop work with more than one optometrist?</summary><p>Yes. A shop can link a primary optometrist, tele-optometrists and visiting or referral ophthalmologists, and each of them can work with many shops. Cases reach the linked professionals, and the shop books their time slots from the app.</p></details>
+          <details><summary>How do you know an optometrist is who they say?</summary><p>Optometrists and ophthalmologists register with their council and registration number. The network admin verifies them before they can sign off a case; until then they can only look around.</p></details>
+          <details><summary>Where is the patient’s data kept?</summary><p>On the shop’s device, encrypted with a PIN. The server keeps cases under a code, with names sealed so that only the optometrist hub can open them. The ZEISS dashboard sees only counts and rates.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Close -->
+    <section class="close" data-tone="dark" aria-labelledby="h-close">
+      <div class="placido big" aria-hidden="true"><i class="signal"></i></div>
+      <div class="wrap closein">
+        <ul class="numbers" aria-label="DivyaDrishti in numbers">
+          <li><b data-count="6">6</b><span>languages, written the way people speak</span></li>
+          <li><b data-count="38">38</b><span>questions in the bank; about half are asked</span></li>
+          <li><b data-count="43">43</b><span>graded referral rules, each with a source</span></li>
+          <li><b data-count="12">12</b><span>tests, with the charts on the shop’s test screen</span></li>
+        </ul>
+        <h2 class="h2 closeh" id="h-close">Bring the optometrist to the counter.</h2>
+        <div class="actions center">
+          <a class="pillbtn light big" href="./">Optical store</a>
+          <a class="pillbtn ghostlight big" href="portal.html">Optometrist portal</a>
+          <a class="pillbtn ghostlight big" href="patient.html">Patient app</a>
+          <a class="pillbtn ghostlight big" href="zeiss.html">ZEISS dashboard</a>
+        </div>
+        <p class="demo-note">Each app opens with <b>Explore the demo</b>: no account or PIN. In the optical store app, start a demo patient: thirteen synthetic patients play the whole interview without a microphone.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot" data-tone="dark">
+    <div class="wrap footin">
+      <div class="fbrand">
+        <a href="about.html" class="brand"><svg class="mark" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg><span>DivyaDrishti</span></a>
+        <p>ZEISS Hackathon 2026 · Theme 3: No-Device Vision Intelligence and Accessible Clinical UX. Team Ridhima, Kedar, Venkatesh and Rohit, IIT Madras.</p>
+      </div>
+      <nav class="fcols" aria-label="Footer">
+        <div><h4>Product</h4><a href="./">Optical store</a><a href="portal.html">Optometrist portal</a><a href="patient.html">Patient app</a><a href="zeiss.html">ZEISS dashboard</a><a href="display.html">Test screen</a></div>
+        <div><h4>Clinical</h4><a href="./?screen=rules">Referral rules</a><a href="#triage">Triage tiers</a><a href="#tests">The twelve tests</a></div>
+      </nav>
+      <p class="honest">Clinical rules are proposed and must be reviewed by optometrists before any patient use. Nothing here diagnoses; the optometrist confirms every power. Camera measurements are not yet validated against clinic instruments, and all patients shown are synthetic.</p>
+    </div>
+  </footer>
+  <script type="module" src="js/about.js"></script>
+</body>
+</html>

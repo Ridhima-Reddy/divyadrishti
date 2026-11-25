@@ -7,23 +7,23 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Shared document · DivyaDrishti</title>
   <meta name="description" content="An encrypted eye-care document shared with you. It expires after a few days.">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a101c" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <style>
-    @font-face { font-family: "DM Serif Display"; src: url("fonts/DMSerifDisplay-Regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
-    @font-face { font-family: "Plus Jakarta Sans"; src: url("fonts/PlusJakartaSans-Variable.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
-    @font-face { font-family: "Geist"; src: url("fonts/Geist-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+    @font-face { font-family: "Instrument Sans"; src: url("fonts/InstrumentSans-Variable.woff2") format("woff2"); font-weight: 400 700; font-display: swap; }
+    @font-face { font-family: "Newsreader"; src: url("fonts/Newsreader-Variable.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
     :root {
-      --ink: #0f1419; --ink-2: #3b434e; --muted: #6c7480; --bg: #f6f1ec; --card: #ffffff; --surface-2: #f5f6f8; --line: #e7e9ed;
-      --accent: #e8622f; --accent-ink: #ffffff; --teal: #e8622f; --teal-soft: #e3f3f3; --primary: #1d1a17; --primary-ink: #fff;
-      --red: #c4281f; --red-soft: #fff1f0; --green: #0a7a4b; --green-soft: #ecfaf3;
-      --radius: 20px; --shadow: 0 1px 2px rgba(15, 20, 25, .04), 0 6px 20px -10px rgba(15, 20, 25, .10);
+      --ink: #0e1629; --ink-2: #3c4558; --muted: #626a7d; --bg: #f5f4f0; --card: #ffffff; --surface-2: #f5f4f0; --line: rgba(17, 24, 43, .1);
+      --accent: #2e4fc4; --accent-ink: #ffffff; --teal: #2e4fc4; --teal-soft: #eceffb; --primary: #2e4fc4; --primary-ink: #fff;
+      --red: #b3261e; --red-soft: #fcefed; --green: #1b6e45; --green-soft: #ebf5ef;
+      --radius: 20px; --shadow: 0 0 0 1px rgba(14, 22, 41, .055), 0 1px 2px rgba(14, 22, 41, .05), 0 10px 28px -16px rgba(14, 22, 41, .16);
       color-scheme: light dark;
     }
     @media (prefers-color-scheme: dark) {
       :root:not([data-theme="light"]) {
-        --ink: #edf0f3; --ink-2: #c3c9d1; --muted: #8b939e; --bg: #0b0e11; --card: #14181d; --surface-2: #1b2026; --line: #252b33;
-        --accent: #ff8a5c; --accent-ink: #0b0e11; --teal: #ff8a5c; --teal-soft: #11292b; --primary: #edf0f3; --primary-ink: #0b0e11;
+        --ink: #eceff5; --ink-2: #c3c9d5; --muted: #9098aa; --bg: #0a101c; --card: #121a2a; --surface-2: #172134; --line: rgba(255, 255, 255, .09);
+        --accent: #93a8f5; --accent-ink: #0a101c; --teal: #93a8f5; --teal-soft: #18234a; --primary: #4262da; --primary-ink: #fff;
         --red: #ff8077; --red-soft: #2a1412; --green: #5fd49b; --green-soft: #0d2219; --shadow: none;
       }
     }
@@ -32,13 +32,14 @@
     html { -webkit-text-size-adjust: 100%; }
     body {
       margin: 0; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased;
-      font: 18px/1.55 "Plus Jakarta Sans", "Geist", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Tamil", "Noto Sans Devanagari",
+      font: 18px/1.55 "Instrument Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Tamil", "Noto Sans Devanagari",
         "Noto Sans Telugu", "Noto Sans Kannada", sans-serif;
     }
     .top { display: flex; align-items: center; gap: 10px; padding: 12px 16px; min-height: 60px; background: var(--card); border-bottom: 1px solid var(--line); color: var(--ink); font-weight: 600; font-size: 1.05rem; letter-spacing: -.02em; }
     .top svg { color: var(--accent); flex: none; }
+    .top { font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: 1.25rem; letter-spacing: -.015em; }
     main { max-width: 640px; margin: 0 auto; padding: 16px 16px 48px; }
-    h1 { font-size: 1.7rem; line-height: 1.15; font-weight: 700; letter-spacing: -.03em; margin: .2rem 0 .6rem; overflow-wrap: anywhere; }
+    h1 { font-family: "Newsreader", Georgia, serif; font-size: 2.1rem; line-height: 1.08; font-weight: 450; letter-spacing: -.02em; margin: .2rem 0 .6rem; overflow-wrap: anywhere; }
     h2 { font-size: 1.08rem; font-weight: 600; margin: 1.4rem 0 .4rem; padding-top: .9rem; border-top: 1px solid var(--line); }
     p { margin: .45rem 0; }
     .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 18px; margin: 12px 0; box-shadow: var(--shadow); }
@@ -73,6 +74,13 @@
     .doc .meta dd { margin: 0; }
     .doc .sign { margin-top: 1.4rem; white-space: pre-line; font-weight: 600; }
     .printnote { display: none; }
+    .save .savetitle { font-family: "Newsreader", Georgia, serif; font-size: 1.4rem; font-weight: 450; letter-spacing: -.015em; line-height: 1.15; margin: 0 0 .3rem; }
+    .save label { font-size: .95rem; margin-top: 1rem; }
+    #savePlace { display: block; width: 100%; min-height: 50px; margin-top: .4rem; padding: .6rem .8rem; font: inherit; font-size: 1rem;
+      color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; }
+    .savedone { margin: .2rem 0 0; padding: 12px 14px; border-radius: 14px; background: var(--green-soft); color: var(--green); font-weight: 500; font-size: .95rem; }
+    .savedone a { color: inherit; font-weight: 600; white-space: nowrap; }
+    a:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; border-radius: 4px; }
     .spinner { display: inline-block; width: 1em; height: 1em; border: 3px solid var(--line); border-top-color: var(--teal);
       border-radius: 50%; animation: spin 1s linear infinite; vertical-align: -.15em; margin-right: .4em; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -92,7 +100,7 @@
 </head>
 <body>
   <header class="top">
-    <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="10" fill="currentColor"/><path d="M5.5 16c2.9-4.7 6.4-7 10.5-7s7.6 2.3 10.5 7c-2.9 4.7-6.4 7-10.5 7s-7.6-2.3-10.5-7z" fill="none" stroke="#fff" stroke-width="1.9"/><circle cx="16" cy="16" r="3.4" fill="#fff"/></svg>
+    <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
     <span>DivyaDrishti</span>
   </header>
   <main>
@@ -122,6 +130,16 @@
     <div id="actions" class="actions" hidden>
       <button id="printBtn" class="btn" type="button">Print</button>
     </div>
+    <section id="saveCard" class="card save noprint" aria-labelledby="saveTitle" hidden>
+      <p id="saveTitle" class="savetitle">Keep a copy in My eye record</p>
+      <p class="muted small">Saved only on this phone, in the My eyes app, with your other prescriptions and visits. You can delete it there at any time.</p>
+      <form id="saveForm" novalidate>
+        <label for="savePlace">Shop or eye camp <span class="muted">(optional)</span></label>
+        <input id="savePlace" name="place" type="text" maxlength="80" autocomplete="off" placeholder="For example: Chennai Optics, Velachery">
+        <button id="saveBtn" class="btn primary" type="submit">Save to my eye record</button>
+      </form>
+      <p id="saveDone" class="savedone" role="status" hidden><span id="saveMsg">Saved to My eye record on this phone.</span> <a href="patient.html#record">Open My eye record</a></p>
+    </section>
     <p id="keepNote" class="muted small noprint" hidden>Nothing is saved on this phone. To see this again, open the link again (it uses one view) or print it now.</p>
     <p class="printnote muted">Printed from an encrypted DivyaDrishti link.</p>
   </main>

@@ -1,10 +1,17 @@
 {
-  "name": "DivyaDrishti",
+  "name": "DivyaDrishti Optical store",
   "short_name": "DivyaDrishti",
   "description": "Voice-first adaptive eye-care interview, reviewed by a remote optometrist",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f1f2f4",
-  "theme_color": "#ffffff",
-  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "background_color": "#f5f4f0",
+  "theme_color": "#f5f4f0",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }

@@ -4,32 +4,101 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DivyaDrishti Optometrist Bridge</title>
-  <meta name="theme-color" content="#f6f1ec">
+  <meta name="theme-color" content="#f5f4f0">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/portal.css">
 </head>
 <body class="portal">
-  <div class="shell">
+  <!-- sign-in gate: shown by portal.js when there is no valid clinician session -->
+  <div class="gate" id="gate" hidden>
+    <div class="gatewrap welcome">
+      <section class="band gateband">
+        <svg class="mark" viewBox="0 0 32 32" width="40" height="40" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
+        <div class="gatecopy">
+          <h1>Optometrist Bridge</h1>
+          <p class="lede">Review the cases that optical shops and eye camps send you, sign them off, send referral letters and see patients by video.</p>
+          <ul class="facts"><li><b>2 h</b>emergency review</li><li><b>1 day</b>urgent</li><li><b>3 days</b>soon and routine</li></ul>
+          <a class="how" href="about.html">How DivyaDrishti works <svg class="ic" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        </div>
+      </section>
+      <section class="card gatecard">
+        <button class="btn primary big" id="demoBtn" type="button">Explore the demo (no sign-in)</button>
+        <p class="muted small demonote">Opens the portal as Optom. A. Meenakshi, a verified demo optometrist. The demo patients are synthetic.</p>
+        <p class="gatemsg" id="gateMsg" role="status"></p>
+        <div class="gatesep"><span>or use your own registration</span></div>
+        <div class="seg" id="gateMode">
+          <button class="chip on" type="button" data-gmode="in">Sign in</button>
+          <button class="chip" type="button" data-gmode="up">Register</button>
+        </div>
+
+        <form id="loginForm" class="gform" novalidate>
+          <label>Phone or email<input name="login" id="liLogin" autocomplete="username" inputmode="email" maxlength="254" required></label>
+          <label>Password<input name="password" id="liPass" type="password" autocomplete="current-password" maxlength="200" required></label>
+          <button class="btn primary big" type="submit" id="liGo">Sign in</button>
+          <p class="err" id="liErr" role="alert"></p>
+        </form>
+
+        <form id="regForm" class="gform" novalidate hidden>
+          <h2>Register as an optometrist or ophthalmologist</h2>
+          <p class="muted small">The network admin checks your registration with your council. Until then you can explore cases; signing off unlocks once you are verified.</p>
+          <label data-f="name">Full name, as registered<input name="name" autocomplete="name" maxlength="80" placeholder="e.g. Optom. R. Karthik"><small class="ferr"></small></label>
+          <fieldset class="rolepick" data-f="role">
+            <legend>Role</legend>
+            <div class="seg" id="regRole">
+              <label class="chip on"><input type="radio" name="role" value="optometrist" checked> Optometrist</label>
+              <label class="chip"><input type="radio" name="role" value="ophthalmologist"> Ophthalmologist</label>
+            </div>
+          </fieldset>
+          <div class="g2">
+            <label data-f="council">Council<select name="council" id="regCouncil"></select><small class="ferr"></small></label>
+            <label data-f="regNo">Registration number<input name="regNo" maxlength="24" autocomplete="off" placeholder="e.g. TN-OPT-1234"><small class="ferr"></small></label>
+          </div>
+          <div class="g2">
+            <label data-f="qualification">Qualification<input name="qualification" list="qualList" maxlength="60" placeholder="e.g. B.Optom"><small class="ferr"></small></label>
+            <label data-f="practicePin">Practice PIN code<input name="practicePin" inputmode="numeric" maxlength="6" autocomplete="postal-code" placeholder="6 digits"><small class="ferr"></small></label>
+          </div>
+          <datalist id="qualList"></datalist>
+          <label data-f="practiceArea">Practice area<input name="practiceArea" maxlength="80" placeholder="Locality and city, e.g. Anna Nagar, Chennai"><small class="ferr"></small></label>
+          <div class="g2">
+            <label data-f="login">Phone or email<input name="login" autocomplete="username" inputmode="email" maxlength="254"><small class="ferr"></small></label>
+            <label data-f="password">Password<input name="password" type="password" autocomplete="new-password" maxlength="200" placeholder="At least 8 characters"><small class="ferr"></small></label>
+          </div>
+          <label class="check attest" data-f="attest"><input type="checkbox" name="attest"> <span>These are my registration details; the network may verify them with my council.</span></label>
+          <small class="ferr attesterr" data-ferr="attest"></small>
+          <button class="btn primary big" type="submit" id="regGo">Register and open the portal</button>
+          <p class="err" id="regErr" role="alert"></p>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <div class="shell" hidden>
     <aside class="sidenav">
       <a href="portal.html" class="brand">
-        <svg class="mark" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true"><rect width="32" height="32" rx="10" fill="currentColor"/><path d="M5.5 16c2.9-4.7 6.4-7 10.5-7s7.6 2.3 10.5 7c-2.9 4.7-6.4 7-10.5 7s-7.6-2.3-10.5-7z" fill="none" stroke="#fff" stroke-width="1.9"/><circle cx="16" cy="16" r="3.4" fill="#fff"/></svg>
+        <svg class="mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
         <span>DivyaDrishti <em>Optometrist Bridge</em></span>
       </a>
       <nav class="navlist" aria-label="Portal">
         <button class="navitem on" data-tab="dash" data-icon="home"><span>Dashboard</span></button>
-        <button class="navitem" data-tab="queue" data-icon="users"><span>Patients</span><b class="count" id="navOpen" hidden></b></button>
+        <button class="navitem" data-tab="queue" data-icon="inbox"><span>Patients</span><b class="count" id="navOpen" hidden></b></button>
+        <button class="navitem" data-tab="calendar" data-icon="clock"><span>Calendar</span><b class="count soft" id="navToday" hidden></b></button>
+        <button class="navitem" data-tab="shops" data-icon="users"><span>My shops</span><b class="count soft" id="navReq" hidden></b></button>
         <button class="navitem" data-tab="planning" data-icon="chart"><span>Camp planning</span></button>
         <button class="navitem" data-tab="rules" data-icon="rules"><span>Referral rules</span><b class="count soft" id="navRules" hidden></b></button>
       </nav>
-      <button class="navitem me" id="me" title="Reviewer: click to change"></button>
+      <div class="mewrap">
+        <button class="navitem me" id="me" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="meMenu"></button>
+        <div class="memenu" id="meMenu" hidden></div>
+      </div>
     </aside>
     <div class="content">
       <div id="hubBanner" class="hubwarn" role="status"></div>
+      <div id="clinBanner" class="clinbanner" role="status" hidden></div>
       <section class="tabpage" id="dashTab"><div id="dashBody"><p class="muted">Loading…</p></div></section>
       <section class="tabpage" id="queueTab" hidden>
         <div id="plistView">
-          <div class="ptools"><h1>Patients</h1>
+          <div class="ptools"><div class="ptitle"><h1>Patients</h1><p class="meta" id="scopeNote"></p></div>
             <div class="row gap wrap"><input type="search" id="psearch" placeholder="Search name, code, area, finding" aria-label="Search patients">
               <label class="inline"><input type="checkbox" id="openOnly" checked> Open cases only</label></div></div>
           <div class="seg filters" id="pfilters"></div>
@@ -39,10 +108,13 @@
         </div>
         <section class="detail" id="detail" hidden></section>
       </section>
+      <section class="tabpage caltab" id="calendarTab" hidden></section>
+      <section class="tabpage shopstab" id="shopsTab" hidden></section>
       <section class="planning tabpage" id="planningTab" hidden></section>
       <section class="planning rules-tab tabpage" id="rulesTab" hidden></section>
     </div>
   </div>
+  <dialog class="dlg" id="slotDlg" aria-labelledby="slotDlgTitle"></dialog>
   <script type="module" src="js/portal.js"></script>
 </body>
 </html>

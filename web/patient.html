@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>DivyaDrishti · My eyes</title>
+  <meta name="description" content="Quick eye checks at home, a booking with an optical shop near you, and your own eye record that stays on your phone.">
+  <meta name="theme-color" content="#f5f4f0" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a101c" media="(prefers-color-scheme: dark)">
+  <meta name="referrer" content="no-referrer">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/patient.css">
+</head>
+<body class="patient has-tabs">
+  <header class="top">
+    <a href="#home" class="brand" aria-label="DivyaDrishti, My eyes: home">
+      <svg class="mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M26.2 13.2A10.6 10.6 0 1 0 26.2 18.8" fill="none" stroke="currentColor" stroke-width="3.2"/><circle cx="16" cy="16" r="3.1" fill="currentColor"/></svg>
+      <span>DivyaDrishti <em>My eyes</em></span>
+    </a>
+    <button class="chip p-acct" id="acctBtn" type="button" hidden></button>
+  </header>
+  <nav class="tabbar" id="tabbar" aria-label="Sections"></nav>
+  <main id="main" data-screen="loading"><p class="muted center">Loading…</p></main>
+  <div id="toast" class="p-toast" role="status" aria-live="polite" hidden></div>
+  <noscript><p class="card">My eyes needs JavaScript to run the eye checks.</p></noscript>
+  <script type="module" src="js/patient.js"></script>
+</body>
+</html>

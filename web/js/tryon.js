@@ -288,10 +288,10 @@ export async function tryOn(api, { back, recTitle = '' } = {}) {
     g.beginPath(); g.moveTo(-pdHalf, 1.5); g.lineTo(-pdHalf, yDim); g.moveTo(pdHalf, 1.5); g.lineTo(pdHalf, yDim); g.stroke();
     g.setLineDash([]); g.lineWidth = .6;
     g.beginPath(); g.moveTo(-pdHalf, yDim); g.lineTo(pdHalf, yDim); g.stroke();
-    g.font = '600 4.2px "Plus Jakarta Sans", sans-serif'; g.textAlign = 'center';
+    g.font = '600 4.2px "Instrument Sans", sans-serif'; g.textAlign = 'center';
     const lbl = `${pdMm || 63} mm`; const tw = g.measureText(lbl).width + 5;
     g.fillStyle = 'rgba(255,255,255,.88)'; g.beginPath(); g.roundRect?.(-tw / 2, yDim - 3.6, tw, 7.2, 3.6); g.fill();
-    g.fillStyle = '#0f2a20'; g.fillText(lbl, 0, yDim + 1.5);
+    g.fillStyle = '#0b1433'; g.fillText(lbl, 0, yDim + 1.5);
     g.restore();
     api.$('#tFrameName').textContent = `${FRAMES[st.shape].label} · ${st.shape === 'rimless' ? 'rimless' : st.colour}`;
     api.$('#tLensName').textContent = ['photo', 'photob'].includes(st.lens) ? `${LENSES[st.lens].label} · ${Math.round(st.outdoor * 100)}% outdoors` : LENSES[st.lens].label;

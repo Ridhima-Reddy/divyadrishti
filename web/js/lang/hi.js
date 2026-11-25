@@ -23,7 +23,7 @@ for (const w of ECHO) {
 export default {
   code: 'hi', name: 'हिन्दी', locale: 'hi-IN',
   ui: {
-    tabShop: 'दुकान',
+    tabShop: 'डैशबोर्ड',
     tabHome: 'होम', tabPatients: 'मरीज़', tabTools: 'टूल्स', tabRules: 'नियम', tabAccount: 'अकाउंट',
     accTitle: 'दुकान का अकाउंट', accSignIn: 'साइन इन कीजिए', accCreate: 'दुकान का अकाउंट बनाइए', accLogin: 'फ़ोन नंबर या ईमेल', accPassword: 'पासवर्ड', accShopName: 'दुकान या कैंप का नाम', accShared: 'यह किसी और का या कैंप का कंप्यूटर है (काम के बाद साइन आउट कीजिए)', accLocal: 'बिना अकाउंट के, सिर्फ़ इसी फ़ोन पर चलाइए', accSignOut: 'साइन आउट', accBad: 'फ़ोन/ईमेल या पासवर्ड गलत है।', accSynced: 'आपके दुकान के अकाउंट से सिंक हो गया', accDevices: 'जिन डिवाइस पर साइन इन है', accSigningIn: 'साइन इन हो रहा है…', accWeak: 'पासवर्ड कम से कम 8 अक्षर का रखिए।', accExists: 'इस फ़ोन या ईमेल से अकाउंट पहले से है। साइन इन कीजिए।',
     devPhone: 'फ़ोन', devScreen: 'बड़ी स्क्रीन', devEither: 'फ़ोन या बड़ी स्क्रीन', devBoth: 'फ़ोन + बड़ी स्क्रीन', screenTitle: 'चार्ट स्क्रीन', screenNone: 'कोई चार्ट स्क्रीन नहीं जुड़ी', screenPaired: 'चार्ट स्क्रीन जुड़ गई: यह फ़ोन रिमोट है', pairScreen: 'स्क्रीन जोड़िए', unpair: 'हटाइए', pairGo: 'जोड़िए', pairBad: 'कोड नहीं मिला या पुराना हो गया। स्क्रीन देखकर फिर से डालिए।', needsScreen: 'इस टेस्ट के लिए लैपटॉप या टीवी की स्क्रीन चाहिए', onScreen: 'चार्ट स्क्रीन पर दिख रहा है', tryOn: 'फ़्रेम पहनकर देखिए', frames: 'फ़्रेम', lensesLbl: 'लेंस', takePhoto: 'फ़ोटो लीजिए', tapEyes: 'पहले दाईं आँख के बीच में, फिर बाईं आँख के बीच में टैप कीजिए', sampleFace: 'सैंपल चेहरा', outdoor: 'धूप में',

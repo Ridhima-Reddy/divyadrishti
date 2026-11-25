@@ -8,7 +8,11 @@
 //   the server sees age, sex, PIN code and the clinical record.
 import { createVault, openVault, encryptJson, decryptJson, sealToHub } from './crypto.js';
 
-const DB_NAME = 'divyadrishti';
+// The demo (no account, no PIN) runs in its own database for this tab only, so it
+// never touches a real shop's encrypted records on the same browser.
+export const DEMO = (() => { try { return sessionStorage.getItem('dd.demo') === '1'; } catch { return false; } })();
+const DB_NAME = DEMO ? 'divyadrishti-demo' : 'divyadrishti';
+const SECRET = DEMO ? 'dd.demo.secret.' : 'dd.secret.';
 const VAULT_KEY = 'dd.vault';
 const HUB_KEY = 'dd.hubKey';
 let dbp = null;
@@ -43,7 +47,7 @@ async function tx(store, mode, fn) {
 
 // ---------------------------------------------------------------- vault (PIN)
 const readVault = () => { try { return JSON.parse(localStorage.getItem(VAULT_KEY) || 'null'); } catch { return null; } };
-export const hasVault = () => Boolean(readVault());
+export const hasVault = () => !DEMO && Boolean(readVault());
 export const isUnlocked = () => Boolean(sessionKey);
 export function touch() { lastActivity = Date.now(); }
 export function idleTooLong() { return sessionKey && Date.now() - lastActivity > IDLE_LOCK_MS; }
@@ -70,8 +74,8 @@ export async function unlock(pin) {
 export async function resetVault() {
   sessionKey = null;
   ephemeralMode = false;
-  localStorage.removeItem(VAULT_KEY);
-  for (const k of Object.keys(localStorage)) if (k.startsWith('dd.secret.')) localStorage.removeItem(k);
+  if (!DEMO) localStorage.removeItem(VAULT_KEY);
+  for (const k of Object.keys(localStorage)) if (k.startsWith(SECRET)) localStorage.removeItem(k);
   await tx('cases', 'readwrite', (s) => s.clear());
   await tx('drafts', 'readwrite', (s) => s.clear());
 }
@@ -90,14 +94,14 @@ export const isEphemeral = () => ephemeralMode;
 // Small secrets kept under the vault key (the shop account's data key on the
 // operator's own phone, so a PIN unlock is enough to keep syncing).
 export async function putSecret(name, value) {
-  localStorage.setItem(`dd.secret.${name}`, JSON.stringify(await encryptJson(needKey(), value, `secret:${name}`)));
+  localStorage.setItem(`${SECRET}${name}`, JSON.stringify(await encryptJson(needKey(), value, `secret:${name}`)));
 }
 export async function getSecret(name) {
-  const raw = localStorage.getItem(`dd.secret.${name}`);
+  const raw = localStorage.getItem(`${SECRET}${name}`);
   if (!raw || !sessionKey) return null;
   try { return await decryptJson(sessionKey, JSON.parse(raw), `secret:${name}`); } catch { return null; }
 }
-export const dropSecret = (name) => localStorage.removeItem(`dd.secret.${name}`);
+export const dropSecret = (name) => localStorage.removeItem(`${SECRET}${name}`);
 
 function needKey() {
   if (!sessionKey) throw new Error('locked');

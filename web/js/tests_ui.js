@@ -1,7 +1,7 @@
 // Screens for the extra vision tests: contrast, colour plates, astigmatism
 // dial, duochrome, near vision, convergence near point and camera lensometry.
 // app.js passes in its screen helpers (api) so these screens look and behave
-// like the rest of the field app. Every result lands in C.measurements and is
+// like the rest of the optical store app. Every result lands in C.measurements and is
 // interpreted by engine/profile.js (findings) and engine/redflags.js (urgency).
 import { createContrastTest, nextRing, respondRing, landoltSvg } from './measure/contrast.js';
 import { SERIES, generatePlate, plateSvg, scorePlates } from './measure/plates.js';

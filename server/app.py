@@ -593,26 +593,37 @@ def list_cases(
 
 
 @app.get("/api/cases/{case_id}")
-def get_case(case_id: str, request: Request) -> dict:
+def get_case(case_id: str, request: Request, x_clin_token: Optional[str] = Header(None)) -> dict:
     r = store.get(case_id)
     if not r:
         raise HTTPException(404, "case not found")
+    from . import network
+    network.clin_may_open(x_clin_token, r)
     store.audit(actor_of(request), "case_viewed", case_id)
     return full_case(r)
 
 
 @app.post("/api/cases/{case_id}/review")
-def review_case(case_id: str, review: ReviewIn, request: Request, x_portal_token: Optional[str] = Header(None)) -> dict:
+def review_case(case_id: str, review: ReviewIn, request: Request, x_portal_token: Optional[str] = Header(None),
+                x_clin_token: Optional[str] = Header(None)) -> dict:
     require_token(x_portal_token)
     r = store.get(case_id)
     if not r:
         raise HTTPException(404, "case not found")
     rv = review.model_dump()
+    if x_clin_token:  # a signed-in clinician signs as themselves, and only once verified
+        from . import network
+        c = network.clin_session(x_clin_token)
+        if c["status"] != "verified":
+            raise HTTPException(403, "your registration is still being verified: you can review, but not sign off yet")
+        rv["reviewer"] = {"name": c["name"], "regNo": c["reg_no"], "code": c["code"], "role": c["role"], "demo": bool(c["session_demo"])}
     own = review.decisionText.strip()
     rv["decisionLabel"] = own if review.decision == "other" and own else DECISIONS[review.decision]
     rv["reviewedAt"] = iso(now())
     store.set_review(case_id, rv)
-    store.audit(f"{review.reviewer.name} ({review.reviewer.regNo or 'no reg. no.'})", "case_reviewed", case_id, rv["decisionLabel"])
+    from . import patients
+    patients.add_review(case_id, rv)
+    store.audit(f"{rv['reviewer']['name']} ({rv['reviewer'].get('regNo') or 'no reg. no.'})", "case_reviewed", case_id, rv["decisionLabel"])
     return {"id": case_id, "status": "reviewed", "review": rv}
 
 
@@ -763,8 +774,11 @@ def rules_history(x_portal_token: Optional[str] = Header(None)) -> list[dict]:
 
 
 @app.put("/api/rules/{code}")
-def edit_rule(code: str, body: RuleEditIn, x_portal_token: Optional[str] = Header(None)) -> dict:
+def edit_rule(code: str, body: RuleEditIn, x_portal_token: Optional[str] = Header(None),
+              x_clin_token: Optional[str] = Header(None)) -> dict:
     require_token(x_portal_token)
+    from . import network
+    network.clin_must_be_verified(x_clin_token)
     if not RULE_CODE.match(code):
         raise HTTPException(400, "bad rule code")
     o = rule_overrides()
@@ -780,8 +794,11 @@ def edit_rule(code: str, body: RuleEditIn, x_portal_token: Optional[str] = Heade
 
 
 @app.post("/api/rules/{code}/reset")
-def reset_rule(code: str, body: RuleResetIn, x_portal_token: Optional[str] = Header(None)) -> dict:
+def reset_rule(code: str, body: RuleResetIn, x_portal_token: Optional[str] = Header(None),
+               x_clin_token: Optional[str] = Header(None)) -> dict:
     require_token(x_portal_token)
+    from . import network
+    network.clin_must_be_verified(x_clin_token)
     o = rule_overrides()
     before = o["rules"].pop(code, None)
     if before is None:
@@ -833,18 +850,62 @@ def _controlled(ctl: Optional[str]) -> dict:
 
 
 @app.post("/api/display", status_code=201)
-def display_create() -> dict:
+def display_create(x_shop_token: Optional[str] = Header(None), x_shop_code: Optional[str] = Header(None)) -> dict:
+    """A chart screen. Opened with the shop's sign-in (or as a demo shop) it belongs to
+    that shop at once: the shop's own phones find it with no code. Without a shop it
+    shows a one-time pairing code instead (older phones)."""
+    shop = None
+    if x_shop_token or x_shop_code:
+        from . import network
+        shop = network.shop_of(x_shop_token, x_shop_code)
     with display_lock:
         _purge_displays(now())
         if len(displays) > 500:
             raise HTTPException(503, "too many screens")
+        token = secrets.token_urlsafe(24)
+        if shop:
+            displays[token] = {"code": None, "created": now(), "seen": now(), "controller": secrets.token_urlsafe(24), "seq": 0,
+                               "cmd": {"chart": "idle"}, "shop": {"code": shop["code"], "name": shop["name"]}, "driven": None}
+            return {"token": token, "shop": {"code": shop["code"], "name": shop["name"]}}
         live = {d["code"] for d in displays.values() if d["code"]}
         code = f"{secrets.randbelow(10 ** 6):06d}"
         while code in live:
             code = f"{secrets.randbelow(10 ** 6):06d}"
-        token = secrets.token_urlsafe(24)
         displays[token] = {"code": code, "created": now(), "seen": now(), "controller": None, "seq": 0, "cmd": {"chart": "idle"}}
     return {"code": code, "token": token, "expiresInSec": int(PAIR_CODE_TTL.total_seconds())}
+
+
+@app.post("/api/display/self")
+def display_self(x_display_token: Optional[str] = Header(None)) -> dict:
+    """A demo shop's screen runs a demo patient by itself (judges with one device):
+    it takes its own remote. Real shops' screens never can."""
+    from . import network
+    with display_lock:
+        d = displays.get(x_display_token or "")
+        if not d or not d.get("shop"):
+            raise HTTPException(404, "screen not found")
+        code = d["shop"]["code"]
+    with network.lock():
+        demo = network.db().execute("SELECT demo FROM shops WHERE code = ?", (code,)).fetchone()
+    if not demo or not demo["demo"]:
+        raise HTTPException(403, "the self-run demo is only for demo shops")
+    return {"controller": d["controller"]}
+
+
+@app.post("/api/display/connect")
+def display_connect(x_shop_token: Optional[str] = Header(None), x_shop_code: Optional[str] = Header(None)) -> dict:
+    """The shop's phone takes the remote of the shop's own chart screen (the one most recently online)."""
+    from . import network
+    shop = network.shop_of(x_shop_token, x_shop_code)
+    with display_lock:
+        _purge_displays(now())
+        mine = [d for d in displays.values() if (d.get("shop") or {}).get("code") == shop["code"] and now() - d["seen"] < timedelta(minutes=2)]
+        if not mine:
+            return {"found": False}  # not an error: the shop has not opened its test screen
+        d = max(mine, key=lambda x: x["seen"])
+        d["driven"] = now()
+        d["seq"] += 1
+        return {"found": True, "controller": d["controller"], "shop": d["shop"]}
 
 
 @app.post("/api/display/claim")
@@ -863,7 +924,10 @@ def display_claim(body: ClaimIn) -> dict:
 @app.get("/api/display/ping")
 def display_ping(x_display_controller: Optional[str] = Header(None)) -> dict:
     with display_lock:
-        _controlled(x_display_controller)["seen"] = now()
+        d = _controlled(x_display_controller)
+        d["seen"] = now()
+        if d.get("shop"):
+            d["driven"] = now()
     return {"ok": True}
 
 
@@ -874,6 +938,8 @@ def display_cmd(cmd: ChartCmd, x_display_controller: Optional[str] = Header(None
         d["seq"] += 1
         d["cmd"] = cmd.model_dump(exclude_none=True)
         d["seen"] = now()
+        if d.get("shop"):
+            d["driven"] = now()
         return {"seq": d["seq"]}
 
 
@@ -884,10 +950,90 @@ def display_state(since: int = Query(0, ge=0), x_display_token: Optional[str] = 
         if not d:
             raise HTTPException(404, "screen not found")
         d["seen"] = now()
-        out: dict[str, Any] = {"paired": d["controller"] is not None, "seq": d["seq"], "code": d["code"]}
+        a = d.get("answer")
+        shop = d.get("shop")
+        out: dict[str, Any] = {"paired": d["controller"] is not None, "seq": d["seq"], "code": d["code"], "shop": shop,
+                               "phoneConnected": bool(d.get("driven") and now() - d["driven"] < timedelta(minutes=5)) if shop else d["controller"] is not None,
+                               "answerToken": a["token"] if a else None, "answerJoined": bool(a and a["joined"])}
         if d["seq"] != since:
             out["cmd"] = d["cmd"]
         return out
+
+
+# ---------------------------------------------------------------- patient's phone as the answer pad
+# While the shop runs the screen tests for one patient, the chart screen shows a
+# QR code. The patient scans it with their own phone (no app: a web page) and
+# taps their answers; the shop phone receives them as if tapped there. The code
+# belongs to this one patient's session: it stops working when the shop ends the
+# session (the tests are done) or after an hour. Only answers travel (a
+# direction, a number, a choice), never patient data.
+ANSWER_TTL = timedelta(hours=1)
+
+
+class AnswerIn(BaseModel):
+    value: str = Field(min_length=1, max_length=12, pattern=r"^[A-Za-z0-9_-]+$")
+
+
+def _answer_display(tok: Optional[str]) -> dict:
+    d = next((d for d in displays.values() if tok and d.get("answer") and hmac.compare_digest(d["answer"]["token"], tok)), None)
+    if not d or now() - d["answer"]["seen"] > ANSWER_TTL:
+        raise HTTPException(410, "this answer code has ended: ask the shop for the new one")
+    return d
+
+
+@app.post("/api/display/answers/session")
+def answer_session(x_display_controller: Optional[str] = Header(None)) -> dict:
+    """A fresh answer code for the next patient; the previous patient's code stops working."""
+    with display_lock:
+        d = _controlled(x_display_controller)
+        d["answer"] = {"token": secrets.token_urlsafe(18), "seen": now(), "answers": [], "seq": 0, "joined": False}
+        d["seq"] += 1  # the screen redraws with the new QR code
+        return {"token": d["answer"]["token"]}
+
+
+@app.delete("/api/display/answers/session")
+def answer_session_end(x_display_controller: Optional[str] = Header(None)) -> dict:
+    with display_lock:
+        d = _controlled(x_display_controller)
+        if d.get("answer"):
+            d["answer"] = None
+            d["seq"] += 1
+    return {"ok": True}
+
+
+@app.get("/api/display/answers")
+def answers_poll(since: int = Query(0, ge=0), x_display_controller: Optional[str] = Header(None)) -> dict:
+    with display_lock:
+        d = _controlled(x_display_controller)
+        a = d.get("answer")
+        if not a:
+            return {"active": False, "joined": False, "answers": [], "seq": since}
+        return {"active": True, "joined": a["joined"], "answers": [x for x in a["answers"] if x["seq"] > since], "seq": a["seq"]}
+
+
+@app.get("/api/answer/state")
+def answer_state(x_answer_token: Optional[str] = Header(None)) -> dict:
+    with display_lock:
+        try:
+            d = _answer_display(x_answer_token)
+        except HTTPException:
+            return {"active": False}  # the tests are done or the code was replaced: the pad says so
+        d["answer"]["joined"] = True
+        d["answer"]["seen"] = now()
+        cmd = d["cmd"] or {"chart": "idle"}
+        return {"active": True, "chart": cmd.get("chart", "idle"), "eye": cmd.get("eye"), "optotype": cmd.get("optotype"),
+                "index": cmd.get("index"), "n": cmd.get("n"), "lang": cmd.get("lang"), "answered": d["answer"]["seq"]}
+
+
+@app.post("/api/answer")
+def answer_send(body: AnswerIn, x_answer_token: Optional[str] = Header(None)) -> dict:
+    with display_lock:
+        d = _answer_display(x_answer_token)
+        a = d["answer"]
+        a["seq"] += 1
+        a["seen"] = now()
+        a["answers"] = (a["answers"] + [{"seq": a["seq"], "value": body.value, "chart": (d["cmd"] or {}).get("chart")}])[-50:]
+        return {"ok": True, "seq": a["seq"]}
 
 
 @app.delete("/api/display")
@@ -1282,6 +1428,17 @@ def revoke_share(share_id: str, request: Request, x_delete_token: Optional[str] 
     store.audit(actor_of(request), "share_revoked", s["case_ref"], f"{_share_ref(share_id)}; ciphertext wiped")
     return {"id": share_id, "status": "revoked"}
 
+
+# ---------------------------------------------------------------- care network: clinicians, links, calendar, requests, ZEISS dashboard
+from . import network  # noqa: E402
+
+network.init(store, now_fn=now, iso_fn=iso, full_case=full_case, row_summary=row_summary, norm_login=norm_login,
+             shop_session=shop_session, seed=SEED)
+app.include_router(network.router)
+from . import patients  # noqa: E402
+
+patients.init(seed=SEED)
+app.include_router(patients.router)
 
 # static web apps (field app at /, portal at /portal.html); mounted last
 app.mount("/", StaticFiles(directory=str(WEB), html=True), name="web")

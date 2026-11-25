@@ -13,7 +13,7 @@ Every rule below is implemented in `web/js/engine/profile.js` and `web/js/engine
 
 ## 2. Triage: five tiers with a time to care
 
-The full table, generated from the code, is in **[REFERRAL_RULES.md](REFERRAL_RULES.md)** (43 rules, each with the exact criteria, time to care, action and reference, plus the presentations that are deliberately *not* flagged). It is also shown in the field app (🚦 Referral rules) and the portal.
+The full table, generated from the code, is in **[REFERRAL_RULES.md](REFERRAL_RULES.md)** (43 rules, each with the exact criteria, time to care, action and reference, plus the presentations that are deliberately *not* flagged). It is also shown in the optical store app (🚦 Referral rules) and the portal.
 
 | Tier | Time to care | Lane | Examples |
 |---|---|---|---|
@@ -83,7 +83,7 @@ This corrects a claim in our own idea-stage deck.
 
 ## 8. Vision tests on the phone (the five ZEISS online screening checks, plus more)
 
-ZEISS's Online Vision Screening Check covers visual acuity and contrast (Landolt C), colour (number plates), astigmatism (stripe pattern) and the central field (Amsler). The field app has all five, plus duochrome, near vision, three camera measurements and camera lensometry. Every test is listed on the tests screen; the engine marks which ones matter for the patient and why.
+ZEISS's Online Vision Screening Check covers visual acuity and contrast (Landolt C), colour (number plates), astigmatism (stripe pattern) and the central field (Amsler). The optical store app has all five, plus duochrome, near vision, three camera measurements and camera lensometry. Every test is listed on the tests screen; the engine marks which ones matter for the patient and why.
 
 | Test | Method | Result recorded | Used for | Limits |
 |---|---|---|---|---|
