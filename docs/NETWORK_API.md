@@ -22,6 +22,12 @@
 | `DDS-NSK01` | Patil Optics, Nashik | store | Maharashtra |
 | `DDS-BMH01` | Eye camp, Bommanahalli | camp | Karnataka |
 | `DDS-TBM01` | Nethra Opticals, Tambaram | store | Tamil Nadu |
+| `DDS-ADY01` | Kumaran Opticals, Adyar | store | Tamil Nadu |
+| `DDS-TNG01` | Lakshmi Opticals, T. Nagar | store | Tamil Nadu |
+| `DDS-ANN01` | Vision Plus Opticals, Anna Nagar | store | Tamil Nadu |
+| `DDS-MYL01` | Sri Ganesh Opticals, Mylapore | store | Tamil Nadu |
+| `DDS-PRR01` | Annai Opticals, Porur | store | Tamil Nadu |
+| `DDS-GDY01` | Eye camp, Guindy | camp | Tamil Nadu |
 
 **Seeded demo clinicians:**
 
