@@ -237,7 +237,7 @@ def seed_network() -> None:
         ]:
             db().execute("INSERT INTO requests VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                          (secrets.token_hex(6), hashlib.sha256(secrets.token_bytes(16)).hexdigest(), "DDS-VEL01", kind, pref, note, name,
-                          "98765 4" + str(rnd.randint(1000, 9999)), None, st, "We will call you to confirm a time." if st == "accepted" else None,
+                          "98765 4" + str(rnd.randint(1000, 9999)), None, st, "We will confirm your booking shortly." if st == "accepted" else None,
                           None, iso(t - timedelta(hours=rnd.randint(1, 30))), iso(t)))
         # 30 days of de-identified shop counters (synthetic)
         for c, _n, kind, *_ in DEMO_SHOPS:

@@ -6,7 +6,7 @@
 // every 6 months). A reminder, not a diagnosis: sudden changes are never "wait".
 
 export const QUESTIONS = [
-  { id: 'age', q: 'How old is the person these checks are for?', type: 'one', opts: [['u6', 'Under 6'], ['6-17', '6 to 17'], ['18-39', '18 to 39'], ['40-59', '40 to 59'], ['60+', '60 or older']] },
+  { id: 'age', q: 'How old is the person these checkups are for?', type: 'one', opts: [['u6', 'Under 6'], ['6-17', '6 to 17'], ['18-39', '18 to 39'], ['40-59', '40 to 59'], ['60+', '60 or older']] },
   { id: 'wear', q: 'Do they wear glasses or contact lenses?', type: 'one', opts: [['none', 'Neither'], ['glasses', 'Glasses'], ['contacts', 'Contact lenses']] },
   { id: 'health', q: 'Any of these health conditions?', type: 'many', opts: [['diabetes', 'Diabetes (sugar)'], ['bp', 'High blood pressure'], ['thyroid', 'Thyroid problem'], ['none', 'None of these']] },
   { id: 'eyes', q: 'Any of these eye problems, now or before?', type: 'many', opts: [['glaucoma', 'Glaucoma'], ['macula', 'Macular degeneration'], ['cataract', 'Cataract or cataract surgery'], ['highpower', 'High power (above 6) or very thick glasses'], ['squint', 'Squint or lazy eye'], ['injury', 'An eye injury'], ['none', 'None of these']] },

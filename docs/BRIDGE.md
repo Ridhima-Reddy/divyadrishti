@@ -41,7 +41,7 @@ A comprehensive exam takes the optometrist the full chair time. Reviewing a stru
 
 1. **Validate the measurements.** On 30 adults: PD against a pupillometer, reading distance and near point against a tape, acuity against the store chart. Report the errors honestly.
 2. **Clinical review.** Two optometrists review the rule set and 50 cases blind: agreement with the app's lane and lens category.
-3. **Language.** Native-speaker review of the Hindi, Tamil, Telugu, Marathi and Kannada text (already rewritten in the spoken register); record 200 real answers to measure parse accuracy.
+3. **Language.** Native-speaker review of the Hindi, Tamil, Telugu, Marathi, Kannada and Bengali text (already rewritten in the spoken register); record 200 real answers to measure parse accuracy.
 4. **Live pilot.** Three Velachery-type stores and one Kanchipuram camp. KPIs: minutes per patient, questions asked, review minutes per case, % green, referral completion at 30 days, remakes.
 
 ## What it means for ZEISS

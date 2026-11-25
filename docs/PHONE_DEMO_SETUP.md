@@ -1,6 +1,6 @@
 # Phone demo: setup checklist
 
-Allow 30 minutes the day before and 10 minutes before the demo. Use an **Android phone with Chrome**. iPhone Safari's speech recognition does not cover Tamil, Telugu, Kannada or Marathi well, and the demo has not been tested on it.
+Allow 30 minutes the day before and 10 minutes before the demo. Use an **Android phone with Chrome**. iPhone Safari's speech recognition does not cover Tamil, Telugu, Kannada, Marathi or Bengali well, and the demo has not been tested on it.
 
 ## 1. Give the phone an HTTPS address (required)
 
@@ -15,8 +15,8 @@ The microphone and camera only work on `https://` (or `localhost`). Pick one.
 ## 2. On the phone (once)
 
 1. **Chrome up to date** (Play Store › Chrome › Update).
-2. **Voices for all six languages:** Settings › System › Languages & input › Text-to-speech output › Preferred engine: *Speech Services by Google* › ⚙ › *Install voice data* › install **Hindi, Tamil, Telugu, Marathi, Kannada** and English (India). The path differs slightly by phone; search Settings for "Text-to-speech".
-3. **Speech recognition languages:** open the Google app › profile picture › Settings › Voice › Languages, and add the same five. Optionally download them under *Offline speech recognition*, which helps on weak networks.
+2. **Voices for all seven languages:** Settings › System › Languages & input › Text-to-speech output › Preferred engine: *Speech Services by Google* › ⚙ › *Install voice data* › install **Hindi, Tamil, Telugu, Marathi, Kannada, Bengali** and English (India). The path differs slightly by phone; search Settings for "Text-to-speech".
+3. **Speech recognition languages:** open the Google app › profile picture › Settings › Voice › Languages, and add the same six. Optionally download them under *Offline speech recognition*, which helps on weak networks.
 4. Open the demo address in Chrome, then ⋮ › **Add to Home screen**. This installs the app and makes Chrome keep its storage.
 5. First launch: **set a 6-digit PIN**. Use one the whole team knows for the demo; it encrypts the patient data on the phone.
 6. **Allow the microphone and camera** when asked. If you dismissed the prompt: tap the lock icon in the address bar › Permissions.
@@ -47,8 +47,8 @@ The microphone and camera only work on `https://` (or `localhost`). Pick one.
 
 ## 5. Running the demo
 
-- **Quiet room? Live voice.** Pick the language, then New patient. A teammate answers in Tamil, Telugu, Hindi, Kannada or Marathi.
-- **Noisy room? Demo patients.** The home screen has 13 synthetic patients across all six languages. They play the full interview with no microphone.
+- **Quiet room? Live voice.** Pick the language, then New patient. A teammate answers in Tamil, Telugu, Hindi, Kannada, Marathi or Bengali.
+- **Noisy room? Demo patients.** The home screen has 13 synthetic patients in English and five Indian languages (no Bengali demo patient yet). They play the full interview with no microphone.
 - Show the **graded red flags** side by side: M. Ravi (curtain since last night: emergency, interview stops after 7 questions), T. Gopal (new floaters for 3 days, no curtain: urgent within 24 h, not same day) and Santosh Jadhav (sugarcane-leaf scratch: antibiotic ointment within 18 h). Then open 🚦 *Referral rules* to show what is and is not a red flag.
 - The app opens in the phone's language (English if the phone is not in one of the six). Pick the patient's language and your own app language separately on the home screen.
 - On the laptop: open the case, point out the **decision path**, **data quality**, the trace with the patient's own words, the **🔐 identity line** and the **access log**. Then sign it off and show the reply arriving in the phone's inbox.

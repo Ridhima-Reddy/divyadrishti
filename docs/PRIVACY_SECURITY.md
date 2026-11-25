@@ -33,7 +33,7 @@ What the prototype does today, how, and what is still open. Every item below is 
 - **Store-and-forward.** Cases queue on the phone and retry every minute and whenever the network returns. The upload is idempotent on the case id, so retries never duplicate. The browser is asked to keep the storage from eviction.
 - **Speech-recognition confidence.** If the recogniser's confidence is below 0.6, or the answer came from its second guess, the operator must confirm by tap. Red-flag "yes" answers and contradictory multi-select answers always need a tap. Each answer is logged with its confidence.
 - **Measurement quality gates.** PD capture is refused while the head is tilted (more than 4°) or turned (more than 12% left/right asymmetry). Reading distance needs a stable median before it can be used. Every measurement records whether the phone was calibrated.
-- **Phone check.** A pre-flight screen covers HTTPS, speech recognition, a voice for each of the six languages, calibration, storage persistence, encryption, server reachability, the hub key and battery, with live voice, microphone and camera tests.
+- **Phone check.** A pre-flight screen covers HTTPS, speech recognition, a voice for each of the seven languages, calibration, storage persistence, encryption, server reachability, the hub key and battery, with live voice, microphone and camera tests.
 - **Offline shell.** A service worker caches the app (including the language packs) so it opens with no signal.
 
 ## Interpretability

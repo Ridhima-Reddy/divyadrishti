@@ -152,7 +152,7 @@ function overview(api, d, real, counts, filter) {
   const attention = [];
   const late = d.orders.filter((o) => ['ordered', 'in_lab'].includes(o.status) && o.promised && o.promised < today);
   const waiting = d.orders.filter((o) => o.status === 'ready' && daysBetween(o.readyAt || o.createdAt, new Date()) >= 3);
-  if (counts.requests) attention.push(`<button class="nx t2" data-go="appointments">${ic('inbox')}<span>${counts.requests} new appointment request${counts.requests > 1 ? 's' : ''} from the patient app<small>Call back, then book a slot with an optometrist if needed</small></span>${ic('right')}</button>`);
+  if (counts.requests) attention.push(`<button class="nx t2" data-go="appointments">${ic('inbox')}<span>${counts.requests} new appointment request${counts.requests > 1 ? 's' : ''} from the patient app<small>Confirm the booking, then book a slot with an optometrist if needed</small></span>${ic('right')}</button>`);
   if (late.length) attention.push(`<button class="nx red" data-go="orders">${ic('clock')}<span>${late.length} order${late.length > 1 ? 's' : ''} past the promised date<small>${esc(late.slice(0, 3).map((o) => o.patient.name).join(', '))}</small></span>${ic('right')}</button>`);
   if (waiting.length) attention.push(`<button class="nx t3" data-go="orders">${ic('glasses')}<span>${waiting.length} pair${waiting.length > 1 ? 's' : ''} ready for 3 days or more<small>Call the patient to collect</small></span>${ic('right')}</button>`);
   if (low.length) attention.push(`<button class="nx" data-go="stock">${ic('alert')}<span>${low.length} stock item${low.length > 1 ? 's' : ''} to reorder</span>${ic('right')}</button>`);
@@ -446,7 +446,7 @@ async function appointments(api, d, real, reqs, counts, opts = {}) {
   wireViews(api);
   const refresh = () => dashboard(api, 'appointments', opts);
   const patch = async (id, body) => { await net(api, `/requests/${id}`, { method: 'PATCH', body: JSON.stringify(body) }); refresh(); };
-  api.$$('[data-acc]').forEach((b) => b.onclick = () => patch(b.dataset.acc, { status: 'accepted', reply: 'We will call you to confirm a time.' }).catch(() => {}));
+  api.$$('[data-acc]').forEach((b) => b.onclick = () => patch(b.dataset.acc, { status: 'accepted', reply: 'We will confirm your booking shortly.' }).catch(() => {}));
   api.$$('[data-dec]').forEach((b) => b.onclick = () => patch(b.dataset.dec, { status: 'declined', reply: 'Sorry, we cannot take this request. Please choose another shop.' }).catch(() => {}));
   api.$$('[data-cancelbk]').forEach((b) => b.onclick = async () => { await net(api, `/bookings/${b.dataset.cancelbk}`, { method: 'PATCH', body: JSON.stringify({ status: 'cancelled' }) }).catch(() => {}); refresh(); });
   api.$('#findClin').onclick = async () => {

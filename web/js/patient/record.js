@@ -51,8 +51,8 @@ function latestRx(net) {
 function latestHtml(e) {
   if (!e) {
     return `<h2>${icon('glasses')} Latest prescription</h2>
-      <p class="muted">None yet. When an optical shop or optometrist on the network checks your eyes, your prescription appears here by itself.</p>
-      <a class="btn primary" href="#book">${icon('pin')} Book an eye check</a>`;
+      <p class="muted">None yet. When an optical store or optometrist on the network checks your eyes, your prescription appears here by itself.</p>
+      <a class="btn primary" href="#book">${icon('pin')} Book an appointment</a>`;
   }
   return `<h2>${icon('glasses')} Latest prescription</h2>
     <p class="meta">${where(e)}${e.net ? ' · from the shop' : e.type === 'passport' ? ' · from a Vision Passport' : ''}</p>
@@ -71,7 +71,7 @@ function netItem(r) {
   const d = r.data || {};
   let title = ''; let body = '';
   if (r.kind === 'visit') {
-    title = d.summary || 'Eye check';
+    title = d.summary || 'Checkup';
     body = `<p class="small">${d.urgency ? `<span class="tier ${TIER_OF[d.urgency] || 'routine'}">${esc(d.urgency)}</span> ` : ''}${esc(d.within || '')}</p>
       ${d.next ? `<p class="small">${esc(d.next)}</p>` : ''}
       ${d.review ? `<p class="small p-review">${icon('check', { size: 15 })} <span><b>Reviewed by ${esc(d.review.by || 'the optometrist')}</b>: ${esc(d.review.decision || '')}${d.review.note ? `. ${esc(d.review.note)}` : ''}</span></p>` : '<p class="small muted">Waiting for the optometrist’s review.</p>'}
@@ -89,7 +89,7 @@ function netItem(r) {
 function localItem(e) {
   let title = ''; let body = '';
   if (e.type === 'selfcheck') {
-    title = `Self-check: ${TESTS[e.test]?.name || e.test}`;
+    title = `Self-checkup: ${TESTS[e.test]?.name || e.test}`;
     body = `<div class="p-scline">${tierChip(e.outcome)}</div>
       <ul class="p-sceyes">${(e.eyes || []).map((x) => `<li><b>${x.eye === 'R' ? 'Right eye' : x.eye === 'L' ? 'Left eye' : 'Both eyes'}:</b> ${esc(OUTCOMES[x.outcome]?.label || '')}. ${esc(x.why || '')}</li>`).join('')}</ul>`;
   } else if (e.type === 'passport') {
@@ -112,7 +112,7 @@ export function shareText(net = A.cached()) {
     if (rx.pd) lines.push(`PD ${rx.pd} mm`);
   }
   const visit = net.find((r) => r.kind === 'visit');
-  if (visit) lines.push(`Last eye check: ${fmtDate(visit.date)}, ${visit.place}${visit.data?.review ? ` (${visit.data.review.decision})` : ''}`);
+  if (visit) lines.push(`Last checkup: ${fmtDate(visit.date)}, ${visit.place}${visit.data?.review ? ` (${visit.data.review.decision})` : ''}`);
   const sc = selfTestSummary();
   if (sc) lines.push(sc);
   if (lines.length === 1) lines.push('Nothing saved yet.');
@@ -156,7 +156,7 @@ export async function view(app) {
       <h2>${icon('clock')} History</h2>
       ${netErr ? `<p class="err">${esc(netErr)}</p>` : ''}
       ${items.length ? `<ol class="p-timeline">${items.map((x) => x.html).join('')}</ol>`
-    : '<p class="muted">Nothing yet. Your visits, prescriptions and glasses orders from shops on the network show here, with your self-check results.</p>'}
+    : '<p class="muted">Nothing yet. Your visits, prescriptions and glasses orders from stores on the network show here, with your self-checkup results.</p>'}
     </section>
     <p class="muted small p-printnote">Printed from My eyes, DivyaDrishti. A personal record; not a clinical document.</p>`, 'record');
 

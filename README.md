@@ -22,7 +22,7 @@ The free host sleeps when idle, so the first request can take about a minute. De
 
 ## What it does
 
-- **Adaptive voice interview** in English, Hindi, Tamil, Telugu, Marathi and Kannada. It asks only what can change the outcome for this patient. Demo patients play the whole interview without a microphone.
+- **Adaptive voice interview** in seven languages: English, Hindi, Tamil, Telugu, Marathi, Kannada and Bengali. It asks only what can change the outcome for this patient. Demo patients play the whole interview without a microphone.
 - **Graded red flags** in five tiers (emergency, urgent, soon, routine, note), each with a time to care. See `docs/REFERRAL_RULES.md`.
 - **12 tests on the phone:** the five ZEISS Online Vision Screening checks, duochrome, a near-vision chart, camera measurements and lensometry.
 - **Functional vision profile** mapped to the Balanced / Intermediate / Near design options of ZEISS individual progressive lenses.

@@ -52,7 +52,7 @@ export function selfTestSummary() {
     return `${TESTS[k].name} ${fmtDate(e.date, { day: 'numeric', month: 'short' })}: ${OUTCOMES[e.outcome].label}${eyes.length && e.outcome !== 'looks_good' ? ` (${eyes.join(', ')})` : ''}`;
   });
   if (!parts.length) return '';
-  const s = `Self-checks at home: ${parts.join('; ')}.`;
+  const s = `Self-checkups at home: ${parts.join('; ')}.`;
   return s.length <= 300 ? s : `${s.slice(0, 297)}...`;
 }
 
@@ -64,8 +64,8 @@ export function hub(app) {
   const done = ORDER.filter((k) => latest[k]);
   app.render(`
     <header class="p-head">
-      <h1 tabindex="-1">Check my eyes</h1>
-      <p class="lede">Short checks, one screen at a time. Wear your usual glasses. This is a screening, not a diagnosis.</p>
+      <h1 tabindex="-1">Quick checkups</h1>
+      <p class="lede">Short checkups, one screen at a time. Wear your usual glasses. This is a screening, not a diagnosis.</p>
     </header>
     <div class="p-groups">${GROUPS.map((g) => `
       <section class="card p-group">
@@ -218,7 +218,7 @@ function showResult(app, key, eyes, detail = {}) {
       ${key === 'amsler' && outcome === 'see_soon' ? '<p class="p-safetyline small">If the change came on suddenly, go to an eye hospital today.</p>' : ''}
       <p class="muted small">Saved in your eye record on this phone. This is a screening, not a diagnosis.</p>
       <div class="p-actions">
-        ${outcome !== 'looks_good' ? `<a class="btn primary" href="#book">${icon('calendar')} Book an eye check</a>` : ''}
+        ${outcome !== 'looks_good' ? `<a class="btn primary" href="#book">${icon('calendar')} Book an appointment</a>` : ''}
         ${detail.retry ? '<button class="btn" type="button" id="retry">Try again</button>' : ''}
         ${next ? `<a class="btn${outcome === 'looks_good' ? ' primary' : ''}" href="#check/${next}">Next: ${esc(TESTS[next].name)} ${icon('right')}</a>` : ''}
         <a class="btn ghost" href="#check">All checks</a>
@@ -359,7 +359,7 @@ function amsler(app) {
 // ---------------------------------------------------------------- 4. contrast: fading Landolt C rings
 function rateContrast(logCS) {
   if (logCS >= 1.5) return { outcome: 'looks_good', why: 'You saw faint rings well.' };
-  if (logCS >= 1.2) return { outcome: 'follow_up', why: 'Faint rings were harder to see than expected. An eye check can find out why.' };
+  if (logCS >= 1.2) return { outcome: 'follow_up', why: 'Faint rings were harder to see than expected. A checkup can find out why.' };
   return { outcome: 'see_soon', why: 'Only strong rings were visible. An optometrist should check this eye.' };
 }
 

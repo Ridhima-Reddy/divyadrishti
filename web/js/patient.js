@@ -36,7 +36,7 @@ const app = {
 };
 
 // ---------------------------------------------------------------- navigation
-const TABS = [['home', 'home', 'Home'], ['check', 'eye', 'Check'], ['book', 'calendar', 'Book'], ['record', 'record', 'Record']];
+const TABS = [['home', 'home', 'Home'], ['check', 'eye', 'Checkups'], ['book', 'calendar', 'Book'], ['record', 'record', 'Record']];
 const TAB_OF = { home: 'home', plan: 'home', check: 'check', calibrate: 'check', book: 'book', requests: 'book', record: 'record' };
 
 function setTabs(base, inTest) {
@@ -86,7 +86,7 @@ function gate() {
       <div class="p-herocopy">
         ${mark(44, 'mark p-heromark')}
         <h1 tabindex="-1">My eyes</h1>
-        <p class="lede">Quick eye checks at home, a booking with an optical shop near you, and every visit, prescription and glasses order from shops on the DivyaDrishti network, in one place.</p>
+        <p class="lede">Quick eye checkups at home, a booking with an optical store near you, and every visit, prescription and glasses order from stores on the DivyaDrishti network, in one place.</p>
       </div>
       <div class="card p-gatecard">
         <button class="btn primary big" type="button" id="demoGo">${icon('play')} Explore the demo (no sign-in)</button>
@@ -103,7 +103,7 @@ function gate() {
           <button class="btn ghost small" type="button" id="backPhone">Use another number</button>
         </form>
         <p class="err" id="gateErr" role="alert"></p>
-        <p class="muted small">Use the number you give at the optical shop: your visits there appear here by themselves.</p>
+        <p class="muted small">Use the number you give at the optical store: your visits there appear here by themselves.</p>
       </div>
     </section>`, 'signin');
   const err = $('#gateErr');
@@ -146,7 +146,7 @@ function reminder() {
   const answers = S.prefs().plan;
   const last = A.cached().find((r) => r.kind === 'visit') || S.lastVisit();
   if (!P.complete(answers)) return { due: null, html: `
-    <h2>${icon('calendar')} When is your next eye check due?</h2>
+    <h2>${icon('calendar')} When is your next routine checkup due?</h2>
     <p class="muted">Answer ${P.QUESTIONS.length} quick questions about age, eye history, health and daily life. The app works out how often you need a check, and why.</p>
     ${last ? `<p class="meta">Last visit ${esc(fmtDate(last.date))}${last.place ? ` · ${esc(last.place)}` : ''}</p>` : ''}
     <div class="p-actions"><a class="btn primary" href="#plan">${icon('right')} Answer the questions</a></div>` };
@@ -155,9 +155,9 @@ function reminder() {
   const n = due ? monthsUntil(due) : 0;
   const now = r.dueNow || !due || n <= 0;
   const title = r.urgent ? 'Sudden change in sight: get checked today'
-    : now ? 'Your next eye check is due now' : `Next eye check due in ${n} month${n === 1 ? '' : 's'}`;
+    : now ? 'Your next routine checkup is due now' : `Next routine checkup due in ${n} month${n === 1 ? '' : 's'}`;
   const meta = last ? `Last visit ${esc(fmtDate(last.date))}${last.place ? ` · ${esc(last.place)}` : ''}${!now ? ` · due ${esc(fmtDate(S.isoDate(due), { month: 'long', year: 'numeric' }))}` : ''}`
-    : 'No eye check on record yet.';
+    : 'No routine checkup on record yet.';
   return {
     due: now ? null : due,
     html: `
@@ -165,13 +165,13 @@ function reminder() {
     <p class="meta">${meta}</p>
     ${r.urgent ? '<p class="p-urgent"><span class="tier emergency">Emergency</span> Sudden loss or change of sight needs an eye hospital today. Do not wait for an appointment.</p>' : ''}
     <div class="p-plan">
-      <p><b>A check ${every(r.months)}</b>, because:</p>
+      <p><b>A routine checkup ${every(r.months)}</b>, because:</p>
       <ul>${r.reasons.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
       ${r.dueNow && !r.urgent ? '<p class="small">Your sight has changed, so book a check now rather than waiting.</p>' : ''}
       ${r.advice.length ? `<details class="small"><summary>Tips for daily life (${r.advice.length})</summary><ul>${r.advice.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></details>` : ''}
     </div>
     <div class="p-actions">
-      ${now ? `<a class="btn primary" href="#book">${icon('pin')} Book an eye check</a>` : `<button class="btn primary" type="button" id="icsBtn">${icon('download')} Add to calendar</button>`}
+      ${now ? `<a class="btn primary" href="#book">${icon('pin')} Book an appointment</a>` : `<button class="btn primary" type="button" id="icsBtn">${icon('download')} Add to calendar</button>`}
       <a class="btn ghost" href="#plan">Change my answers</a>
     </div>
     <p class="muted small">A guide from common eye-care advice, not a diagnosis. Your optometrist may suggest a different interval.</p>`,
@@ -182,7 +182,7 @@ function planForm() {
   const a = { ...(S.prefs().plan || {}) };
   app.render(`
     <header class="p-head">
-      <h1 tabindex="-1">How often do you need an eye check?</h1>
+      <h1 tabindex="-1">How often do you need a routine checkup?</h1>
       <p class="lede">${P.QUESTIONS.length} quick questions. Your answers stay on this phone.</p>
     </header>
     <form class="card p-planform" id="planForm" novalidate>
@@ -225,7 +225,7 @@ function planForm() {
       return;
     }
     S.setPrefs({ plan: a });
-    toast('Your eye check plan is ready.');
+    toast('Your checkup plan is ready.');
     app.go('home');
   };
 }
@@ -242,8 +242,8 @@ function downloadIcs(due) {
     'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//DivyaDrishti//My eyes//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
     'BEGIN:VEVENT', `UID:${S.uid()}@divyadrishti`, `DTSTAMP:${stamp}`,
     `DTSTART;VALUE=DATE:${icsDate(day)}`, `DTEND;VALUE=DATE:${icsDate(next)}`,
-    'SUMMARY:Eye check due', `DESCRIPTION:${icsEscape(`Time for your eye check. Book one near you: ${url}`)}`, 'TRANSP:TRANSPARENT',
-    'BEGIN:VALARM', 'TRIGGER:-P7D', 'ACTION:DISPLAY', 'DESCRIPTION:Eye check due in a week', 'END:VALARM',
+    'SUMMARY:Routine checkup due', `DESCRIPTION:${icsEscape(`Time for your routine checkup. Book one near you: ${url}`)}`, 'TRANSP:TRANSPARENT',
+    'BEGIN:VALARM', 'TRIGGER:-P7D', 'ACTION:DISPLAY', 'DESCRIPTION:Routine checkup due in a week', 'END:VALARM',
     'END:VEVENT', 'END:VCALENDAR', '',
   ].join('\r\n');
   const href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
@@ -275,8 +275,8 @@ function home() {
       <div class="p-herocopy">
         ${mark(44, 'mark p-heromark')}
         <h1 tabindex="-1">${greeting()}</h1>
-        <p class="lede">Quick eye checks at home, a few minutes each. They are a screening, not a diagnosis: they tell you when it is time to see an optometrist.</p>
-        <div class="p-actions"><a class="btn primary" href="#check">${icon('eye')} Check my eyes</a></div>
+        <p class="lede">Quick eye checkups at home, a few minutes each. They are a screening, not a diagnosis: they tell you when it is time to see an optometrist.</p>
+        <div class="p-actions"><a class="btn primary" href="#check">${icon('eye')} Start a quick checkup</a></div>
       </div>
       <aside class="card p-safety" aria-labelledby="safetyH">
         <span class="tier emergency">Emergency</span>
@@ -285,8 +285,8 @@ function home() {
       </aside>
     </section>
     <nav class="p-start" aria-label="Start">
-      <a href="#check"><span class="p-sicon t1">${icon('eye', { size: 22 })}</span><span class="p-stext"><b>Check my eyes</b><small>Six short checks: sharpness, eye health, colour and comfort.</small></span>${icon('right', { cls: 'p-chev' })}</a>
-      <a href="#book"><span class="p-sicon t4">${icon('calendar', { size: 22 })}</span><span class="p-stext"><b>Book an eye check near me</b><small>Find an optical shop or eye camp by PIN code.</small></span>${icon('right', { cls: 'p-chev' })}</a>
+      <a href="#check"><span class="p-sicon t1">${icon('eye', { size: 22 })}</span><span class="p-stext"><b>Quick checkups</b><small>Six short checkups: sharpness, eye health, colour and comfort.</small></span>${icon('right', { cls: 'p-chev' })}</a>
+      <a href="#book"><span class="p-sicon t4">${icon('calendar', { size: 22 })}</span><span class="p-stext"><b>Book an appointment</b><small>Find the nearest optical store or eye camp by PIN code.</small></span>${icon('right', { cls: 'p-chev' })}</a>
       <a href="#record"><span class="p-sicon t5">${icon('record', { size: 22 })}</span><span class="p-stext"><b>My eye record</b><small>Visits, prescriptions and glasses orders from network shops.</small></span>${icon('right', { cls: 'p-chev' })}</a>
     </nav>
     <div class="p-homegrid">

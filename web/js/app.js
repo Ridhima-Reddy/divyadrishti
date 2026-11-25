@@ -1096,7 +1096,7 @@ function pushVisit(prof, payload) {
     method: 'POST', headers: { 'Content-Type': 'application/json', ...shopHeaders(dashApi) },
     body: JSON.stringify({ phone, kind: 'visit', ref: C.id, date: String(C.createdAt || new Date().toISOString()).slice(0, 10), consent: true, data: {
       summary: `Eye check: ${prof.recommendation?.title || 'screening'}`, urgency: TIERS[tri.urgency]?.label || 'Routine', within: tri.within || '',
-      tests, next: tri.urgency === 'emergency' ? 'Go to an eye hospital today.' : 'Your optometrist reviews the results; the shop will call you.',
+      tests, next: tri.urgency === 'emergency' ? 'Go to an eye hospital today.' : 'Your optometrist reviews the results; the store will be in touch.',
       passport: payload.passport.text } }),
   }).catch(() => { /* offline: the passport still reaches the patient by SMS */ });
 }

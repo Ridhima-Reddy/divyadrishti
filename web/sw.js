@@ -1,6 +1,6 @@
 // Offline shell: the optical store app must open in a village with no signal.
 // API calls are never cached (cases queue in IndexedDB instead).
-const CACHE = 'dd-shell-v16';
+const CACHE = 'dd-shell-v17';
 const SHELL = [
   './', 'index.html', 'css/app.css', 'manifest.webmanifest', 'icon.svg',
   'js/app.js', 'js/icons.js', 'js/remote.js', 'js/account.js', 'js/tryon.js', 'js/call.js', 'display.html', 'js/display.js', 'fonts/InstrumentSans-Variable.woff2', 'fonts/InstrumentSans-Variable-ext.woff2', 'fonts/Newsreader-Variable.woff2', 'js/charts_ui.js', 'fonts/GeistMono-Variable.woff2', 'js/i18n.js', 'js/voice.js', 'js/store.js', 'js/passport.js', 'js/profile_view.js', 'js/crypto.js', 'js/tests_ui.js',
@@ -17,10 +17,10 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.pathname.includes('/api/')) return;
   // network first so updates reach the phone, cache as the offline fallback
-  e.respondWith(fetch(e.request).then((r) => {
+  e.respondWith(fetch(e.request.mode === 'navigate' ? e.request : new Request(e.request, { cache: 'no-cache' })).then((r) => {
     if (r.ok && (url.origin === location.origin || url.hostname.endsWith('jsdelivr.net') || url.hostname.endsWith('googleapis.com'))) {
       const copy = r.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy));
     }
     return r;
-  }).catch(() => caches.match(e.request)));
+  }).catch(() => caches.match(e.request, { ignoreSearch: true })));
 });
