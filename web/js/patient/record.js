@@ -55,7 +55,7 @@ function latestHtml(e) {
       <a class="btn primary" href="#book">${icon('pin')} Book an appointment</a>`;
   }
   return `<h2>${icon('glasses')} Latest prescription</h2>
-    <p class="meta">${where(e)}${e.net ? ' · from the shop' : e.type === 'passport' ? ' · from a Vision Passport' : ''}</p>
+    <p class="meta">${where(e)}${e.net ? ' · from the store' : e.type === 'passport' ? ' · from a Vision Passport' : ''}</p>
     ${rxTable(e.rx, { big: true })}
     ${e.pd ? `<div class="kv"><span>PD (distance between pupils)</span><b class="mono">${esc(e.pd)} mm</b></div>` : ''}
     ${e.by ? `<p class="small muted">${esc(e.by)}</p>` : ''}`;
@@ -133,7 +133,7 @@ export async function view(app) {
     <section class="band p-recband">
       <div class="p-reccopy">
         <h1 tabindex="-1">My eye record</h1>
-        <p class="lede">Every visit to a shop or optometrist on the DivyaDrishti network appears here by itself: results, prescriptions and your glasses order. You never need to type it in.</p>
+        <p class="lede">Every visit to an optical store or optometrist on the DivyaDrishti network appears here by itself: results, prescriptions and your glasses order. You never need to type it in.</p>
         <p class="small p-who">${icon('user', { size: 16 })} ${s?.demo ? `Demo patient ${esc(s.name || '')} · ` : ''}Mobile ${esc(s?.phone || '')}</p>
         <div class="p-actions">
           <button class="btn p-onnight" type="button" id="shareBtn" aria-expanded="false" aria-controls="shareBox">${icon('send')} Share with my optician</button>

@@ -287,7 +287,7 @@ function home() {
     <nav class="p-start" aria-label="Start">
       <a href="#check"><span class="p-sicon t1">${icon('eye', { size: 22 })}</span><span class="p-stext"><b>Quick checkups</b><small>Six short checkups: sharpness, eye health, colour and comfort.</small></span>${icon('right', { cls: 'p-chev' })}</a>
       <a href="#book"><span class="p-sicon t4">${icon('calendar', { size: 22 })}</span><span class="p-stext"><b>Book an appointment</b><small>Find the nearest optical store or eye camp by PIN code.</small></span>${icon('right', { cls: 'p-chev' })}</a>
-      <a href="#record"><span class="p-sicon t5">${icon('record', { size: 22 })}</span><span class="p-stext"><b>My eye record</b><small>Visits, prescriptions and glasses orders from network shops.</small></span>${icon('right', { cls: 'p-chev' })}</a>
+      <a href="#record"><span class="p-sicon t5">${icon('record', { size: 22 })}</span><span class="p-stext"><b>My eye record</b><small>Visits, prescriptions and glasses orders from network stores.</small></span>${icon('right', { cls: 'p-chev' })}</a>
     </nav>
     <div class="p-homegrid">
       <section class="card p-remind" id="remind" aria-live="polite"></section>
